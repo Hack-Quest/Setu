@@ -1,56 +1,21 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
 
-# Create FastAPI app
+from backend.routes.need import router as need_router
+from backend.routes.volunteer import router as volunteer_router
+from backend.routes.match import router as match_router
+from backend.routes.dashboard import router as dashboard_router
+
 app = FastAPI()
 
-
-# 📦 Request Schema
-class RequestData(BaseModel):
-    description: str
-    address: str
-
-
-# 🧠 Mock AI Processing Function
-def process_with_ai(description):
-    description = description.lower()
-
-    if "food" in description:
-        return {"category": "food", "severity": "high"}
-    elif "medical" in description:
-        return {"category": "medical", "severity": "high"}
-    elif "water" in description:
-        return {"category": "water", "severity": "medium"}
-    else:
-        return {"category": "general", "severity": "medium"}
-
-
-# 🏠 Test Route
 @app.get("/")
 def home():
-    return {"message": "Server is running"}
+    return {"message": "Backend is running"}
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
-# 🔥 Webhook (MAIN API)
-@app.post("/webhook")
-async def webhook(data: RequestData):
-    
-    # ✅ Step 1: Extract data
-    description = data.description
-    address = data.address
-
-    # ✅ Step 2: Process using AI logic
-    ai_result = process_with_ai(description)
-
-    # Debug prints
-    print("Description:", description)
-    print("Address:", address)
-    print("AI Result:", ai_result)
-
-    # ✅ Step 3: Return processed response
-    return {
-        "description": description,
-        "address": address,
-        "category": ai_result["category"],
-        "severity": ai_result["severity"]
-    }
+app.include_router(need_router)
+app.include_router(volunteer_router)
+app.include_router(match_router)
+app.include_router(dashboard_router)
