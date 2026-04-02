@@ -5,18 +5,18 @@ from dotenv import load_dotenv
 load_dotenv('config/.env')
 
 api_key = os.getenv("GOOGLE_MAPS_KEY")
-_client = googlemaps.Client(key=api_key) if api_key else None
+client = googlemaps.Client(key=api_key) if api_key else None
 
 def get_coordinates(address: str) -> dict:
     """
     Converts a text address into latitude and longitude using Google Maps.
     """
-    if not _client:
+    if not client:
         print("Warning: GOOGLE_MAPS_KEY is missing. Add it to config/.env later.")
         return {"lat": None, "lng": None}
 
     try:
-        result = _client.geocode(address)
+        result = client.geocode(address)
         
         if result:
             loc = result[0]["geometry"]["location"]
@@ -28,3 +28,11 @@ def get_coordinates(address: str) -> dict:
         print(f"🚨 Google Maps API Error: {e}")
         
     return {"lat": None, "lng": None}
+
+
+# --- TEST BLOCK ---
+if __name__ == "__main__":
+    print("Testing Geocoder...")
+    test_address = "India Gate, New Delhi"
+    coords = get_coordinates(test_address)
+    print(f"Result for '{test_address}': {coords}")
