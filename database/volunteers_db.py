@@ -14,12 +14,17 @@ def save_volunteer(data: dict) -> str:
     print(f"🦸 Successfully registered volunteer with ID: {doc_ref.id}")
     return doc_ref.id
 
-def get_available_volunteers() -> list:
+def get_available_volunteers(category: str = None) -> list:
     """
-    Fetches a list of all volunteers who are currently free to help.
+    Fetches available volunteers. Optionally filters by a specific skill.
     """
     docs = db.collection("volunteers").where("available", "==", True).stream()
-    return [{"id": doc.id, **doc.to_dict()} for doc in docs]
+    volunteers = [{"id": doc.id, **doc.to_dict()} for doc in docs]
+    
+    if category:
+        volunteers = [v for v in volunteers if category in v.get("skills", [])]
+        
+    return volunteers
 
 def update_volunteer_status(doc_id: str, is_available: bool):
     """

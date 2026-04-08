@@ -1,38 +1,43 @@
-import googlemaps
-import os
-from dotenv import load_dotenv
-
-load_dotenv('config/.env')
-
-api_key = os.getenv("GOOGLE_MAPS_KEY")
-client = googlemaps.Client(key=api_key) if api_key else None
+import requests
 
 def get_coordinates(address: str) -> dict:
     """
-    Converts a text address into latitude and longitude using Google Maps.
+    Text address to maps using OpenStreetMap
+    Alternate till google geocoding api issue gets fixed
     """
-    if not client:
-        print("Warning: GOOGLE_MAPS_KEY is missing. Add it to config/.env later.")
-        return {"lat": None, "lng": None}
 
     try:
-        result = client.geocode(address)
-        
-        if result:
-            loc = result[0]["geometry"]["location"]
-            return {"lat": loc["lat"], "lng": loc["lng"]}
-        else:
-            print(f"📍 Google Maps found no results for: {address}")
-            
-    except Exception as e:
-        print(f"🚨 Google Maps API Error: {e}")
-        
-    return {"lat": None, "lng": None}
+        url = "https://nominatim.openstreetmap.org/search"
+        params = {
+            "q" : address,
+            "format" : "json",
+            "limit" : 1
+        }
 
+        headers={
+            "User-Agent":"SetuApp"
+        }
+
+        response = requests.get(url, params=params, headers=headers)
+        data = response.json()
+
+        if data:
+            return {
+                "lat": float(data[0]["lat"]),
+                "lng": float(data[0]["lon"])
+            }
+        else:
+            print(f"No result for {address}")
+
+    except Exception as e:
+        print(f"Geocoder Error: {e}")
+
+    # Default fallback coordinates (India Gate)
+    return {"lat": 26.8467, "lng": 80.9462}
 
 # --- TEST BLOCK ---
 if __name__ == "__main__":
-    print("Testing Geocoder...")
-    test_address = "India Gate, New Delhi"
+    print("Testing Free Geocoder...")
+    test_address = "Kanpur, Uttar Pradesh"
     coords = get_coordinates(test_address)
     print(f"Result for '{test_address}': {coords}")
