@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 
-from backend.routes.need import needs_storage
-from backend.routes.volunteer import volunteers
+from database.needs_db import get_open_needs
+from database.volunteers_db import get_available_volunteers
+from database.assignments_db import save_assignment
 
 router = APIRouter()
 
@@ -10,11 +11,11 @@ def match_needs():
 
     matches = []
 
-    for need in needs_storage:
+    for need in get_open_needs():
 
         best_volunteer = None
 
-        for vol in volunteers:
+        for vol in get_available_volunteers():
 
             skills = vol.get("skills", [])
             location = vol.get("location", "").lower()
@@ -34,6 +35,9 @@ def match_needs():
             "assigned_volunteer": best_volunteer.get("name") if best_volunteer else None,
             "status": "assigned" if best_volunteer else "unassigned"
         }
+
+        if best_volunteer:
+            save_assignment(need["id"], best_volunteer["id"])
 
         matches.append(match)
 

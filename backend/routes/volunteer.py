@@ -1,9 +1,7 @@
 from fastapi import APIRouter
+from database.volunteers_db import save_volunteer, get_available_volunteers
 
 router = APIRouter()
-
-# 🧠 In-memory storage
-volunteers = []
 
 @router.post("/volunteer")
 def create_volunteer(data: dict):
@@ -11,11 +9,11 @@ def create_volunteer(data: dict):
     try:
         print("Incoming Volunteer Data:", data)
 
-        volunteers.append(data)
+        save_volunteer(data)
 
         return {
             "message": "volunteer added",
-            "total_volunteers": len(volunteers)
+            "total_volunteers": len(get_available_volunteers())
         }
 
     except Exception as e:

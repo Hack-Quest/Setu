@@ -1,54 +1,63 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from backend.models import NeedInput
+from dotenv import load_dotenv
+import os
+import json
 
-# 🔥 Import Coder's function
+from backend.models import NeedInput
 from ai_processing.gemini_processor import process_need_text
+from database.geocoding import get_coordinates
+from database.needs_db import save_need
+
+# 🔐 Load env variables
+load_dotenv()
+SECRET_TOKEN = os.getenv("SECRET_TOKEN")
 
 router = APIRouter()
 
-# 🧠 In-memory storage
-needs_storage = []
-
-# 🔐 Security
-SECRET_TOKEN = "hackathon-secret"
-security = HTTPBearer()
+# 🔐 Security setup
+security = HTTPBearer(auto_error=False)
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if credentials.credentials != SECRET_TOKEN:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    return credentials.credentials
+
+    # ✅ TEMP (testing mode – no blocking)
+    if credentials and credentials.credentials != SECRET_TOKEN:
+        print(f"⚠ Warning: Invalid token received: {credentials.credentials}")
+
+    return credentials.credentials if credentials else None
 
 
-# 🔴 TEMP (until Animesh ready)
-def get_coordinates(location):
-    return {"lat": 28.61, "lng": 77.20}
+# 🧠 In-memory storage (temporary)
+needs_storage = []
 
-def save_need(data):
-    print("Mock DB Save:", data)
+
+
 
 
 # 🔥 MAIN ROUTE
 @router.post("/need")
-def create_need(data: NeedInput, token: str = Depends(verify_token)):
+def create_need(
+    data: NeedInput,
+    token: str = Depends(verify_token)
+):
 
     try:
-        print("Incoming Data:", data)
+        print("📥 Incoming Data:", data)
 
-        # 🧠 STEP 1 — AI PROCESSING (Gemini)
+        # 🧠 STEP 1 — AI processing
         ai_result = process_need_text(data.description)
 
-        # ⚠️ SAFETY CHECK (VERY IMPORTANT)
+        # 🛡️ Safe parsing
         if not isinstance(ai_result, dict):
-            raise Exception("AI did not return JSON")
+            raise Exception("AI did not return valid JSON")
 
         category = ai_result.get("category", "general")
         severity = ai_result.get("severity", "low")
 
-        # 🌍 STEP 2 — LOCATION (mock for now)
+        # 🌍 STEP 2 — Location (mock)
         coords = get_coordinates(data.location)
 
-        # 🧩 STEP 3 — FINAL DATA
+        # 🧩 STEP 3 — Final data
         final_data = {
             "id": len(needs_storage) + 1,
             "description": data.description,
@@ -61,21 +70,21 @@ def create_need(data: NeedInput, token: str = Depends(verify_token)):
             "status": "pending"
         }
 
-        # 💾 STEP 4 — SAVE
+        # 💾 STEP 4 — Save
         save_need(final_data)
         needs_storage.append(final_data)
 
-        print("Final Data:", final_data)
+        print("✅ Final Data:", final_data)
 
         return final_data
 
     except Exception as e:
-        print("Error:", e)
+        print("❌ Error:", e)
 
-        # 🔴 FALLBACK (important for demo safety)
+        # 🔴 Fallback (never break demo)
         return {
             "error": str(e),
-            "message": "Fallback: using default values",
+            "message": "Fallback response used",
             "category": "general",
             "severity": "low"
         }

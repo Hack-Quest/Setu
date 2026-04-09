@@ -1,21 +1,24 @@
 from fastapi import APIRouter
 
-from backend.routes.need import needs_storage
-from backend.routes.volunteer import volunteers
+from database.needs_db import get_open_needs
+from database.volunteers_db import get_available_volunteers
 
 router = APIRouter()
 
 @router.get("/dashboard")
 def dashboard():
 
-    total_needs = len(needs_storage)
-    total_volunteers = len(volunteers)
+    needs = get_open_needs()
+    vols = get_available_volunteers()
 
-    high = sum(1 for n in needs_storage if n["severity"] == "high")
-    medium = sum(1 for n in needs_storage if n["severity"] == "medium")
-    low = sum(1 for n in needs_storage if n["severity"] == "low")
+    total_needs = len(needs)
+    total_volunteers = len(vols)
 
-    recent_need = needs_storage[-1] if needs_storage else None
+    high = sum(1 for n in needs if n["severity"] == "high")
+    medium = sum(1 for n in needs if n["severity"] == "medium")
+    low = sum(1 for n in needs if n["severity"] == "low")
+
+    recent_need = needs[-1] if needs else None
 
     return {
         "total_needs": total_needs,

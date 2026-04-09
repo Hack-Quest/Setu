@@ -43,7 +43,7 @@ def get_coordinates(address: str) -> dict:
             "User-Agent": "Setu" 
         }
 
-        response = requests.get(url, params=params, headers=headers)
+        response = requests.get(url, params=params, headers=headers, timeout=10)
         response.raise_for_status() # Catches HTTP errors
         data = response.json()
 
