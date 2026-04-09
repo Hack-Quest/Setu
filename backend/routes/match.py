@@ -41,4 +41,3 @@ def match_needs():
         "total_matches": len(matches),
         "matches": matches
     }
-    }
