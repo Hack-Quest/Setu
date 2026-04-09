@@ -1,7 +1,6 @@
 from database.firestore_client import db
 from datetime import datetime, timezone
 
-# Import your other database tools so they can talk to each other!
 from database.needs_db import update_need_status
 from database.volunteers_db import update_volunteer_status
 
@@ -31,13 +30,12 @@ def resolve_assignment(doc_id: str, need_id: str, volunteer_id: str):
     """
     Marks the job as done, resolves the need, and frees up the volunteer.
     """
-    # 1. Mark the assignment as finished
+    
     db.collection("assignments").document(doc_id).update({
         "resolved_at": datetime.now(timezone.utc).isoformat()
     })
     
-    # 2. Update the connected systems back to normal!
-    update_need_status(need_id, "resolved")       # The problem is fixed!
-    update_volunteer_status(volunteer_id, True)   # Volunteer is ready for a new job
+    update_need_status(need_id, "resolved")      
+    update_volunteer_status(volunteer_id, True)   
     
     print(f"✅ Assignment {doc_id} resolved! Volunteer is free again.")
