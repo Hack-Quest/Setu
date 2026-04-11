@@ -32,11 +32,11 @@ def get_open_needs() -> list:
     docs = db.collection("needs_reports").where("status", "==", "open").stream()
     
     # Package the results nicely into a Python list
-    return [{"id": doc.id, **doc.to_dict()} for doc in docs]
+    return [{**doc.to_dict(), "id": doc.id} for doc in docs]
 
 def get_need_by_id(doc_id: str) -> dict:
     """Fetches a single need by its exact Firestore document ID."""
     doc = db.collection("needs_reports").document(doc_id).get()
     if doc.exists:
-        return {"id": doc.id, **doc.to_dict()}
+        return {**doc.to_dict(), "id": doc.id}
     return None

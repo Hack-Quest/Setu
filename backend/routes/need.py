@@ -59,7 +59,6 @@ def create_need(
 
         # 🧩 STEP 3 — Final data
         final_data = {
-            "id": len(needs_storage) + 1,
             "description": data.description,
             "category": category,
             "severity": severity,
@@ -71,7 +70,8 @@ def create_need(
         }
 
         # 💾 STEP 4 — Save
-        save_need(final_data)
+        doc_id = save_need(final_data)
+        final_data["id"] = doc_id
         needs_storage.append(final_data)
 
         print("✅ Final Data:", final_data)
