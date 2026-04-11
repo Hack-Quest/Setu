@@ -19,7 +19,7 @@ _GROQ_MODEL = "llama-3.3-70b-versatile"
 def _parse_and_validate(raw: str) -> dict:
     """
     Parse and validate a raw JSON string from any AI model.
-    Returns a validated dict with 'category' and 'severity'.
+    Returns a validated dict with 'category', 'severity', and 'consistency'.
     Raises json.JSONDecodeError if parsing fails.
     """
     # Clean markdown if model wraps output in backticks
@@ -36,7 +36,19 @@ def _parse_and_validate(raw: str) -> dict:
     if result.get("severity") not in VALID_SEVERITIES:
         result["severity"] = "medium"
 
-    return {"category": result["category"], "severity": result["severity"]}
+    # Extract consistency score (0-10); default to 5 if missing or non-integer
+    try:
+        consistency = int(result.get("consistency", 5))
+        consistency = max(0, min(10, consistency))  # clamp to valid range
+    except (TypeError, ValueError):
+        consistency = 5
+
+    return {
+        "category": result["category"],
+        "severity": result["severity"],
+        "consistency": consistency
+    }
+
 
 
 def _call_groq(prompt: str) -> dict:

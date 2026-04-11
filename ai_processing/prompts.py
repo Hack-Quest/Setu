@@ -5,9 +5,11 @@ def build_prompt(description: str) -> str:
     return f"""
         You are an AI assistant classifying community emergency reports for an NGO volunteer system.
 
-        Analyze the report below and return ONLY a valid JSON object with exactly two fields:
+        Analyze the report below and return ONLY a valid JSON object with exactly three fields:
         - "category": must be one of {VALID_CATEGORIES}
         - "severity": must be one of {VALID_SEVERITIES}
+        - "consistency": an integer from 0 to 10 rating how believable and internally consistent this report is.
+          (0 = clearly fake/nonsensical, 5 = plausible but vague, 10 = very detailed and credible)
 
         Severity guide:
         - "critical" → immediate life threat (trapped, dying, no water for days)
@@ -15,10 +17,15 @@ def build_prompt(description: str) -> str:
         - "medium"   → important, can wait a few hours (hygiene issue, minor injury)
         - "low"      → general community need (awareness, minor supply request)
 
+        Consistency guide:
+        - Penalise vague, contradictory, very short, or implausible descriptions.
+        - Reward specific details: named location, number of people, timeline, type of disaster.
+
         Rules:
         - Return ONLY the JSON. No explanation. No markdown. No extra text.
         - If unsure about category, use "other"
         - If unsure about severity, use "medium"
+        - If unsure about consistency, use 5
 
         Report: "{description}"
         """

@@ -40,3 +40,52 @@ def get_need_by_id(doc_id: str) -> dict:
     if doc.exists:
         return {**doc.to_dict(), "id": doc.id}
     return None
+
+def check_corroboration(lat: float, lng: float, category: str) -> int:
+    """
+    Checks how many recent, nearby reports share the same category.
+
+    - Time window: last 2 hours (filtered in Python to avoid composite index)
+    - Distance check: within 0.05 degrees (~5km) in both lat and lng
+    - Returns: count of matching corroborating reports (int)
+    """
+    try:
+        from datetime import timedelta
+
+        two_hours_ago = datetime.now(timezone.utc) - timedelta(hours=2)
+
+        # Single-field query — avoids requiring a Firestore composite index
+        docs = db.collection("needs_reports").where("category", "==", category).stream()
+
+        count = 0
+        for doc in docs:
+            d = doc.to_dict()
+
+            # Manual time filter: only count reports from the last 2 hours
+            doc_time_str = d.get("timestamp")
+            if doc_time_str:
+                try:
+                    doc_time = datetime.fromisoformat(doc_time_str)
+                    # Normalise to UTC if naive (safety for older records)
+                    if doc_time.tzinfo is None:
+                        doc_time = doc_time.replace(tzinfo=timezone.utc)
+                    if doc_time < two_hours_ago:
+                        continue  # Skip reports older than 2 hours
+                except ValueError:
+                    pass  # Unparseable timestamp — include anyway
+
+            # Mock distance check: within ~0.05 degrees (~5km bounding box)
+            doc_lat = d.get("lat")
+            doc_lng = d.get("lng")
+            if doc_lat is not None and doc_lng is not None and lat is not None and lng is not None:
+                if abs(doc_lat - lat) <= 0.05 and abs(doc_lng - lng) <= 0.05:
+                    count += 1
+            else:
+                # Coordinates unavailable — count category + time match alone
+                count += 1
+
+        return count
+
+    except Exception as e:
+        print(f"[Corroboration] Query failed: {e}. Defaulting to 0.")
+        return 0

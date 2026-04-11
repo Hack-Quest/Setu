@@ -1,119 +1,136 @@
+import requests
+import time
 import json
-import sys
-
-try:
-    import requests
-except ImportError:
-    print("Error: The 'requests' library is not installed.")
-    print("Please run: pip install requests")
-    sys.exit(1)
 
 BASE_URL = "http://127.0.0.1:8000"
-# We include the token we found in need.py just in case it's still partially required.
-HEADERS = {
-    "Authorization": "Bearer hackathon-secret"
-}
+# Matches the secret in your need.py
+HEADERS = {"Authorization": "Bearer hackathon-secret"} 
 
-def print_response(response):
+def print_header(title):
+    print(f"\n{'='*50}\n🚀 {title}\n{'='*50}")
+
+def test_scenario(name, endpoint, payload, expected_action=None):
+    print(f"\n▶️ Running Scenario: {name}")
     try:
-        print("\n--- API Response ---")
-        print(f"Status Code: {response.status_code}")
-        print(json.dumps(response.json(), indent=2))
-        print("--------------------\n")
+        response = requests.post(f"{BASE_URL}{endpoint}", json=payload, headers=HEADERS)
+        response.raise_for_status()
+        data = response.json()
+        
+        print(f"✅ Success! Server responded with HTTP 200.")
+        
+        # If testing a Need, check the Trust Score engine results
+        if "trust_score" in data:
+            print(f"   🛡️ Trust Score: {data.get('trust_score')}/100")
+            print(f"   🚦 Action: {data.get('dispatch_action')}")
+            print(f"   📝 Reasons: {data.get('verification_reasons', [])}")
+            
+            if expected_action and data.get('dispatch_action') != expected_action:
+                print(f"   ⚠️ WARNING: Expected '{expected_action}' but got '{data.get('dispatch_action')}'")
+        
+        return data
+    except requests.exceptions.ConnectionError:
+        print("🚨 ERROR: Connection Refused. Is your FastAPI server running on port 8000?")
+        return None
     except Exception as e:
-        print(f"\n--- API Error ---")
-        print(f"Status Code: {response.status_code}")
-        print(response.text)
-        print("-----------------\n")
-
-def report_need():
-    print("\n" + "="*30)
-    print("        REPORT A NEED")
-    print("="*30)
-    reporter_name = input("Reporter Name: ")
-    reporter_phone = input("Reporter Phone: ")
-    location = input("Location (e.g., Delhi, Mumbai): ")
-    disaster_type = input("Disaster Type (e.g., Flood, Earthquake): ")
-    help_needed = input("Briefly, what help is needed? ")
-    description = input("Detailed Description (used by AI): ")
-    
-    data = {
-        "reporter_name": reporter_name,
-        "reporter_phone": reporter_phone,
-        "location": location,
-        "disaster_type": disaster_type,
-        "help_needed": help_needed,
-        "description": description
-    }
-    
-    print("\nSending request to /need ...")
-    response = requests.post(f"{BASE_URL}/need", json=data, headers=HEADERS)
-    print_response(response)
-
-
-def register_volunteer():
-    print("\n" + "="*30)
-    print("      REGISTER VOLUNTEER")
-    print("="*30)
-    name = input("Volunteer Name: ")
-    location = input("Location (e.g., Delhi, Mumbai): ")
-    skills_input = input("Skills (comma-separated, e.g., medical, food, rescue): ")
-    
-    skills = [s.strip().lower() for s in skills_input.split(",") if s.strip()]
-    
-    data = {
-        "name": name,
-        "location": location,
-        "skills": skills
-    }
-    
-    print("\nSending request to /volunteer ...")
-    response = requests.post(f"{BASE_URL}/volunteer", json=data)
-    print_response(response)
-
-def get_matches():
-    print("\n" + "="*30)
-    print("        MATCHING SYSTEM")
-    print("="*30)
-    print("Getting matches from /match ...")
-    response = requests.get(f"{BASE_URL}/match")
-    print_response(response)
-
-def view_dashboard():
-    print("\n" + "="*30)
-    print("           DASHBOARD")
-    print("="*30)
-    print("Fetching dashboard metrics from /dashboard ...")
-    response = requests.get(f"{BASE_URL}/dashboard")
-    print_response(response)
+        print(f"🚨 HTTP Error: {e}")
+        if response is not None:
+            print(f"   Response output: {response.text}")
+        return None
 
 def main():
-    while True:
-        print("\n" + "#"*40)
-        print("          SETU SYSTEM TESTER")
-        print("#"*40)
-        print(" 1. Report a Need (POST /need)")
-        print(" 2. Register a Volunteer (POST /volunteer)")
-        print(" 3. Run Matching (GET /match)")
-        print(" 4. View Dashboard (GET /dashboard)")
-        print(" 5. Exit")
-        print("#"*40)
-        
-        choice = input("\nSelect an option (1-5): ")
-        
-        if choice == '1':
-            report_need()
-        elif choice == '2':
-            register_volunteer()
-        elif choice == '3':
-            get_matches()
-        elif choice == '4':
-            view_dashboard()
-        elif choice == '5':
-            print("Exiting test app. Goodbye!")
-            break
-        else:
-            print("Invalid option. Please enter a number between 1 and 5.")
+    print_header("STARTING SYSTEM-WIDE INTEGRATION TESTS")
+
+    # ---------------------------------------------------------
+    # SCENARIO 1: The Perfect Report (High Trust -> Auto Dispatch)
+    # ---------------------------------------------------------
+    perfect_need = {
+        "reporter_name": "Rahul Sharma",
+        "reporter_phone": "9876543210", # Valid 10-digit
+        "location": "Gomti Nagar, Lucknow", # Valid location
+        "disaster_type": "flood",
+        "help_needed": "evacuation",
+        "description": "The Gomti river overflowed. Water is knee-deep in Sector 4 and rising fast. Need immediate rescue for elderly neighbors."
+    }
+    test_scenario("High-Trust Flood Report", "/need", perfect_need, "auto_dispatch")
+
+
+    # ---------------------------------------------------------
+    # SCENARIO 2: The Lazy Spammer (Low Trust -> Flagged)
+    # ---------------------------------------------------------
+    spam_need = {
+        "reporter_name": "Anon",
+        "reporter_phone": "123", # Invalid phone
+        "location": "asdfghjkl", # Invalid location
+        "disaster_type": "earthquake",
+        "help_needed": "food",
+        "description": "send food fast plz" # Vague AI consistency
+    }
+    test_scenario("Suspicious Spam Report", "/need", spam_need, "flagged")
+
+
+    # ---------------------------------------------------------
+    # SCENARIO 3: The Corroboration Trigger (Layer 4 Bonus)
+    # ---------------------------------------------------------
+    print("\n▶️ Running Scenario: Corroboration Check")
+    print("   Submitting a second flood report in the same area to trigger Layer 4...")
+    corroborating_need = {
+        "reporter_name": "Priya Singh",
+        "reporter_phone": "9123456780",
+        "location": "Gomti Nagar, Lucknow",
+        "disaster_type": "flood",
+        "help_needed": "boat",
+        "description": "Water is entering our ground floor. Need a boat for 3 people."
+    }
+    test_scenario("Corroborating Flood Report", "/need", corroborating_need, "auto_dispatch")
+
+
+    # ---------------------------------------------------------
+    # SCENARIO 4: Volunteer Registration
+    # ---------------------------------------------------------
+    print_header("TESTING VOLUNTEER PIPELINE")
+    volunteer_data = {
+        "name": "NDRF Rescue Agent 01",
+        "location": "Hazratganj, Lucknow",
+        "skills": ["rescue", "medical", "boat"],
+        "phone": "9998887776"
+    }
+    test_scenario("Registering Expert Volunteer", "/volunteer", volunteer_data)
+
+
+    # ---------------------------------------------------------
+    # SCENARIO 5: The Match Engine
+    # ---------------------------------------------------------
+    print_header("TESTING SMART ASSIGNMENT ENGINE")
+    try:
+        # Give the DB a second to settle
+        time.sleep(2) 
+        print("Calling GET /match ...")
+        res = requests.get(f"{BASE_URL}/match")
+        res.raise_for_status()
+        match_data = res.json()
+        print(f"✅ Matching Engine ran successfully!")
+        print(f"   Matches Made: {match_data.get('new_matches_made', 0)}")
+        print(json.dumps(match_data.get('matches', []), indent=2))
+    except Exception as e:
+        print(f"🚨 Match Engine Error: {e}")
+
+    # ---------------------------------------------------------
+    # SCENARIO 6: Dashboard Statistics
+    # ---------------------------------------------------------
+    print_header("TESTING DASHBOARD FEED")
+    try:
+        res = requests.get(f"{BASE_URL}/dashboard")
+        res.raise_for_status()
+        dash_data = res.json()
+        print("✅ Dashboard stats fetched successfully!")
+        print(json.dumps(dash_data, indent=2))
+    except Exception as e:
+        print(f"🚨 Dashboard Error: {e}")
+
+    print("\n" + "="*50)
+    print("🎉 ALL INTEGRATION TESTS COMPLETE!")
+    print("="*50 + "\n")
+
 
 if __name__ == "__main__":
     main()

@@ -12,6 +12,12 @@ def match_needs():
 
     for need in get_open_needs():
 
+        # GUARD CLAUSE: Skip reports flagged as spam/untrustworthy (trust_score < 50).
+        # Default to 100 when the field is absent so legacy records are still processed.
+        if need.get("trust_score", 100) < 50:
+            print(f"[Match] Skipping need {need.get('id')} — trust score {need.get('trust_score')} is below threshold.")
+            continue
+
         best_volunteer = None
 
         for vol in get_available_volunteers():
