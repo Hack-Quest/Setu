@@ -87,7 +87,7 @@ def create_need(
         needs_storage.append(final_data)
 
         # 🚨 EMAIL TRIGGER (NON-BLOCKING)
-        if dispatch_action == "auto_dispatch":
+        if final_data.get("dispatch_action") == "auto_dispatch" and final_data.get("trust_score", 0) > 60:
             background_tasks.add_task(send_alert, final_data)
 
         print("✅ Final Data:", final_data)
