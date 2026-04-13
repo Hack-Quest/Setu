@@ -1,31 +1,14 @@
 from fastapi import APIRouter, Depends, BackgroundTasks
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from dotenv import load_dotenv
-import os
 
 from backend.models import NeedInput
+from backend.auth import verify_token                          # ✅ Centralised auth
 from ai_processing.gemini_processor import process_need_text
 from database.geocoding import get_coordinates
-from database.needs_db import save_need
-
-# ✅ FIXED IMPORT
+from database.needs_db import save_need, check_corroboration  # ✅ Corroboration helper
+from database.verification import calculate_trust_score        # ✅ Trust engine
 from notifications.gmail_alert import send_alert
 
-
-# 🔐 Load env variables
-load_dotenv()
-SECRET_TOKEN = os.getenv("SECRET_TOKEN")
-
 router = APIRouter()
-
-# 🔐 Security setup
-security = HTTPBearer(auto_error=False)
-
-
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    if credentials and credentials.credentials != SECRET_TOKEN:
-        print(f"⚠ Warning: Invalid token received: {credentials.credentials}")
-    return credentials.credentials if credentials else None
 
 
 # 🧠 Temporary in-memory storage
@@ -66,6 +49,12 @@ def create_need(
         if not coords:
             coords = {"lat": 0, "lng": 0}
 
+        # 🛡️ STEP 2b — Trust verification (wired to verification.py)
+        corroboration_count = check_corroboration(coords["lat"], coords["lng"], category)
+        ai_consistency = int(ai_result.get("confidence_score", 5))  # 0-10 scale from Gemini
+        trust_result = calculate_trust_score(data.__dict__ | coords, ai_consistency, corroboration_count)
+        trust_score = trust_result["score"]
+
         # 🧩 STEP 3 — Final data
         final_data = {
             "id": len(needs_storage) + 1,
@@ -79,7 +68,9 @@ def create_need(
             "disaster_type": data.disaster_type,
             "help_needed": data.help_needed,
             "status": "pending",
-            "dispatch_action": dispatch_action
+            "trust_score": trust_score,                        # ✅ Now populated from verification.py
+            "trust_reasons": trust_result["reasons"],
+            "dispatch_action": trust_result["dispatch_action"] # ✅ Overrides AI-only dispatch decision
         }
 
         # 💾 Save
