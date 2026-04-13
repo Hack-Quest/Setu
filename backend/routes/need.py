@@ -1,102 +1,63 @@
 from fastapi import APIRouter, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from dotenv import load_dotenv
 import os
 
 from backend.models import NeedInput
+from backend.auth import verify_token
 from ai_processing.gemini_processor import process_need_text
 from database.geocoding import get_coordinates
-from database.needs_db import save_need
-
-# 🔐 Load env variables
-load_dotenv()
-SECRET_TOKEN = os.getenv("SECRET_TOKEN")
+from database.needs_db import save_need, check_corroboration
+from database.verification import calculate_trust_score
 
 router = APIRouter()
 
-# 🔐 Security setup
-security = HTTPBearer(auto_error=False)
-
-
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # ✅ Soft validation (no blocking for demo)
-    if credentials and credentials.credentials != SECRET_TOKEN:
-        print(f"⚠ Warning: Invalid token received: {credentials.credentials}")
-
-    return credentials.credentials if credentials else None
-
-
-# 🧠 Temporary in-memory storage (backup)
-needs_storage = []
-
-
-# 🔥 MAIN ROUTE
 @router.post("/need")
 def create_need(
     data: NeedInput,
-    token: str = Depends(verify_token)  # webhook me bhi kaam karega (optional)
+    token: str = Depends(verify_token)
 ):
     try:
-        print("📥 Incoming Data:", data)
-
-        # 🧠 STEP 1 — AI processing
+        # STEP 1 — AI processing (Gemini/Groq Fallback)
         ai_result = process_need_text(data.description)
-
-        # 🛡️ Safe parsing
-        if not isinstance(ai_result, dict):
-            raise Exception("AI did not return valid JSON")
-
         category = ai_result.get("category", "general")
         severity = ai_result.get("severity", "low")
+        ai_consistency = ai_result.get("consistency", 5)
 
-        # 🧠 (NEW) Confidence / verification flag
-        confidence = ai_result.get("confidence", "medium")
-
-        if confidence == "low":
-            flag = "suspicious"
-        else:
-            flag = "verified"
-
-        # 🌍 STEP 2 — Location
+        # STEP 2 — Location & Corroboration
         coords = get_coordinates(data.location)
+        lat, lng = coords.get("lat"), coords.get("lng")
+        corroborating_count = check_corroboration(lat, lng, category)
 
-        # 🛡️ Fail-safe for location
-        if not coords:
-            coords = {"lat": 0, "lng": 0}
+        # STEP 3 — Trust Score Calculation
+        trust_result = calculate_trust_score(
+            data_dict={
+                "lat": lat,
+                "lng": lng,
+                "reporter_phone": data.reporter_phone,
+                "disaster_type": data.disaster_type,
+            },
+            ai_consistency=ai_consistency,
+            corroborating_reports_count=corroborating_count
+        )
 
-        # 🧩 STEP 3 — Final data
+        # STEP 4 — Final Data Assembly
         final_data = {
-            "id": len(needs_storage) + 1,
             "description": data.description,
             "category": category,
             "severity": severity,
-            "confidence": confidence,
-            "flag": flag,
-            "lat": coords["lat"],
-            "lng": coords["lng"],
-            "disaster_type": data.disaster_type,
-            "help_needed": data.help_needed,
-            "status": "pending"
+            "lat": lat,
+            "lng": lng,
+            "status": "pending",
+            "trust_score": trust_result["score"],
+            "dispatch_action": trust_result["dispatch_action"],
+            "verification_reasons": trust_result["reasons"],
         }
 
-        # 💾 STEP 4 — Save to DB
-        save_need(final_data)
-
-        # 🧠 Backup storage (in case DB fails later)
-        needs_storage.append(final_data)
-
-        print("✅ Final Data:", final_data)
-
+        # STEP 5 — Save to Firestore
+        doc_id = save_need(final_data)
+        final_data["id"] = doc_id
+        
         return final_data
 
     except Exception as e:
-        print("❌ Error:", e)
-
-        # 🔴 Fallback (NEVER break demo)
-        return {
-            "error": str(e),
-            "message": "Fallback response used",
-            "category": "general",
-            "severity": "low",
-            "flag": "unknown"
-        }
+        print(f"❌ Error in /need: {e}")
+        return {"error": str(e), "category": "general", "severity": "low"}

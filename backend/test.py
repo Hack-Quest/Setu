@@ -1,154 +1,80 @@
 import requests
-import time
 import json
+import time
 
 BASE_URL = "http://127.0.0.1:8000"
-HEADERS = {"Authorization": "Bearer hackathon-secret"} 
+HEADERS = {"Authorization": "Bearer hackathon-secret"}
 
+def print_section(title):
+    print(f"\n{'='*60}\n🚀 {title}\n{'='*60}")
 
-def print_header(title):
-    print(f"\n{'='*50}\n🚀 {title}\n{'='*50}")
-
-
-def test_scenario(name, endpoint, payload, expected_action=None, use_auth=True):
-    print(f"\n▶️ Running Scenario: {name}")
-    try:
-        headers = HEADERS if use_auth else {}
-
-        response = requests.post(
-            f"{BASE_URL}{endpoint}",
-            json=payload,
-            headers=headers
-        )
-
-        response.raise_for_status()
-        data = response.json()
-
-        print(f"✅ Success! Server responded with HTTP 200.")
-
-        # Trust score check (if exists)
-        if "trust_score" in data:
-            print(f"   🛡️ Trust Score: {data.get('trust_score')}/100")
-            print(f"   🚦 Action: {data.get('dispatch_action')}")
-            print(f"   📝 Reasons: {data.get('verification_reasons', [])}")
-
-            if expected_action and data.get('dispatch_action') != expected_action:
-                print(f"   ⚠️ WARNING: Expected '{expected_action}' but got '{data.get('dispatch_action')}'")
-
-        return data
-
-    except requests.exceptions.ConnectionError:
-        print("🚨 ERROR: Connection Refused. Is your FastAPI server running?")
-        return None
-
-    except Exception as e:
-        print(f"🚨 HTTP Error: {e}")
-        try:
-            print(f"Response output: {response.text}")
-        except:
-            pass
-        return None
-
-
-def main():
-    print_header("STARTING SYSTEM-WIDE INTEGRATION TESTS")
-
-    # ---------------------------------------------------------
-    # SCENARIO 1: Perfect Need
-    # ---------------------------------------------------------
-    perfect_need = {
-        "reporter_name": "Rahul Sharma",
+def run_comprehensive_test():
+    print_section("SCENARIO 1: HIGH-TRUST EMERGENCY")
+    need_1 = {
+        "reporter_name": "Amit Patel",
         "reporter_phone": "9876543210",
-        "location": "Gomti Nagar, Lucknow",
+        "location": "Gomti Nagar, Lucknow", 
         "disaster_type": "flood",
         "help_needed": "evacuation",
-        "description": "Water rising fast, need urgent rescue."
+        "description": "Water has entered the ground floor. It is knee-deep and rising. Need a boat to evacuate elderly parents."
     }
-    test_scenario("High-Trust Flood Report", "/need", perfect_need, "auto_dispatch")
+    print("📤 SENDING INPUT:")
+    print(json.dumps(need_1, indent=2))
+    
+    res_1 = requests.post(f"{BASE_URL}/need", json=need_1, headers=HEADERS)
+    print("\n📥 RECEIVED OUTPUT:")
+    print(json.dumps(res_1.json(), indent=2))
 
-    # ---------------------------------------------------------
-    # 🔗 NEW SCENARIO: WEBHOOK TEST (IMPORTANT)
-    # ---------------------------------------------------------
-    print_header("TESTING WEBHOOK (/webhook)")
 
-    webhook_data = {
-        "description": "Need medical help urgently",
-        "location": "Delhi",
-        "disaster_type": "earthquake",
-        "help_needed": "medical"
-    }
-
-    test_scenario(
-        "Webhook Flow Test",
-        "/webhook",
-        webhook_data,
-        use_auth=False  # 🔥 webhook me token nahi hota
-    )
-
-    # ---------------------------------------------------------
-    # SCENARIO 2: Spam
-    # ---------------------------------------------------------
-    spam_need = {
-        "reporter_name": "Anon",
-        "reporter_phone": "123",
-        "location": "asdfghjkl",
+    print_section("SCENARIO 2: LOW-TRUST SPAM REPORT")
+    need_2 = {
+        "reporter_name": "Unknown",
+        "reporter_phone": "12345", # Invalid phone
+        "location": "nowhere",     # Un-geocodable location
         "disaster_type": "earthquake",
         "help_needed": "food",
-        "description": "send food fast"
+        "description": "send food fast plz" # Vague AI text
     }
-    test_scenario("Suspicious Spam Report", "/need", spam_need, "flagged")
+    print("📤 SENDING INPUT:")
+    print(json.dumps(need_2, indent=2))
+    
+    res_2 = requests.post(f"{BASE_URL}/need", json=need_2, headers=HEADERS)
+    print("\n📥 RECEIVED OUTPUT (Look at Trust Score & Action):")
+    print(json.dumps(res_2.json(), indent=2))
 
-    # ---------------------------------------------------------
-    # SCENARIO 3: Volunteer
-    # ---------------------------------------------------------
-    print_header("TESTING VOLUNTEER PIPELINE")
 
-    volunteer_data = {
-        "name": "Rescue Volunteer",
-        "location": "Delhi",
-        "skills": ["rescue", "medical"],
+    print_section("SCENARIO 3: REGISTERING VOLUNTEERS")
+    vol_1 = {
+        "name": "NDRF Agent Rahul",
+        "location": "Hazratganj, Lucknow",
+        "skills": ["rescue", "medical", "boat", "evacuation"],
         "phone": "9998887776"
     }
+    print("📤 SENDING VOLUNTEER INPUT:")
+    print(json.dumps(vol_1, indent=2))
+    
+    res_vol = requests.post(f"{BASE_URL}/volunteer", json=vol_1, headers=HEADERS)
+    print("\n📥 RECEIVED OUTPUT:")
+    print(json.dumps(res_vol.json(), indent=2))
 
-    test_scenario("Register Volunteer", "/volunteer", volunteer_data)
 
-    # ---------------------------------------------------------
-    # SCENARIO 4: Matching
-    # ---------------------------------------------------------
-    print_header("TESTING MATCHING")
+    print_section("SCENARIO 4: THE MATCH ENGINE")
+    print("⏳ Waiting 2 seconds for Firestore to settle...")
+    time.sleep(2)
+    
+    print("📤 TRIGGERING GET /match...")
+    res_match = requests.get(f"{BASE_URL}/match", headers=HEADERS)
+    print("\n📥 RECEIVED MATCHES (Should assign Amit, but ignore the spammer):")
+    print(json.dumps(res_match.json(), indent=2))
 
-    try:
-        time.sleep(2)
-        res = requests.get(f"{BASE_URL}/match")
-        res.raise_for_status()
-        data = res.json()
 
-        print("✅ Matching Engine ran successfully!")
-        print(json.dumps(data, indent=2))
+    print_section("SCENARIO 5: DASHBOARD DATA")
+    print("📤 TRIGGERING GET /dashboard...")
+    res_dash = requests.get(f"{BASE_URL}/dashboard") # Public route, no headers
+    print("\n📥 RECEIVED DASHBOARD STATS:")
+    print(json.dumps(res_dash.json(), indent=2))
 
-    except Exception as e:
-        print(f"🚨 Match Engine Error: {e}")
-
-    # ---------------------------------------------------------
-    # SCENARIO 5: Dashboard
-    # ---------------------------------------------------------
-    print_header("TESTING DASHBOARD")
-
-    try:
-        res = requests.get(f"{BASE_URL}/dashboard")
-        res.raise_for_status()
-        data = res.json()
-
-        print("✅ Dashboard working!")
-        print(json.dumps(data, indent=2))
-
-    except Exception as e:
-        print(f"🚨 Dashboard Error: {e}")
-
-    print("\n" + "="*50)
-    print("🎉 ALL TESTS COMPLETE!")
-    print("="*50 + "\n")
-
+    print(f"\n{'='*60}\n🎉 COMPREHENSIVE TEST COMPLETE!\n{'='*60}\n")
 
 if __name__ == "__main__":
-    main()
+    run_comprehensive_test()
