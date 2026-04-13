@@ -1,3 +1,8 @@
+import os
+import requests
+import dotenv
+dotenv.load_dotenv()
+
 def calculate_trust_score(data_dict: dict, ai_consistency: int, corroborating_reports_count: int) -> dict:
     """
     Multi-layered trust scoring engine. Grades an incoming disaster report 0-100.
@@ -5,7 +10,7 @@ def calculate_trust_score(data_dict: dict, ai_consistency: int, corroborating_re
     Layers:
         Layer 1 (Automated checks):  up to 20 pts
         Layer 2 (AI consistency):    up to 30 pts
-        Layer 3 (Weather correl.):   up to 20 pts
+        Layer 3 (Live Weather API):  up to 20 pts
         Layer 4 (Corroboration):     up to 40 pts (but overall cap is 100)
 
     Returns:
@@ -49,38 +54,42 @@ def calculate_trust_score(data_dict: dict, ai_consistency: int, corroborating_re
         reasons.append(f"+{consistency_points}: AI consistency score ({ai_consistency}/10)")
 
         # ------------------------------------------------------------------ #
-        # LAYER 3 — Weather correlation hack (max 20 pts)
-        # Structure is ready to swap in a real requests.get() call.
-        # For the hackathon demo we simulate a successful weather match for
-        # "flood" and "rain" disaster types.
+        # LAYER 3 — Live Weather API Correlation (max 20 pts)
+        # Hits OpenWeatherMap to verify conditions at the exact lat/lng
         # ------------------------------------------------------------------ #
         disaster_type = str(data_dict.get("disaster_type", "")).lower().strip()
-        WEATHER_CORRELATED_TYPES = {"flood", "rain", "cyclone", "storm"}
+        
+        # What users report vs what OpenWeatherMap reports
+        WATER_DISASTERS = {"flood", "rain", "cyclone", "storm"}
+        OWM_WATER_WEATHER = {"rain", "thunderstorm", "drizzle"} 
 
         try:
-            # Real implementation would be:
-            # resp = requests.get(
-            #     "https://api.openweathermap.org/data/2.5/weather",
-            #     params={"lat": lat, "lon": lng, "appid": os.getenv("OWM_API_KEY")},
-            #     timeout=5
-            # )
-            # weather_condition = resp.json()["weather"][0]["main"].lower()
-            # weather_match = weather_condition in WEATHER_CORRELATED_TYPES
-
-            # --- SIMULATED CHECK (demo mode) ---
-            weather_match = disaster_type in WEATHER_CORRELATED_TYPES
-
-            if weather_match:
-                score += 20
-                reasons.append(f"+20: Disaster type '{disaster_type}' corroborated by weather data (simulated)")
+            api_key = os.getenv("WEATHER_API")
+            if lat is not None and lng is not None and api_key:
+                resp = requests.get(
+                    "https://api.openweathermap.org/data/2.5/weather",
+                    params={"lat": lat, "lon": lng, "appid": api_key},
+                    timeout=5
+                )
+                resp.raise_for_status() # Catch HTTP errors
+                
+                # OWM returns weather[0].main (e.g., 'Rain', 'Clear', 'Clouds')
+                weather_condition = resp.json()["weather"][0]["main"].lower()
+                
+                # Check for correlation
+                if disaster_type in WATER_DISASTERS and weather_condition in OWM_WATER_WEATHER:
+                    score += 20
+                    reasons.append(f"+20: Disaster type '{disaster_type}' corroborated by live weather API ({weather_condition})")
+                else:
+                    reasons.append(f"+0: Live weather API ({weather_condition}) did not correlate with '{disaster_type}'")
             else:
-                reasons.append(f"+0: No weather correlation for disaster type '{disaster_type}'")
+                reasons.append("+0: Weather check skipped (Missing coordinates or OWM_API_KEY)")
+                
         except Exception as weather_err:
-            reasons.append(f"+0: Weather check failed ({weather_err})")
+            reasons.append(f"+0: Weather API check failed ({weather_err})")
 
         # ------------------------------------------------------------------ #
         # LAYER 4 — Corroboration by nearby recent reports (max 40 pts)
-        # A single nearby report is significant; 2+ is high confidence.
         # ------------------------------------------------------------------ #
         if corroborating_reports_count >= 2:
             score += 40
