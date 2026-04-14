@@ -7,9 +7,6 @@ from backend.routes.volunteer import router as volunteer_router
 from backend.routes.match import router as match_router
 from backend.routes.dashboard import router as dashboard_router
 
-# Models
-from backend.models import NeedInput
-
 # Volunteer helpers
 from database.volunteers_db import save_volunteer
 from database.geocoding import get_coordinates
@@ -17,26 +14,26 @@ from database.geocoding import get_coordinates
 app = FastAPI()
 
 
-# 🏠 Home Route
+# 🏠 Home
 @app.get("/")
 def home():
     return {"message": "Backend is running"}
 
 
-# 💚 Health Check
+# 💚 Health
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
 
-# 🔗 WEBHOOK (Google Form → Need)
+# 🔗 NEED WEBHOOK (FIXED)
 @app.post("/webhook")
 async def webhook(request: Request):
     try:
         data = await request.json()
 
         mapped_data = {
-            "reporter_name": data.get("name", "Unknown Form User"),
+            "reporter_name": data.get("name", "Unknown"),
             "reporter_phone": data.get("phone", "0000000000"),
             "description": data.get("description", ""),
             "location": data.get("address", "Unknown Location"),
@@ -44,7 +41,7 @@ async def webhook(request: Request):
             "help_needed": data.get("help_needed", "Not Specified")
         }
 
-        # 🔥 Proper API call to /need
+        # ✅ CORRECT: API call
         response = requests.post(
             "http://127.0.0.1:8000/need",
             json=mapped_data,
@@ -61,24 +58,23 @@ async def webhook(request: Request):
         return {"error": str(e)}
 
 
-# 🔗 VOLUNTEER WEBHOOK (Google Form → Volunteer DB)
+# 🔗 VOLUNTEER WEBHOOK (FIXED)
 @app.post("/volunteer_webhook")
 async def volunteer_webhook(request: Request):
     try:
         data = await request.json()
 
-        # 🌍 Safe geocoding
         coords = get_coordinates(data.get("location", "")) or {"lat": 0, "lng": 0}
 
         mapped_volunteer = {
-            "name": data.get("volunteer_name", "Unknown Form Volunteer"),
+            "name": data.get("volunteer_name", "Unknown"),
             "phone": data.get("phone", "0000000000"),
             "skills": [
                 skill.strip().lower()
                 for skill in data.get("skills", "").split(",")
             ] if data.get("skills") else [],
-            "lat": coords.get("lat", 0),
-            "lng": coords.get("lng", 0)
+            "lat": coords["lat"],
+            "lng": coords["lng"]
         }
 
         print("📥 Incoming Volunteer:", mapped_volunteer)
@@ -95,10 +91,8 @@ async def volunteer_webhook(request: Request):
         return {"error": str(e)}
 
 
-# 📦 Include Routers
+# 📦 Routers
 app.include_router(need_router)
 app.include_router(volunteer_router)
 app.include_router(match_router)
 app.include_router(dashboard_router)
-
-

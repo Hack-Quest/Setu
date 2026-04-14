@@ -1,6 +1,6 @@
 function onFormSubmit(e) {
   // Jab Khare Google Cloud ka link degi, tab yahan replace karenge
-  var targetWebsite = "YOUR_GOOGLE_CLOUD_RUN_URL_HERE/webhook";
+  var targetWebsite = "https://tweak-dole-registry.ngrok-free.dev/webhook";
 
   var answers = e.namedValues;
 

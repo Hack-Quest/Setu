@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html class="dark scroll-smooth" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SETU AI | Tactical Emergency Command</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="js/api.js" defer></script>
+<script src="js/theme.js" defer></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-dim": "#0b1326",
+                        "tertiary": "#ffb95f",
+                        "surface-container-highest": "#2d3449",
+                        "primary-fixed": "#acedff",
+                        "on-primary": "#003640",
+                        "secondary-container": "#a40217",
+                        "background": "#0b1326",
+                        "surface-tint": "#4cd7f6",
+                        "error-container": "#93000a",
+                        "surface": "#0b1326",
+                        "primary-container": "#06b6d4",
+                        "surface-variant": "#2d3449",
+                        "surface-container": "#171f33",
+                        "primary": "#4cd7f6",
+                        "error": "#ffb4ab",
+                        "secondary": "#ffb3ad"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .glow-secondary {
+            box-shadow: 0 0 40px rgba(164, 2, 23, 0.3);
+        }
+        .dark .glow-primary {
+            box-shadow: 0 0 20px rgba(76, 215, 246, 0.15);
+        }
+        .scanline {
+            background: linear-gradient(to bottom, transparent 50%, rgba(76, 215, 246, 0.02) 50%);
+            background-size: 100% 4px;
+        }
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+        }
+        .animate-pulse-red {
+            animation: pulse-red 2s infinite;
+        }
+    </style>
+</head>
+<body class="text-slate-900 dark:text-slate-100 font-body selection:bg-primary/30 selection:text-white antialiased overflow-x-hidden transition-colors duration-300 relative">
+
+<div class="fixed inset-0 z-[-1] pointer-events-none">
+    <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop" class="w-full h-full object-cover opacity-40 dark:opacity-30" alt="Global Dashboard Background">
+    <div class="absolute inset-0 bg-slate-50/90 dark:bg-[#0b1326]/90 transition-colors duration-300"></div>
+</div>
+
+<header class="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#0b1326]/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-[0_0_15px_rgba(76,215,246,0.1)] flex items-center justify-between px-6 py-3 transition-colors duration-300">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-slate-900 dark:text-white uppercase font-['Space_Grotesk']">SETU AI</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="font-['Space_Grotesk'] text-sm font-bold tracking-tighter uppercase text-cyan-600 dark:text-cyan-400 border-b-2 border-cyan-600 dark:border-cyan-400 pb-1" href="#">Dashboard</a>
+<a class="font-['Space_Grotesk'] text-sm tracking-tighter uppercase text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-white transition-colors" href="#missions">Missions</a>
+<a class="font-['Space_Grotesk'] text-sm tracking-tighter uppercase text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-white transition-colors" href="#telemetry">Telemetry</a>
+<a class="font-['Space_Grotesk'] text-sm tracking-tighter uppercase text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-white transition-colors cursor-pointer" onclick="alert('🔒 ASSETS MODULE: Access Restricted.')">Assets</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex items-center gap-2">
+<span class="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[10px] font-bold tracking-widest rounded-full border border-emerald-500/20">🟢 API ACTIVE</span>
+<span class="px-3 py-1 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 text-[10px] font-bold tracking-widest rounded-full border border-cyan-500/20">🧠 GEMINI NEURAL LIVE</span>
+</div>
+<div class="h-6 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+<div class="flex items-center gap-2 relative">
+    <button class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-300 text-slate-500 dark:text-slate-400 active:scale-95" id="theme-toggle">
+    <span class="material-symbols-outlined dark:hidden" data-icon="dark_mode">dark_mode</span>
+    <span class="material-symbols-outlined hidden dark:inline-block" data-icon="light_mode">light_mode</span>
+    </button>
+    
+    <button onclick="toggleNotifications()" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-300 text-slate-500 dark:text-slate-400 relative active:scale-95">
+    <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+    <span id="notif-badge" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#0b1326] transition-opacity"></span>
+    </button>
+
+    <div id="notification-dropdown" class="hidden absolute top-full right-0 mt-3 w-80 bg-white dark:bg-[#171f33] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden transition-colors duration-300 z-50">
+        <div class="p-4 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex items-center justify-between">
+            <h3 class="font-headline font-bold text-sm uppercase tracking-widest text-slate-800 dark:text-white">System Alerts</h3>
+            <span class="px-2 py-0.5 bg-red-500/20 text-red-600 dark:text-[#ffb4ab] text-[10px] font-bold rounded">2 NEW</span>
+        </div>
+        <div class="divide-y divide-slate-100 dark:divide-white/5 max-h-[300px] overflow-y-auto bg-white dark:bg-[#0b1326]">
+            <div class="p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                <div class="flex items-center gap-3 mb-1">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white uppercase">Priority 0 Threat</span>
+                    <span class="text-[10px] text-slate-500 ml-auto font-mono">Just now</span>
+                </div>
+                <p class="text-xs text-slate-600 dark:text-[#bcc9cd] ml-5 leading-relaxed">SOS protocol activated by citizen in Western Ghats. Immediate dispatch required.</p>
+            </div>
+            <div class="p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                <div class="flex items-center gap-3 mb-1">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span class="text-xs font-bold text-slate-900 dark:text-white uppercase">Network Update</span>
+                    <span class="text-[10px] text-slate-500 ml-auto font-mono">10m ago</span>
+                </div>
+                <p class="text-xs text-slate-600 dark:text-[#bcc9cd] ml-5 leading-relaxed">22 new volunteers have successfully linked their field HUDs to Command.</p>
+            </div>
+        </div>
+        <div class="p-3 border-t border-slate-100 dark:border-white/5 text-center bg-slate-50 dark:bg-white/5">
+            <button class="text-[10px] font-headline font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 hover:underline" onclick="toggleNotifications()">Mark all as read</button>
+        </div>
+    </div>
+</div>
+</div>
+</header>
+
+<main class="pt-24 pb-20 px-8 min-h-screen scanline relative z-0">
+<section class="max-w-5xl mx-auto mb-16 relative">
+    <div class="relative overflow-hidden rounded-2xl border border-red-500/30 shadow-[0_0_30px_rgba(239,68,68,0.1)] group transition-all duration-300 hover:border-red-500/50">
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=1600&auto=format&fit=crop" class="w-full h-full object-cover opacity-20 dark:opacity-30 mix-blend-overlay" alt="Tactical Background">
+            <div class="absolute inset-0 bg-gradient-to-b from-red-50/95 to-white/95 dark:from-[#0b1326]/95 dark:to-[#131b2e]/95"></div>
+        </div>
+        <div class="relative z-10 p-8 md:p-12 flex flex-col items-center text-center">
+            <div class="mb-4 relative">
+                <div class="absolute inset-0 bg-red-500/20 blur-xl rounded-full scale-150 animate-pulse"></div>
+                <span class="material-symbols-outlined text-red-600 dark:text-red-500 text-6xl relative z-10" style="font-variation-settings: 'FILL' 1, 'wght' 300;">warning</span>
+            </div>
+            <div class="inline-flex items-center gap-2 mb-4 px-3 py-1 bg-red-500/10 border border-red-400/30 rounded-full">
+                <span class="material-symbols-outlined text-red-500 text-sm animate-pulse" data-icon="emergency" style="font-variation-settings: 'FILL' 1;">emergency</span>
+                <span class="text-[10px] font-bold tracking-[0.2em] text-red-600 dark:text-[#ffb4ab] uppercase">Priority 0: Life Threat</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-headline font-bold text-slate-900 dark:text-white mb-4 tracking-tighter transition-colors duration-300">
+                REPORTER / CITIZEN <span class="text-red-600 dark:text-red-500">SOS</span>
+            </h1>
+            <p class="text-sm md:text-base text-slate-600 dark:text-[#bcc9cd] font-body mb-8 max-w-2xl transition-colors duration-300">
+                I need immediate rescue or medical aid. Activating this protocol bypasses all queues and initiates <span class="text-red-600 dark:text-[#ffb4ab] font-bold">SETU Response Level 5</span>.
+            </p>
+            <div class="relative group/btn">
+                <div class="absolute -inset-1 bg-red-500 rounded-lg blur opacity-40 group-hover/btn:opacity-70 transition duration-500"></div>
+                <button onclick="openModal()" class="relative bg-red-600 dark:bg-[#a40217] text-white px-8 py-4 rounded-lg text-lg font-headline font-bold uppercase tracking-widest flex items-center gap-3 transition-all active:scale-95 animate-pulse-red hover:bg-red-700 dark:hover:bg-red-700">
+                    <span class="material-symbols-outlined text-2xl" data-icon="sos">sos</span>
+                    Initiate Emergency SOS
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="missions" class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+<div class="bg-white/90 dark:bg-[#171f33]/90 backdrop-blur-md p-8 rounded-xl border border-slate-200 dark:border-primary/20 shadow-sm hover:border-cyan-400 dark:hover:border-primary/40 glow-primary transition-all duration-300 group">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 bg-cyan-50 dark:bg-primary/10 rounded-lg text-cyan-600 dark:text-primary transition-colors">
+<span class="material-symbols-outlined text-3xl" data-icon="volunteer_activism">volunteer_activism</span>
+</div>
+<span class="text-[10px] font-bold text-cyan-600/60 dark:text-primary/60 tracking-widest uppercase">Personnel Only</span>
+</div>
+<h3 class="text-2xl font-headline font-bold text-slate-900 dark:text-[#dae2fd] mb-3 uppercase tracking-tight transition-colors">Ground Volunteer</h3>
+<p class="text-slate-500 dark:text-[#bcc9cd] text-sm mb-8 leading-relaxed transition-colors">
+                    Access mission tactical data, real-time victim coordinates, and field logistics. Requires Level 1 Clearance.
+                </p>
+<button onclick="openAuthModal()" class="w-full py-4 bg-slate-50 dark:bg-[#2d3449] border border-slate-200 dark:border-primary/30 text-cyan-600 dark:text-primary font-headline font-bold uppercase tracking-widest text-sm hover:bg-cyan-600 hover:text-white dark:hover:bg-primary dark:hover:text-slate-900 transition-all duration-300 flex items-center justify-center gap-2">
+                    Enter Tactical Field HUD
+                    <span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+
+<div class="bg-white/90 dark:bg-[#171f33]/90 backdrop-blur-md p-8 rounded-xl border border-slate-200 dark:border-tertiary/20 shadow-sm hover:border-amber-500 dark:hover:border-tertiary/40 transition-all duration-300 group">
+<div class="flex justify-between items-start mb-6">
+<div class="p-3 bg-amber-50 dark:bg-tertiary/10 rounded-lg text-amber-600 dark:text-tertiary transition-colors">
+<span class="material-symbols-outlined text-3xl" data-icon="corporate_fare">corporate_fare</span>
+</div>
+<span class="text-[10px] font-bold text-amber-600/60 dark:text-tertiary/60 tracking-widest uppercase">Admin Auth</span>
+</div>
+<h3 class="text-2xl font-headline font-bold text-slate-900 dark:text-[#dae2fd] mb-3 uppercase tracking-tight transition-colors">NGO Command</h3>
+<p class="text-slate-500 dark:text-[#bcc9cd] text-sm mb-8 leading-relaxed transition-colors">
+                    Orchestrate resources, manage relief zones, and authorize high-level AI deployment. Requires Admin Token.
+                </p>
+<button onclick="openAdminAuthModal()" class="w-full py-4 bg-slate-50 dark:bg-[#2d3449] border border-slate-200 dark:border-tertiary/30 text-amber-600 dark:text-tertiary font-headline font-bold uppercase tracking-widest text-sm hover:bg-amber-600 hover:text-white dark:hover:bg-tertiary dark:hover:text-slate-900 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer">
+                    Access Resource Command
+                    <span class="material-symbols-outlined text-sm" data-icon="shield_lock">shield_lock</span>
+</button>
+</div>
+</section>
+
+<section id="telemetry" class="max-w-6xl mx-auto">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
+<h2 class="text-lg font-headline font-bold tracking-widest uppercase text-slate-900 dark:text-[#dae2fd] transition-colors duration-300">Live Telemetry Feed</h2>
+</div>
+</div>
+<div class="bg-white/90 dark:bg-[#131b2e]/90 backdrop-blur-md border border-slate-200 dark:border-outline-variant/20 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-outline-variant/10 shadow-sm transition-colors duration-300">
+<div class="p-6 flex items-start gap-8 hover:bg-slate-50/50 dark:hover:bg-[#222a3d]/50 transition-colors">
+<span class="font-mono text-xs text-red-600/70 dark:text-red-500/70 whitespace-nowrap pt-1">14:22:18 UTC</span>
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<span class="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded">CRITICAL</span>
+<span class="text-slate-900 dark:text-[#dae2fd] font-headline font-medium transition-colors duration-300">Flash Flood - Zone Alpha 9 (Western Ghats)</span>
+</div>
+<p class="text-sm text-slate-600 dark:text-[#bcc9cd] leading-relaxed mb-4 transition-colors duration-300">
+                            Abnormal precipitation detected. Water levels rising @ 1.2m/hr. Neural prediction suggests evacuation mandate for sub-sectors 4-9.
+                        </p>
+</div>
+</div>
+</div>
+</section>
+</main>
+
+<footer class="fixed bottom-0 w-full z-50 bg-white/80 dark:bg-[#0b1326]/80 backdrop-blur-md border-t border-slate-200 dark:border-white/5 flex justify-between items-center px-6 py-2 transition-colors duration-300">
+<div class="flex items-center gap-4">
+<span class="text-slate-500 text-[10px] tabular-nums tracking-normal font-['Inter']">SETU AI DASHBOARD</span>
+<span class="text-slate-500 text-[10px] tabular-nums tracking-normal font-['Inter']">© 2024 EMERGENCY PROTOCOL v4.2</span>
+</div>
+</footer>
+
+<div id="sosModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 transition-opacity duration-300">
+    <div class="relative w-full max-w-2xl bg-white dark:bg-[#131b2e] rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[85vh] border border-red-500/30">
+        <div class="flex justify-between items-center p-5 bg-red-600 text-white shadow-md z-10">
+            <h2 class="font-headline font-bold text-xl tracking-widest uppercase flex items-center gap-2">
+                <span class="material-symbols-outlined">warning</span>
+                Emergency SOS Protocol
+            </h2>
+            <button onclick="closeModal()" class="text-white hover:text-red-200 transition-colors outline-none">
+                <span class="material-symbols-outlined text-3xl">close</span>
+            </button>
+        </div>
+        <div class="flex-1 w-full bg-slate-50 dark:bg-[#0b1326] relative">
+            <iframe src="https://docs.google.com/forms/d/13BbRMNijCOY15XiW61WrUGWtuumdP0sZyCfpuAHYjKs/viewform?embedded=true" width="100%" height="100%" frameborder="0" marginheight="0" marginwidth="0" class="absolute inset-0">Loading form...</iframe>
+        </div>
+    </div>
+</div>
+
+<div id="auth-modal" class="fixed inset-0 bg-slate-900/80 dark:bg-black/80 z-[100] hidden items-center justify-center p-6 backdrop-blur-sm transition-opacity duration-300">
+    <div class="bg-white dark:bg-[#171f33] border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transition-colors duration-300">
+        <div class="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex items-center justify-between transition-colors duration-300">
+            <h3 class="font-headline font-bold text-lg uppercase tracking-tight text-cyan-700 dark:text-[#00fbfb]">System Authentication</h3>
+            <button class="text-slate-400 dark:text-[#b9cac9] hover:text-slate-900 dark:hover:text-white transition-colors" onclick="closeAuthModal()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <div id="auth-choice-step" class="p-6 space-y-4">
+            <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSclY6jrgE1n3PmEiBQuTwO8o5Ew9QuOrN3_zyTnDLEUbpladw/viewform?usp=header', '_blank')" class="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-cyan-500 dark:hover:border-[#00fbfb] bg-slate-50 dark:bg-[#060d20] flex items-center gap-4 transition-all group">
+                <div class="w-10 h-10 rounded-full bg-cyan-100 dark:bg-[#00fbfb]/10 flex items-center justify-center text-cyan-600 dark:text-[#00fbfb]">
+                    <span class="material-symbols-outlined">person_add</span>
+                </div>
+                <div class="text-left">
+                    <div class="font-bold text-slate-900 dark:text-white">Register as New User</div>
+                    <div class="text-[10px] text-slate-500 uppercase tracking-widest">Fill out the Registration Form</div>
+                </div>
+            </button>
+
+            <button onclick="showLoginStep()" class="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500 dark:hover:border-emerald-400 bg-slate-50 dark:bg-[#060d20] flex items-center gap-4 transition-all group">
+                <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                    <span class="material-symbols-outlined">login</span>
+                </div>
+                <div class="text-left">
+                    <div class="font-bold text-slate-900 dark:text-white">Already a User</div>
+                    <div class="text-[10px] text-slate-500 uppercase tracking-widest">Login with ID & Password</div>
+                </div>
+            </button>
+        </div>
+
+        <div id="auth-login-step" class="p-6 space-y-4 hidden">
+            <div>
+                <label class="text-[10px] uppercase text-slate-500 dark:text-[#b9cac9] font-bold tracking-widest block mb-1">User ID</label>
+                <input id="login-userid" class="w-full bg-white dark:bg-[#060d20] border-slate-300 dark:border-white/10 rounded-lg p-3 text-sm text-slate-900 dark:text-[#dbe2fd] focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-colors duration-300" type="text" placeholder="e.g. VT-8812"/>
+            </div>
+            <div>
+                <label class="text-[10px] uppercase text-slate-500 dark:text-[#b9cac9] font-bold tracking-widest block mb-1">Password</label>
+                <input id="login-password" class="w-full bg-white dark:bg-[#060d20] border-slate-300 dark:border-white/10 rounded-lg p-3 text-sm text-slate-900 dark:text-[#dbe2fd] focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-colors duration-300" type="password" placeholder="••••••••"/>
+            </div>
+            <div class="pt-4 flex gap-3">
+                <button class="flex-1 py-3 rounded-lg font-headline text-xs font-bold uppercase border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-white transition-colors" onclick="showChoiceStep()">Back</button>
+                <button class="flex-1 py-3 rounded-lg font-headline text-xs font-bold uppercase bg-cyan-600 dark:bg-[#00fbfb] text-white dark:text-[#003737] hover:bg-cyan-700 hover:brightness-110 transition-all" onclick="processLogin()">Login</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="admin-auth-modal" class="fixed inset-0 bg-slate-900/80 dark:bg-black/80 z-[100] hidden items-center justify-center p-6 backdrop-blur-sm transition-opacity duration-300">
+    <div class="bg-white dark:bg-[#171f33] border border-amber-500/30 rounded-2xl w-full max-w-md overflow-hidden shadow-[0_0_30px_rgba(245,158,11,0.15)] transition-colors duration-300">
+        <div class="p-6 border-b border-slate-100 dark:border-white/5 bg-amber-50 dark:bg-tertiary/10 flex items-center justify-between">
+            <h3 class="font-headline font-bold text-lg uppercase tracking-tight text-amber-700 dark:text-tertiary flex items-center gap-2">
+                <span class="material-symbols-outlined">shield_lock</span>
+                Admin Clearance
+            </h3>
+            <button class="text-slate-400 dark:text-[#b9cac9] hover:text-slate-900 dark:hover:text-white transition-colors" onclick="closeAdminAuthModal()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <div class="p-6 space-y-4">
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Please enter your Level 4 Authorization Code to access the NGO Command Center.</p>
+            <div>
+                <label class="text-[10px] uppercase text-slate-500 dark:text-[#b9cac9] font-bold tracking-widest block mb-1">Authorization Code</label>
+                <input id="admin-passcode" class="w-full bg-white dark:bg-[#060d20] border-slate-300 dark:border-white/10 rounded-lg p-3 text-sm text-slate-900 dark:text-[#dbe2fd] focus:ring-amber-500 focus:border-amber-500 outline-none transition-colors duration-300 font-mono tracking-widest text-center" type="password" placeholder="ENTER CODE"/>
+                <p id="admin-error" class="text-red-500 dark:text-error text-xs mt-2 hidden font-bold text-center">❌ ACCESS DENIED: Invalid Clearance Code.</p>
+            </div>
+            
+            <div class="pt-4 flex gap-3">
+                <button class="flex-1 py-3 rounded-lg font-headline text-xs font-bold uppercase border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-white transition-colors" onclick="closeAdminAuthModal()">Cancel</button>
+                <button class="flex-1 py-3 rounded-lg font-headline text-xs font-bold uppercase bg-amber-600 dark:bg-tertiary text-white dark:text-[#2a1700] hover:bg-amber-700 hover:brightness-110 transition-all" onclick="verifyAdminPasscode()">Verify</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+        // --- ✨ NOTIFICATION SYSTEM LOGIC ✨ ---
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notification-dropdown');
+            const badge = document.getElementById('notif-badge');
+            
+            if (dropdown.classList.contains('hidden')) {
+                dropdown.classList.remove('hidden');
+                // Optional: remove red dot immediately upon opening
+                if(badge) badge.classList.add('opacity-0');
+            } else {
+                dropdown.classList.add('hidden');
+                // Ensure red dot stays hidden once checked
+                if(badge) badge.style.display = 'none';
+            }
+        }
+
+        // Close notifications if clicked outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notification-dropdown');
+            const notifBtn = document.getElementById('notif-btn'); // Needs id added if implementing strict outside click
+            
+            // Basic close logic
+            if (!event.target.closest('#notification-dropdown') && !event.target.closest('button[onclick="toggleNotifications()"]')) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+
+        // Form Popup Logic (SOS)
+        function openModal() {
+            document.getElementById('sosModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal() {
+            document.getElementById('sosModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // --- ADMIN AUTHENTICATION LOGIC ---
+        function openAdminAuthModal() {
+            const modal = document.getElementById('admin-auth-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('admin-error').classList.add('hidden'); 
+            document.getElementById('admin-passcode').value = ''; 
+            document.body.style.overflow = 'hidden';
+        }
+        function closeAdminAuthModal() {
+            const modal = document.getElementById('admin-auth-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        }
+        function verifyAdminPasscode() {
+            const passcode = document.getElementById('admin-passcode').value;
+            if (passcode === "ADMIN123") {
+                window.location.href = "ngo-dashboard.html";
+            } else {
+                document.getElementById('admin-error').classList.remove('hidden');
+            }
+        }
+
+        // --- VOLUNTEER AUTHENTICATION MODAL LOGIC ---
+        function openAuthModal() {
+            const modal = document.getElementById('auth-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            showChoiceStep(); 
+        }
+        function closeAuthModal() {
+            const modal = document.getElementById('auth-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        }
+        function showLoginStep() {
+            document.getElementById('auth-choice-step').classList.add('hidden');
+            document.getElementById('auth-login-step').classList.remove('hidden');
+        }
+        function showChoiceStep() {
+            document.getElementById('auth-login-step').classList.add('hidden');
+            document.getElementById('auth-choice-step').classList.remove('hidden');
+        }
+        async function processLogin() {
+            const userId = document.getElementById('login-userid').value;
+            const password = document.getElementById('login-password').value;
+            if(userId.trim() !== "" && password.trim() !== "") {
+                try {
+                    const res = await api.login(userId, password);
+                    if (res.success) {
+                        window.location.href = "code.html"; 
+                    }
+                } catch (e) {
+                    alert("Login failed.");
+                }
+            } else {
+                alert("Please enter a valid User ID and Password to proceed!");
+            }
+        }
+
+
+
+        // --- Dark/Light Theme Logic ---
+        // Extracted to js/theme.js
+    </script>
+</body>
+</html>

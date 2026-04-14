@@ -1,6 +1,6 @@
 function onVolunteerFormSubmit(e) {
   // Volunteers ke liye alag endpoint ho sakta hai
-  var targetWebsite = "YOUR_GOOGLE_CLOUD_RUN_URL_HERE/volunteer_webhook";
+  var targetWebsite = "https://tweak-dole-registry.ngrok-free.dev/volunteer_webhook";
 
   var answers = e.namedValues;
 
