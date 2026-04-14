@@ -1,98 +1,132 @@
-import os
-import sys
-from dotenv import load_dotenv
+import requests
+import time
+import json
 
-# Ensure the root directory is in the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+BASE_URL = "http://127.0.0.1:8000"
+HEADERS = {"Authorization": "Bearer hackathon-secret"}
 
-# Load config
-load_dotenv('config/.env')
 
-from ai_processing.gemini_processor import process_need_text
-from database.geocoding import get_coordinates
-from database.verification import calculate_trust_score
-from database.needs_db import save_need, check_corroboration
-from notifications.gmail_alert import send_alert
+def print_header(title):
+    print(f"\n{'='*50}\n🚀 {title}\n{'='*50}")
 
-def run_comprehensive_test():
-    print("🚀 Starting Full System Integration Test...\n")
-    
-    # --- STEP 1: AI Processor Test ---
-    print("1️⃣ Testing AI Processor (Gemini with Groq Fallback)...")
-    description = "There is a massive flood in Kanpur, people are trapped on rooftops."
-    ai_result = process_need_text(description)
-    
-    if ai_result and "category" in ai_result:
-        print(f"✅ AI Success: Category={ai_result['category']}, Consistency={ai_result['consistency']}")
-    else:
-        print("❌ AI Processor failed to return valid data.")
-        return
 
-    # --- STEP 2: Geocoding & Weather Test ---
-    print("\n2️⃣ Testing Geocoding & Live Weather API...")
-    location = "PSIT, Kanpur"
-    coords = get_coordinates(location)
-    lat, lng = coords.get("lat"), coords.get("lng")
-    
-    if lat and lng:
-        print(f"✅ Geocoding Success: {lat}, {lng}")
-    else:
-        print("❌ Geocoding failed. Check Google Maps Key or OSM connectivity.")
-        return
-
-    # --- STEP 3: Verification Engine Test ---
-    print("\n3️⃣ Testing Verification Engine (Trust Score)...")
-    # We mock corroboration count for the test
-    corroborating_count = check_corroboration(lat, lng, ai_result['category'])
-    
-    trust_result = calculate_trust_score(
-        data_dict={
-            "lat": lat,
-            "lng": lng,
-            "reporter_phone": "9876543210",
-            "disaster_type": "flood",
-        },
-        ai_consistency=ai_result['consistency'],
-        corroborating_reports_count=corroborating_count
-    )
-    
-    print(f"✅ Trust Score: {trust_result['score']} | Action: {trust_result['dispatch_action']}")
-    for reason in trust_result['reasons']:
-        print(f"   - {reason}")
-
-    # --- STEP 4: Firestore Storage Test ---
-    print("\n4️⃣ Testing Firestore Connectivity...")
-    final_data = {
-        "description": description,
-        "category": ai_result['category'],
-        "severity": ai_result['severity'],
-        "lat": lat,
-        "lng": lng,
-        "trust_score": trust_result["score"],
-        "status": "test_pending"
-    }
-    
+def test_scenario(name, endpoint, payload, expected_action=None):
+    print(f"\n▶️ Running Scenario: {name}")
     try:
-        doc_id = save_need(final_data)
-        print(f"✅ Firestore Success: Document saved with ID {doc_id}")
+        response = requests.post(f"{BASE_URL}{endpoint}", json=payload, headers=HEADERS)
+        response.raise_for_status()
+        data = response.json()
+
+        print(f"✅ Success! HTTP 200")
+
+        # 🧠 Check new fields
+        if "trust_score" in data:
+            print(f"   🛡️ Trust Score: {data.get('trust_score')}")
+            print(f"   🚦 Dispatch: {data.get('dispatch_action')}")
+            print(f"   ⭐ Priority: {data.get('priority')}")
+
+        if "error" in data:
+            print(f"   ❌ Error: {data.get('error')}")
+
+        if expected_action and data.get("dispatch_action") != expected_action:
+            print(f"   ⚠️ Expected {expected_action}, got {data.get('dispatch_action')}")
+
+        return data
+
+    except requests.exceptions.ConnectionError:
+        print("🚨 ERROR: Server not running")
+        return None
     except Exception as e:
-        print(f"❌ Firestore failed: {e}")
-        return
+        print(f"🚨 HTTP Error: {e}")
+        if response is not None:
+            print(response.text)
+        return None
 
-    # --- STEP 5: Notification Test ---
-    print("\n5️⃣ Testing Gmail Alert System...")
-    if trust_result['score'] >= 50:
-        alert_success = send_alert(final_data)
-        if alert_success:
-            print("✅ Email Alert sent successfully.")
-        else:
-            print("❌ Email Alert failed. Check GMAIL_APP_PASSWORD.")
-    else:
-        print("⏭️ Skipping Alert (Score too low for emergency).")
 
-    print("\n" + "="*40)
-    print("🎉 ALL SYSTEMS FUNCTIONAL!")
-    print("="*40)
+def main():
+    print_header("FULL SYSTEM INTEGRATION TEST")
+
+    # ---------------------------------------------------------
+    # SCENARIO 1: VALID NEED (SHOULD PASS + PRIORITY)
+    # ---------------------------------------------------------
+    valid_need = {
+        "reporter_name": "Rahul",
+        "reporter_phone": "9876543210",
+        "location": "Delhi",
+        "disaster_type": "earthquake",
+        "help_needed": "medical",
+        "description": "Severe earthquake damage, multiple injured people need urgent medical help"
+    }
+
+    test_scenario("Valid Need (High Priority Expected)", "/need", valid_need)
+
+    # ---------------------------------------------------------
+    # SCENARIO 2: INVALID NEED (VALIDATION TEST)
+    # ---------------------------------------------------------
+    short_need = {
+        "reporter_name": "Test",
+        "reporter_phone": "123",
+        "location": "Delhi",
+        "disaster_type": "flood",
+        "help_needed": "food",
+        "description": "help"
+    }
+
+    test_scenario("Short Description (Validation Fail)", "/need", short_need)
+
+    # ---------------------------------------------------------
+    # SCENARIO 3: VOLUNTEER REGISTRATION
+    # ---------------------------------------------------------
+    print_header("VOLUNTEER TEST")
+
+    volunteer_data = {
+        "name": "Rescue Volunteer",
+        "location": "Delhi",
+        "skills": ["medical", "rescue"],
+        "phone": "9998887776"
+    }
+
+    test_scenario("Volunteer Registration", "/volunteer", volunteer_data)
+
+    # ---------------------------------------------------------
+    # SCENARIO 4: MATCH ENGINE
+    # ---------------------------------------------------------
+    print_header("MATCHING TEST")
+
+    try:
+        time.sleep(2)
+        res = requests.get(f"{BASE_URL}/match", headers=HEADERS)
+        res.raise_for_status()
+        match_data = res.json()
+
+        print("✅ Matching executed")
+        print(f"   Matches: {match_data.get('total_matches_made')}")
+
+        print(json.dumps(match_data.get("matches", []), indent=2))
+
+    except Exception as e:
+        print(f"🚨 Match Error: {e}")
+
+    # ---------------------------------------------------------
+    # SCENARIO 5: DASHBOARD
+    # ---------------------------------------------------------
+    print_header("DASHBOARD TEST")
+
+    try:
+        res = requests.get(f"{BASE_URL}/dashboard", headers=HEADERS)
+        res.raise_for_status()
+        dash_data = res.json()
+
+        print("✅ Dashboard working")
+        print(json.dumps(dash_data, indent=2))
+
+    except Exception as e:
+        print(f"🚨 Dashboard Error: {e}")
+
+    print("\n" + "="*50)
+    print("🎉 ALL TESTS COMPLETE")
+    print("="*50 + "\n")
+
 
 if __name__ == "__main__":
-    run_comprehensive_test()
+    main()

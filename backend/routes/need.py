@@ -1,21 +1,19 @@
 from fastapi import APIRouter, Depends, BackgroundTasks
-
 from backend.models import NeedInput
-from backend.auth import verify_token                          # ✅ Centralised auth
+from backend.auth import verify_token
 from ai_processing.gemini_processor import process_need_text
 from database.geocoding import get_coordinates
-from database.needs_db import save_need, check_corroboration  # ✅ Corroboration helper
-from database.verification import calculate_trust_score        # ✅ Trust engine
+from database.needs_db import save_need, check_corroboration
+from database.verification import calculate_trust_score
 from notifications.gmail_alert import send_alert
 
-router = APIRouter()
+router = APIRouter(prefix="/need")  # ✅ IMPORTANT
 
 
-# 🧠 Temporary in-memory storage
 needs_storage = []
 
 
-@router.post("/need")
+@router.post("")
 def create_need(
     data: NeedInput,
     background_tasks: BackgroundTasks,
@@ -24,7 +22,11 @@ def create_need(
     try:
         print("📥 Incoming Data:", data)
 
-        # 🧠 STEP 1 — AI processing
+        # 🔵 INPUT VALIDATION
+        if len(data.description.strip()) < 10:
+            return {"error": "Description too short"}
+
+        # 🧠 AI PROCESSING
         ai_result = process_need_text(data.description)
 
         if not isinstance(ai_result, dict):
@@ -34,28 +36,39 @@ def create_need(
         severity = ai_result.get("severity", "low")
         confidence = ai_result.get("confidence", "medium")
 
-        # 🔥 IMPROVED DISPATCH LOGIC
-        if severity in ["critical", "high"]:
-            dispatch_action = "auto_dispatch"
-        else:
-            dispatch_action = "manual"
+        # 🔥 CATEGORY FALLBACK (IMPORTANT FOR MATCHING)
+        if category == "other":
+            category = data.help_needed
 
-        # 🛡️ Flag
         flag = "suspicious" if confidence == "low" else "verified"
 
-        # 🌍 STEP 2 — Location
-        coords = get_coordinates(data.location)
+        # 🌍 LOCATION
+        coords = get_coordinates(data.location) or {"lat": 0, "lng": 0}
 
-        if not coords:
-            coords = {"lat": 0, "lng": 0}
+        # 🛡️ VERIFICATION
+        corroboration_count = check_corroboration(
+            coords["lat"], coords["lng"], category
+        )
 
-        # 🛡️ STEP 2b — Trust verification (wired to verification.py)
-        corroboration_count = check_corroboration(coords["lat"], coords["lng"], category)
-        ai_consistency = int(ai_result.get("confidence_score", 5))  # 0-10 scale from Gemini
-        trust_result = calculate_trust_score(data.__dict__ | coords, ai_consistency, corroboration_count)
+        ai_consistency = int(ai_result.get("consistency", 5))
+
+        trust_result = calculate_trust_score(
+            (data.model_dump() if hasattr(data, "model_dump") else data.dict()) | coords,
+            ai_consistency,
+            corroboration_count
+        )
+
         trust_score = trust_result["score"]
 
-        # 🧩 STEP 3 — Final data
+        # 🟢 PRIORITY LOGIC
+        if trust_score > 70:
+            priority = "HIGH"
+        elif trust_score > 40:
+            priority = "MEDIUM"
+        else:
+            priority = "LOW"
+
+        # 🧩 FINAL DATA
         final_data = {
             "id": len(needs_storage) + 1,
             "description": data.description,
@@ -67,18 +80,19 @@ def create_need(
             "lng": coords["lng"],
             "disaster_type": data.disaster_type,
             "help_needed": data.help_needed,
-            "status": "pending",
-            "trust_score": trust_score,                        # ✅ Now populated from verification.py
-            "trust_reasons": trust_result["reasons"],
-            "dispatch_action": trust_result["dispatch_action"] # ✅ Overrides AI-only dispatch decision
+            "status": "open",
+            "trust_score": trust_score,
+            "trust_reasons": trust_result.get("reasons", []),
+            "dispatch_action": trust_result.get("dispatch_action", "manual"),
+            "priority": priority
         }
 
-        # 💾 Save
+        # 💾 SAVE
         save_need(final_data)
         needs_storage.append(final_data)
 
-        # 🚨 EMAIL TRIGGER (NON-BLOCKING)
-        if final_data.get("dispatch_action") == "auto_dispatch" and final_data.get("trust_score", 0) > 60:
+        # 🚨 EMAIL TRIGGER
+        if final_data["dispatch_action"] == "auto_dispatch" and trust_score > 60:
             background_tasks.add_task(send_alert, final_data)
 
         print("✅ Final Data:", final_data)
@@ -87,11 +101,7 @@ def create_need(
 
     except Exception as e:
         print("❌ Error:", e)
-
         return {
             "error": str(e),
-            "message": "Fallback response used",
-            "category": "general",
-            "severity": "low",
-            "flag": "unknown"
+            "message": "Fallback response used"
         }
