@@ -13,12 +13,7 @@ router = APIRouter(prefix="/need")  # ✅ IMPORTANT
 needs_storage = []
 
 
-@router.post("")
-def create_need(
-    data: NeedInput,
-    background_tasks: BackgroundTasks,
-    token: str = Depends(verify_token)
-):
+def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
     try:
         print("📥 Incoming Data:", data)
 
@@ -105,3 +100,11 @@ def create_need(
             "error": str(e),
             "message": "Fallback response used"
         }
+
+@router.post("")
+def create_need(
+    data: NeedInput,
+    background_tasks: BackgroundTasks,
+    token: str = Depends(verify_token)
+):
+    return process_and_save_need(data, background_tasks)

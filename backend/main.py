@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, BackgroundTasks
 import requests
 import os
 
 # Routers
-from backend.routes.need import router as need_router
+from backend.routes.need import router as need_router, process_and_save_need
+from backend.models import NeedInput
 from backend.routes.volunteer import router as volunteer_router
 from backend.routes.match import router as match_router
 from backend.routes.dashboard import router as dashboard_router
@@ -30,7 +31,7 @@ def health():
 
 # 🔗 NEED WEBHOOK (FIXED)
 @app.post("/webhook")
-async def webhook(request: Request):
+async def webhook(request: Request, background_tasks: BackgroundTasks):
     try:
         data = await request.json()
 
@@ -43,16 +44,13 @@ async def webhook(request: Request):
             "help_needed": data.get("help_needed", "Not Specified")
         }
 
-        # ✅ CORRECT: API call
-        response = requests.post(
-            "http://127.0.0.1:8000/need",
-            json=mapped_data,
-            headers={"Authorization": f"Bearer {os.getenv('SECRET_TOKEN')}"}
-        )
+        # ✅ CORRECT: Call service logic directly instead of HTTP self-calling
+        need_input = NeedInput(**mapped_data)
+        result = process_and_save_need(need_input, background_tasks)
 
         return {
             "message": "Webhook processed successfully",
-            "data": response.json()
+            "data": result
         }
 
     except Exception as e:
