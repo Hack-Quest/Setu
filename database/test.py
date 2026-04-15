@@ -1,4 +1,10 @@
+import os
+import sys
 import time
+
+if __package__ is None or __package__ == "":
+    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from database.needs_db import save_need, get_open_needs
 from database.volunteers_db import save_volunteer, get_available_volunteers
 from database.assignments_db import save_assignment, resolve_assignment
@@ -12,7 +18,7 @@ need_data = {
     "severity": "critical",
     "category": "rescue",
     "lat": 26.8467,
-    "lng": 80.9462
+    "lng": 80.9462,
 }
 fake_need_id = save_need(need_data)
 
@@ -29,7 +35,7 @@ volunteer_data = {
     "skills": ["rescue", "medical"],
     "phone": "+91-9876543210",
     "lat": 26.8500,
-    "lng": 80.9500
+    "lng": 80.9500,
 }
 fake_vol_id = save_volunteer(volunteer_data)
 
@@ -45,11 +51,22 @@ assignment_id = save_assignment(fake_need_id, fake_vol_id)
 
 time.sleep(1)
 
-assert len([n for n in get_open_needs() if n["id"] == fake_need_id]) == 0, "🚨 Need should no longer be open after assignment!"
+assert (
+    len([n for n in get_open_needs() if n["id"] == fake_need_id]) == 0
+), "🚨 Need should no longer be open after assignment!"
+assert (
+    len([v for v in get_available_volunteers() if v["id"] == fake_vol_id]) == 0
+), "🚨 Volunteer should no longer be available after assignment!"
 
 # --- 4. Testing Resolution ---
 print("\n--- 4. Testing Resolution ---")
 print("Mission accomplished! Resolving the assignment...")
 resolve_assignment(assignment_id, fake_need_id, fake_vol_id)
+
+resolved_need = next((n for n in get_open_needs() if n["id"] == fake_need_id), None)
+assert resolved_need is None, "🚨 Resolved need should stay out of the open-needs list!"
+assert (
+    len([v for v in get_available_volunteers() if v["id"] == fake_vol_id]) >= 1
+), "🚨 Volunteer should become available again after resolution!"
 
 print("\n🎉 ALL TESTS PASSED! YOUR DATABASE IS PRODUCTION-READY!")

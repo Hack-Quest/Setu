@@ -13,7 +13,16 @@ router = APIRouter(prefix="/need")  # ✅ IMPORTANT
 needs_storage = []
 
 
+<<<<<<< Updated upstream
 def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
+=======
+@router.post("")
+def create_need(
+    data: NeedInput,
+    background_tasks: BackgroundTasks,
+    token: str = Depends(verify_token),
+):
+>>>>>>> Stashed changes
     try:
         print("📥 Incoming Data:", data)
 
@@ -29,7 +38,14 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
 
         category = ai_result.get("category", "general")
         severity = ai_result.get("severity", "low")
-        confidence = ai_result.get("confidence", "medium")
+        ai_consistency = int(ai_result.get("consistency", 5))
+
+        if ai_consistency <= 3:
+            confidence = "low"
+        elif ai_consistency <= 6:
+            confidence = "medium"
+        else:
+            confidence = "high"
 
         # 🔥 CATEGORY FALLBACK (IMPORTANT FOR MATCHING)
         if category == "other":
@@ -38,19 +54,18 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         flag = "suspicious" if confidence == "low" else "verified"
 
         # 🌍 LOCATION
-        coords = get_coordinates(data.location) or {"lat": 0, "lng": 0}
+        coords = get_coordinates(data.location_text) or {"lat": 0, "lng": 0}
 
         # 🛡️ VERIFICATION
         corroboration_count = check_corroboration(
             coords["lat"], coords["lng"], category
         )
 
-        ai_consistency = int(ai_result.get("consistency", 5))
-
         trust_result = calculate_trust_score(
-            (data.model_dump() if hasattr(data, "model_dump") else data.dict()) | coords,
+            (data.model_dump() if hasattr(data, "model_dump") else data.dict())
+            | coords,
             ai_consistency,
-            corroboration_count
+            corroboration_count,
         )
 
         trust_score = trust_result["score"]
@@ -69,6 +84,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             "description": data.description,
             "category": category,
             "severity": severity,
+            "location_text": data.location_text,
             "confidence": confidence,
             "flag": flag,
             "lat": coords["lat"],
@@ -79,7 +95,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             "trust_score": trust_score,
             "trust_reasons": trust_result.get("reasons", []),
             "dispatch_action": trust_result.get("dispatch_action", "manual"),
-            "priority": priority
+            "priority": priority,
         }
 
         # 💾 SAVE
@@ -96,6 +112,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
 
     except Exception as e:
         print("❌ Error:", e)
+<<<<<<< Updated upstream
         return {
             "error": str(e),
             "message": "Fallback response used"
@@ -108,3 +125,6 @@ def create_need(
     token: str = Depends(verify_token)
 ):
     return process_and_save_need(data, background_tasks)
+=======
+        return {"error": str(e), "message": "Fallback response used"}
+>>>>>>> Stashed changes

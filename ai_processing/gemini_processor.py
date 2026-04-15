@@ -46,9 +46,8 @@ def _parse_and_validate(raw: str) -> dict:
     return {
         "category": result["category"],
         "severity": result["severity"],
-        "consistency": consistency
+        "consistency": consistency,
     }
-
 
 
 def _call_groq(prompt: str) -> dict:
@@ -63,13 +62,13 @@ def _call_groq(prompt: str) -> dict:
 
     headers = {
         "Authorization": f"Bearer {groq_api_key}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
     payload = {
         "model": _GROQ_MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "response_format": {"type": "json_object"},
-        "temperature": 0.1
+        "temperature": 0.1,
     }
 
     response = requests.post(_GROQ_API_URL, headers=headers, json=payload, timeout=30)
@@ -95,20 +94,24 @@ def process_need_text(description: str) -> dict:
         return {"category": "other", "severity": "medium", "error": "empty input"}
 
     prompt = build_prompt(description)
+    raw = ""
 
     # --- Primary: Gemini ---
     try:
         response = _gemini_client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt
+            model="gemini-2.0-flash", contents=prompt
         )
-        raw = response.text.strip()
+        raw = (getattr(response, "text", "") or "").strip()
+        if not raw:
+            raise ValueError("Gemini returned empty text")
         result = _parse_and_validate(raw)
         print("[Gemini] Successfully processed request.")
         return result
 
     except json.JSONDecodeError:
-        print(f"[Gemini] JSON parse failed. Raw output was: {raw!r}. Falling back to Groq...")
+        print(
+            f"[Gemini] JSON parse failed. Raw output was: {raw!r}. Falling back to Groq..."
+        )
     except Exception as e:
         print(f"[Gemini] Error: {e}. Falling back to Groq...")
 

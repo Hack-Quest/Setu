@@ -1,4 +1,9 @@
+<<<<<<< Updated upstream
 from fastapi import FastAPI, Request, BackgroundTasks
+=======
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+>>>>>>> Stashed changes
 import requests
 import os
 
@@ -6,6 +11,7 @@ import os
 from backend.routes.need import router as need_router, process_and_save_need
 from backend.models import NeedInput
 from backend.routes.volunteer import router as volunteer_router
+from backend.routes.volunteer_auth import router as volunteer_auth_router
 from backend.routes.match import router as match_router
 from backend.routes.dashboard import router as dashboard_router
 from backend.routes.assignment import router as assignment_router
@@ -15,6 +21,17 @@ from database.volunteers_db import save_volunteer
 from database.geocoding import get_coordinates
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # 🏠 Home
@@ -39,11 +56,12 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
             "reporter_name": data.get("name", "Unknown"),
             "reporter_phone": data.get("phone", "0000000000"),
             "description": data.get("description", ""),
-            "location": data.get("address", "Unknown Location"),
+            "location_text": data.get("address", "Unknown Location"),
             "disaster_type": data.get("disaster_type", "Not Specified"),
-            "help_needed": data.get("help_needed", "Not Specified")
+            "help_needed": data.get("help_needed", "Not Specified"),
         }
 
+<<<<<<< Updated upstream
         # ✅ CORRECT: Call service logic directly instead of HTTP self-calling
         need_input = NeedInput(**mapped_data)
         result = process_and_save_need(need_input, background_tasks)
@@ -52,6 +70,18 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
             "message": "Webhook processed successfully",
             "data": result
         }
+=======
+        # ✅ CORRECT: API call
+        response = requests.post(
+            "http://127.0.0.1:8000/need",
+            json=mapped_data,
+            headers={"Authorization": "Bearer hackathon-secret"},
+        )
+
+        response.raise_for_status()
+
+        return {"message": "Webhook processed successfully", "data": response.json()}
+>>>>>>> Stashed changes
 
     except Exception as e:
         print("❌ Webhook Error:", e)
@@ -69,22 +99,20 @@ async def volunteer_webhook(request: Request):
         mapped_volunteer = {
             "name": data.get("volunteer_name", "Unknown"),
             "phone": data.get("phone", "0000000000"),
-            "skills": [
-                skill.strip().lower()
-                for skill in data.get("skills", "").split(",")
-            ] if data.get("skills") else [],
+            "skills": (
+                [skill.strip().lower() for skill in data.get("skills", "").split(",")]
+                if data.get("skills")
+                else []
+            ),
             "lat": coords["lat"],
-            "lng": coords["lng"]
+            "lng": coords["lng"],
         }
 
         print("📥 Incoming Volunteer:", mapped_volunteer)
 
         doc_id = save_volunteer(mapped_volunteer)
 
-        return {
-            "message": "Volunteer registered successfully",
-            "id": doc_id
-        }
+        return {"message": "Volunteer registered successfully", "id": doc_id}
 
     except Exception as e:
         print("❌ Volunteer Webhook Error:", e)
@@ -94,6 +122,10 @@ async def volunteer_webhook(request: Request):
 # 📦 Routers
 app.include_router(need_router)
 app.include_router(volunteer_router)
+app.include_router(volunteer_auth_router)
 app.include_router(match_router)
 app.include_router(dashboard_router)
+<<<<<<< Updated upstream
 app.include_router(assignment_router)
+=======
+>>>>>>> Stashed changes
