@@ -1,6 +1,7 @@
 import os
 import requests
 import dotenv
+from datetime import datetime, timezone, timedelta
 dotenv.load_dotenv()
 
 def calculate_trust_score(data_dict: dict, ai_consistency: int, corroborating_reports_count: int) -> dict:
@@ -44,6 +45,31 @@ def calculate_trust_score(data_dict: dict, ai_consistency: int, corroborating_re
             reasons.append("+10: Valid 10-digit phone number")
         else:
             reasons.append("+0: Phone number missing or invalid")
+
+        # -20 SPAM CHECK: duplicate phone within the last 1 hour with 'Video Connected' status
+        try:
+            from database.firestore_client import db
+            one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+            if phone.isdigit() and len(phone) == 10:
+                duplicate_docs = (
+                    db.collection("needs")
+                    .where("reporter_phone", "==", phone)
+                    .where("timestamp", ">=", one_hour_ago)
+                    .stream()
+                )
+                video_connected_found = any(
+                    doc.to_dict().get("status") == "Video Connected"
+                    for doc in duplicate_docs
+                )
+                if video_connected_found:
+                    score -= 20
+                    reasons.append("-20: SPAM — same phone already submitted a 'Video Connected' report in the last 1 hour")
+                else:
+                    reasons.append("+0: No duplicate phone spam detected in the last 1 hour")
+            else:
+                reasons.append("+0: Spam check skipped (invalid phone)")
+        except Exception as spam_err:
+            reasons.append(f"+0: Spam check failed ({spam_err})")
 
         # ------------------------------------------------------------------ #
         # LAYER 2 — AI Consistency score (max 30 pts)

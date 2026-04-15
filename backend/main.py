@@ -7,6 +7,7 @@ from backend.routes.need import router as need_router
 from backend.routes.volunteer import router as volunteer_router
 from backend.routes.match import router as match_router
 from backend.routes.dashboard import router as dashboard_router
+from backend.routes.assignment import router as assignment_router
 
 # Volunteer helpers
 from database.volunteers_db import save_volunteer
@@ -97,3 +98,4 @@ app.include_router(need_router)
 app.include_router(volunteer_router)
 app.include_router(match_router)
 app.include_router(dashboard_router)
+app.include_router(assignment_router)
