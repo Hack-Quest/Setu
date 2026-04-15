@@ -24,6 +24,10 @@ def match_needs(token: str = Depends(verify_token)):
     matches = []
     open_needs = get_open_needs()
 
+    # 🚨 TRIAGE LOGIC: Sort needs by severity so critical ones get first pick
+    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    open_needs.sort(key=lambda n: severity_order.get(n.get("severity", "low"), 3))
+
     for need in open_needs:
 
         # 🔴 Skip low trust
