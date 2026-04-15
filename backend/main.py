@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 import requests
+import os
 
 # Routers
 from backend.routes.need import router as need_router
@@ -45,7 +46,7 @@ async def webhook(request: Request):
         response = requests.post(
             "http://127.0.0.1:8000/need",
             json=mapped_data,
-            headers={"Authorization": "Bearer hackathon-secret"}
+            headers={"Authorization": f"Bearer {os.getenv('SECRET_TOKEN')}"}
         )
 
         return {

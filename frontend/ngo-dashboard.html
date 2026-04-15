@@ -437,7 +437,7 @@
         async function loadDashboardStats() {
             try {
                 const data = await api.getDashboardStats();
-                document.getElementById('stat-critical').innerText = data.high_priority_cases ?? '-';
+                document.getElementById('stat-critical').innerText = data.critical_cases ?? '-';
                 document.getElementById('stat-volunteers').innerText = data.total_volunteers ?? '-';
                 document.getElementById('stat-total-needs').innerText = data.total_needs ?? '-';
             } catch(e) {
