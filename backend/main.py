@@ -1,9 +1,5 @@
-<<<<<<< Updated upstream
-from fastapi import FastAPI, Request, BackgroundTasks
-=======
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, BackgroundTasks  # ✅ FIX 1: Added BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
->>>>>>> Stashed changes
 import requests
 import os
 
@@ -56,22 +52,12 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
             "reporter_name": data.get("name", "Unknown"),
             "reporter_phone": data.get("phone", "0000000000"),
             "description": data.get("description", ""),
-            "location_text": data.get("address", "Unknown Location"),
+            "location": data.get("address", "Unknown Location"),  # ✅ FIX 2: Changed to "location"
             "disaster_type": data.get("disaster_type", "Not Specified"),
             "help_needed": data.get("help_needed", "Not Specified"),
         }
 
-<<<<<<< Updated upstream
-        # ✅ CORRECT: Call service logic directly instead of HTTP self-calling
-        need_input = NeedInput(**mapped_data)
-        result = process_and_save_need(need_input, background_tasks)
-
-        return {
-            "message": "Webhook processed successfully",
-            "data": result
-        }
-=======
-        # ✅ CORRECT: API call
+        # API call
         response = requests.post(
             "http://127.0.0.1:8000/need",
             json=mapped_data,
@@ -81,7 +67,6 @@ async def webhook(request: Request, background_tasks: BackgroundTasks):
         response.raise_for_status()
 
         return {"message": "Webhook processed successfully", "data": response.json()}
->>>>>>> Stashed changes
 
     except Exception as e:
         print("❌ Webhook Error:", e)
@@ -125,7 +110,4 @@ app.include_router(volunteer_router)
 app.include_router(volunteer_auth_router)
 app.include_router(match_router)
 app.include_router(dashboard_router)
-<<<<<<< Updated upstream
-app.include_router(assignment_router)
-=======
->>>>>>> Stashed changes
+app.include_router(assignment_router)  # ✅ FIX 3: Added missing router

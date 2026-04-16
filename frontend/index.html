@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SETU AI - Emergency Response Coordination</title>
+    <script src="api.js" defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #f6f4ef;
+            --surface: #ffffff;
+            --surface-soft: #fbfaf8;
+            --line: #e7e1d9;
+            --text: #111111;
+            --muted: #6f6a63;
+            --accent: #111111;
+            --accent-soft: #f0ede7;
+            --success: #2f7d5a;
+            --warning: #8b6b20;
+            --error: #a33a3a;
+            --shadow: 0 18px 50px rgba(17, 17, 17, 0.06);
+        }
+
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(17, 17, 17, 0.03), transparent 35%),
+                linear-gradient(180deg, #fcfbf8 0%, var(--bg) 100%);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid var(--line);
+            background: rgba(252, 251, 248, 0.86);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        .brand-mark {
+            width: 0.65rem;
+            height: 0.65rem;
+            border-radius: 999px;
+            background: var(--text);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.82rem;
+            color: var(--success);
+        }
+
+        .badge {
+            padding: 0.45rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid rgba(47, 125, 90, 0.25);
+            background: rgba(47, 125, 90, 0.06);
+        }
+
+        nav {
+            display: flex;
+            gap: 0;
+            padding: 0 2rem;
+            border-bottom: 1px solid var(--line);
+            background: rgba(252, 251, 248, 0.72);
+            backdrop-filter: blur(8px);
+            overflow-x: auto;
+        }
+
+        nav button {
+            flex: 1;
+            min-width: 0;
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            padding: 1rem 1.25rem;
+            font: inherit;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+
+        nav button:hover {
+            color: var(--text);
+            background: rgba(17, 17, 17, 0.03);
+        }
+
+        nav button.active {
+            color: var(--text);
+            border-bottom-color: var(--text);
+            background: rgba(17, 17, 17, 0.02);
+        }
+
+        .container {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 2.25rem 1.75rem 3rem;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.25fr 0.9fr;
+            gap: 2rem;
+            align-items: end;
+            padding: 1.75rem 0 2.25rem;
+        }
+
+        .eyebrow {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
+        .hero h2 {
+            border: 0;
+            padding: 0;
+            margin: 0;
+            font-size: clamp(2.8rem, 7vw, 5.75rem);
+            line-height: 0.95;
+            letter-spacing: -0.06em;
+            font-weight: 500;
+            max-width: 8ch;
+        }
+
+        .hero .subcopy {
+            margin-top: 1.4rem;
+            max-width: 36rem;
+            font-size: 1.05rem;
+            color: var(--muted);
+        }
+
+        .hero-panel {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .hero-note {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 1.5rem;
+            padding: 1.35rem 1.4rem;
+            box-shadow: var(--shadow);
+        }
+
+        .hero-note strong {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .hero-note p {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 1.25rem;
+            padding: 1.35rem;
+            box-shadow: var(--shadow);
+        }
+
+        .card h3 {
+            color: var(--text);
+            margin-bottom: 0.45rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .card p {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.9rem;
+            margin-top: 1.75rem;
+        }
+
+        .stat-box {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 1.25rem;
+            padding: 1.1rem 1.25rem;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            line-height: 1;
+            font-weight: 500;
+            letter-spacing: -0.05em;
+            color: var(--text);
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-top: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+        }
+
+        .form-group {
+            margin-bottom: 1.1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.45rem;
+            color: var(--text);
+            font-weight: 500;
+            font-size: 0.88rem;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.95rem 1rem;
+            border: 1px solid var(--line);
+            border-radius: 0.9rem;
+            background: var(--surface-soft);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #9a948b;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #b5b0a8;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.05);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 110px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+
+            .form-row,
+            .hero {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        button {
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+            font-weight: 500;
+        }
+
+        .btn {
+            padding: 0.95rem 1.25rem;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--text);
+            color: #fff;
+            border-color: var(--text);
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #2a2a2a;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--line);
+            padding: 0.8rem 1.1rem;
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent-soft);
+        }
+
+        .btn-small {
+            padding: 0.7rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .feedback {
+            padding: 0.95rem 1rem;
+            border-radius: 0.9rem;
+            margin-bottom: 1rem;
+            display: none;
+            border: 1px solid var(--line);
+            background: var(--surface);
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .feedback.success {
+            border-color: rgba(47, 125, 90, 0.22);
+            background: rgba(47, 125, 90, 0.06);
+            color: var(--success);
+        }
+
+        .feedback.error {
+            border-color: rgba(163, 58, 58, 0.22);
+            background: rgba(163, 58, 58, 0.06);
+            color: var(--error);
+        }
+
+        .feedback.warning {
+            border-color: rgba(139, 107, 32, 0.22);
+            background: rgba(139, 107, 32, 0.06);
+            color: var(--warning);
+        }
+
+        .feedback.info {
+            color: var(--muted);
+        }
+
+        .list {
+            list-style: none;
+        }
+
+        .list-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .list-item-meta {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .badge-status {
+            display: inline-block;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border: 1px solid var(--line);
+            background: var(--surface-soft);
+            color: var(--text);
+        }
+
+        .badge-status.assigned {
+            border-color: rgba(47, 125, 90, 0.22);
+            background: rgba(47, 125, 90, 0.08);
+            color: var(--success);
+        }
+
+        .badge-status.pending {
+            border-color: rgba(139, 107, 32, 0.22);
+            background: rgba(139, 107, 32, 0.08);
+            color: var(--warning);
+        }
+
+        footer {
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            text-align: center;
+            padding: 1.25rem 1rem 2rem;
+            margin-top: 3rem;
+            font-size: 0.82rem;
+        }
+
+        .spinner {
+            border: 2px solid rgba(17, 17, 17, 0.12);
+            border-top: 2px solid var(--text);
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.85rem;
+            color: var(--muted);
+        }
+
+        .mt-2 {
+            margin-top: 1rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 1rem;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: var(--muted);
+        }
+
+        .stack {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .emergency-cta {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1.5rem;
+            padding: 2rem 2rem;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            text-align: center;
+            margin: 2.5rem 0 2rem;
+        }
+
+        .emergency-cta::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(17, 17, 17, 0.02), transparent 70%);
+            animation: pulse-subtle 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .emergency-cta>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes pulse-subtle {
+
+            0%,
+            100% {
+                transform: scale(0.95);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        .emergency-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(163, 58, 58, 0.08);
+            border: 1px solid rgba(163, 58, 58, 0.22);
+            border-radius: 999px;
+            color: var(--error);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 1rem;
+        }
+
+        .emergency-icon {
+            font-size: 2.75rem;
+            line-height: 1;
+            margin: 0.5rem 0 1rem;
+            animation: pulse-icon 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-icon {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .emergency-cta h2 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            line-height: 1.1;
+            letter-spacing: -0.04em;
+            margin: 0.5rem 0 1rem;
+            color: var(--text);
+        }
+
+        .emergency-cta .subcopy {
+            font-size: 0.95rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+            max-width: 45rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .emergency-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            padding: 1.1rem 2rem;
+            background: #111;
+            color: #fff;
+            border: 1px solid #111;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+            animation: pulse-btn 2s ease-in-out infinite;
+            text-decoration: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes pulse-btn {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(17, 17, 17, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 12px rgba(17, 17, 17, 0);
+            }
+        }
+
+        .emergency-btn:hover {
+            transform: translateY(-2px);
+            background: #2a2a2a;
+        }
+
+        .emergency-btn:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+
+            header,
+            nav,
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .hero h2 {
+                max-width: 10ch;
+            }
+
+            .emergency-cta h2 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="brand"><span class="brand-mark"></span><span>Setu</span></div>
+        <div class="status-badge">
+            <div class="badge online">API Active</div>
+        </div>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" data-section="dashboard">Dashboard</button>
+        <button class="nav-btn" data-section="report">Report Need</button>
+        <button class="nav-btn" data-section="volunteer">Volunteer</button>
+        <button class="nav-btn" data-section="match">Match Engine</button>
+    </nav>
+
+    <div class="container">
+        <section id="dashboard" class="section active">
+            <div class="hero">
+                <div>
+                    <div class="eyebrow">Emergency coordination / minimalist control room</div>
+                    <h2>Coordinate relief effortlessly.</h2>
+                    <p class="subcopy">A unified interface to process incoming distress signals, match active personnel,
+                        and deploy supply lines without visual noise.</p>
+                </div>
+                <div class="hero-panel">
+                    <div class="hero-note">
+                        <strong>Process New Need</strong>
+                        <p>Capture details from ground zero directly into the central databank.</p>
+                    </div>
+                    <div class="hero-note" style="background:#1a1a1a;color:#fff; border-color:#1a1a1a;">
+                        <strong style="color:#fff;">Register Unit</strong>
+                        <p style="color:rgba(255,255,255,0.72);">Onboard new response volunteers.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-number" id="total-needs">-</div>
+                    <div class="stat-label">Open Needs</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="total-volunteers">-</div>
+                    <div class="stat-label">Volunteers</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="critical-cases">-</div>
+                    <div class="stat-label">Critical</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="high-cases">-</div>
+                    <div class="stat-label">High Priority</div>
+                </div>
+            </div>
+
+            <!-- EMERGENCY BUTTON -->
+            <div class="emergency-cta" style="margin-top: 2.5rem;">
+                <div class="emergency-badge">🚨 Direct Access</div>
+                <div class="emergency-icon">⚠️</div>
+                <h2>Report Emergency Now</h2>
+                <p class="subcopy">In immediate need of help? Fill out this quick form to get instant AI processing and
+                    automated dispatch to nearest responders.</p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScEK6_bVlHR_NuSk7Ktl1dzXQNV1iXMYJnIiRXsaUXcLFgn6Q/viewform"
+                    target="_blank" rel="noopener noreferrer" class="emergency-btn">
+                    <span>📝</span> Open Emergency Form
+                </a>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Recent Report</h3>
+                    <div id="recent-need-card">
+                        <p class="text-muted">Loading...</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>System Notes</h3>
+                    <p>All requests are authenticated and routed through the live backend. The interface stays light on
+                        purpose so the data is what stands out.</p>
+                </div>
+            </div>
+
+            <div class="mt-2 text-center">
+                <button class="btn btn-secondary btn-small" onclick="refreshDashboard()">Refresh Now</button>
+            </div>
+        </section>
+
+        <section id="report" class="section">
+            <div class="emergency-cta">
+                <div class="emergency-badge">🚨 Priority Access</div>
+                <div class="emergency-icon">⚠️</div>
+                <h2>Report Emergency Need</h2>
+                <p class="subcopy">Submit an urgent request for assistance. Your report will be processed by AI,
+                    verified, and automatically routed to available responders.</p>
+                <button class="emergency-btn" onclick="scrollToForm()">
+                    <span>➜</span> Open Report Form
+                </button>
+            </div>
+
+            <div class="card">
+                <form id="need-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="need-name">Reporter Name *</label>
+                            <input type="text" id="need-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="need-phone">Phone Number *</label>
+                            <input type="tel" id="need-phone" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="need-location">Location *</label>
+                            <input type="text" id="need-location" placeholder="e.g., Gomti Nagar, Lucknow" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="need-disaster">Disaster Type *</label>
+                            <input type="text" id="need-disaster" placeholder="e.g., flood, earthquake" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="need-help">Help Needed *</label>
+                        <input type="text" id="need-help" placeholder="e.g., rescue, medical, food" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="need-description">Description (min 10 chars) *</label>
+                        <textarea id="need-description"
+                            placeholder="Provide detailed information about the situation..." required></textarea>
+                    </div>
+
+                    <div id="need-feedback" class="feedback"></div>
+
+                    <button type="submit" class="btn btn-primary">Submit Report</button>
+                </form>
+            </div>
+
+            <div id="need-result" class="card" style="margin-top: 2rem; display: none;">
+                <h3>Report Processed</h3>
+                <div id="need-result-content"></div>
+            </div>
+        </section>
+
+        <section id="volunteer" class="section">
+            <h2>Volunteer Portal</h2>
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--line);">
+                <button class="vol-tab-btn active" data-tab="vol-login"
+                    style="padding: 0.8rem 1rem; border: 0; background: transparent; cursor: pointer; border-bottom: 2px solid var(--text); font-weight: 500;">Login</button>
+                <button class="vol-tab-btn" data-tab="vol-register"
+                    style="padding: 0.8rem 1rem; border: 0; background: transparent; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; font-weight: 500;">Register</button>
+            </div>
+
+            <!-- Login Tab -->
+            <div id="vol-login" class="vol-tab-content active" style="display: block;">
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Sign In to Volunteer Portal</h3>
+                    <form id="volunteer-login-form">
+                        <div class="form-group">
+                            <label for="vol-login-email">Email Address *</label>
+                            <input type="email" id="vol-login-email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vol-login-password">Password *</label>
+                            <input type="password" id="vol-login-password" required>
+                        </div>
+
+                        <div id="volunteer-login-feedback" class="feedback"></div>
+
+                        <button type="submit" class="btn btn-primary">Sign In</button>
+                    </form>
+                </div>
+
+                <div id="volunteer-login-result" class="card" style="margin-top: 2rem; display: none;">
+                    <h3>✓ Login Successful</h3>
+                    <div id="volunteer-login-result-content"></div>
+                </div>
+            </div>
+
+            <!-- Register Tab -->
+            <div id="vol-register" class="vol-tab-content" style="display: none;">
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Register as a Volunteer</h3>
+                    <form id="volunteer-register-form">
+                        <div class="form-group">
+                            <label for="vol-reg-email">Email Address *</label>
+                            <input type="email" id="vol-reg-email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vol-reg-password">Password *</label>
+                            <input type="password" id="vol-reg-password" placeholder="Min. 6 characters" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="vol-reg-name">Full Name *</label>
+                                <input type="text" id="vol-reg-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="vol-reg-phone">Phone Number *</label>
+                                <input type="tel" id="vol-reg-phone" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vol-reg-location">Location *</label>
+                            <input type="text" id="vol-reg-location" placeholder="Base location or home address"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vol-reg-skills">Skills (comma-separated) *</label>
+                            <input type="text" id="vol-reg-skills" placeholder="e.g., rescue, medical, food, shelter"
+                                required>
+                        </div>
+
+                        <div id="volunteer-register-feedback" class="feedback"></div>
+
+                        <button type="submit" class="btn btn-primary">Create Account</button>
+                    </form>
+                </div>
+
+                <div id="volunteer-register-result" class="card" style="margin-top: 2rem; display: none;">
+                    <h3>✓ Registration Complete</h3>
+                    <div id="volunteer-register-result-content"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="match" class="section">
+            <h2>Match Engine - Assign Volunteers to Needs</h2>
+            <div class="card">
+                <p class="text-muted">The match engine uses AI to automatically assign available volunteers to open
+                    emergency needs based on proximity, skills, and priority.</p>
+                <button class="btn btn-primary" onclick="runMatchEngine()">Run Match Engine</button>
+            </div>
+
+            <div id="match-feedback" class="feedback"></div>
+
+            <div id="match-results" style="margin-top: 2rem; display: none;">
+                <h3>Assignment Results</h3>
+                <div class="card">
+                    <p><strong>Total Assignments Made: </strong><span id="match-count">0</span></p>
+                    <ul class="list" id="match-list"></ul>
+                </div>
+            </div>
+
+            <div id="match-loading" style="margin-top: 2rem; display: none;">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <span>Running match engine...</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 SETU AI Emergency Response System | Deep Integration v1.0</p>
+    </footer>
+
+    <script>
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const sectionId = e.target.getAttribute('data-section');
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+                if (sectionId === 'dashboard') {
+                    refreshDashboard();
+                }
+            });
+        });
+
+        function showFeedback(elementId, message, type = 'info') {
+            const feedback = document.getElementById(elementId);
+            feedback.textContent = message;
+            feedback.className = `feedback show ${type}`;
+            setTimeout(() => feedback.classList.remove('show'), 5000);
+        }
+
+        async function refreshDashboard() {
+            try {
+                const data = await api.getDashboardStats();
+                document.getElementById('total-needs').textContent = data.total_needs || 0;
+                document.getElementById('total-volunteers').textContent = data.total_volunteers || 0;
+                document.getElementById('critical-cases').textContent = data.critical_priority_cases || 0;
+                document.getElementById('high-cases').textContent = data.high_priority_cases || 0;
+
+                const recentNeed = data.recent_need;
+                const recentCard = document.getElementById('recent-need-card');
+                if (recentNeed) {
+                    recentCard.innerHTML = `
+                        <div><strong>Description:</strong> ${recentNeed.description || 'N/A'}</div>
+                        <div class="mt-2"><strong>Category:</strong> ${recentNeed.category || 'N/A'} | <strong>Severity:</strong> ${recentNeed.severity || 'N/A'}</div>
+                        <div class="mt-2"><strong>Status:</strong> ${recentNeed.status || 'N/A'} | <strong>Trust Score:</strong> ${recentNeed.trust_score || 'N/A'}</div>
+                    `;
+                } else {
+                    recentCard.innerHTML = '<p class="text-muted">No recent reports yet.</p>';
+                }
+            } catch (error) {
+                console.error('Dashboard load failed:', error);
+            }
+        }
+
+        document.getElementById('need-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                reporter_name: document.getElementById('need-name').value,
+                reporter_phone: document.getElementById('need-phone').value,
+                location_text: document.getElementById('need-location').value,
+                disaster_type: document.getElementById('need-disaster').value,
+                help_needed: document.getElementById('need-help').value,
+                description: document.getElementById('need-description').value,
+            };
+
+            try {
+                const result = await api.submitNeed(payload);
+                if (result.error) {
+                    showFeedback('need-feedback', `Error: ${result.error}`, 'error');
+                    return;
+                }
+
+                showFeedback('need-feedback', `Report submitted successfully! Priority: ${result.priority || 'Pending'}`, 'success');
+                const resultDiv = document.getElementById('need-result');
+                const content = document.getElementById('need-result-content');
+                content.innerHTML = `
+                    <div class="card">
+                        <p><strong>Category:</strong> ${result.category || 'N/A'}</p>
+                        <p><strong>Severity:</strong> ${result.severity || 'N/A'}</p>
+                        <p><strong>Trust Score:</strong> ${result.trust_score || 0}/100</p>
+                        <p><strong>Dispatch Action:</strong> <span class="badge-status ${result.dispatch_action === 'auto_dispatch' ? 'assigned' : 'pending'}">${result.dispatch_action || 'N/A'}</span></p>
+                        <p><strong>Priority:</strong> ${result.priority || 'N/A'}</p>
+                        <div style="margin-top: 1rem;">
+                            <strong>Trust Reasons:</strong>
+                            <ul style="margin-left: 1rem; margin-top: 0.5rem;">
+                                ${(result.trust_reasons || []).map(r => `<li>${r}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+                e.target.reset();
+            } catch (error) {
+                showFeedback('need-feedback', `Error: ${error.message}`, 'error');
+            }
+        });
+
+        document.getElementById('volunteer-login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('vol-login-email').value;
+            const password = document.getElementById('vol-login-password').value;
+
+            try {
+                const result = await api.loginVolunteer(email, password);
+                if (result.error) {
+                    showFeedback('volunteer-login-feedback', `Error: ${result.error}`, 'error');
+                    return;
+                }
+
+                showFeedback('volunteer-login-feedback', `Welcome back, ${result.name}!`, 'success');
+                const resultDiv = document.getElementById('volunteer-login-result');
+                const content = document.getElementById('volunteer-login-result-content');
+                content.innerHTML = `
+                    <p><strong>Email:</strong> ${result.email}</p>
+                    <p><strong>Volunteer ID:</strong> ${result.volunteer_id}</p>
+                    <p class="text-muted" style="margin-top: 1rem;">You're now logged in and ready to receive emergency assignments.</p>
+                `;
+                resultDiv.style.display = 'block';
+                e.target.reset();
+            } catch (error) {
+                showFeedback('volunteer-login-feedback', `Error: ${error.message}`, 'error');
+            }
+        });
+
+        document.getElementById('volunteer-register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                email: document.getElementById('vol-reg-email').value,
+                password: document.getElementById('vol-reg-password').value,
+                name: document.getElementById('vol-reg-name').value,
+                phone: document.getElementById('vol-reg-phone').value,
+                location: document.getElementById('vol-reg-location').value,
+                skills: document.getElementById('vol-reg-skills').value.split(',').map(s => s.trim().toLowerCase()).filter(s => s),
+            };
+
+            if (payload.password.length < 6) {
+                showFeedback('volunteer-register-feedback', 'Password must be at least 6 characters', 'warning');
+                return;
+            }
+
+            try {
+                const result = await api.registerVolunteerWithAuth(payload);
+                if (result.error) {
+                    showFeedback('volunteer-register-feedback', `Error: ${result.error}`, 'error');
+                    return;
+                }
+
+                showFeedback('volunteer-register-feedback', 'Account created successfully! You can now login.', 'success');
+                const resultDiv = document.getElementById('volunteer-register-result');
+                const content = document.getElementById('volunteer-register-result-content');
+                content.innerHTML = `
+                    <p><strong>Volunteer ID:</strong> ${result.volunteer_id}</p>
+                    <p class="mt-2">Your account has been created and added to the system. Use your email and password to login anytime.</p>
+                    <p class="text-muted" style="margin-top: 1rem; font-size: 0.9rem;">Switch to the Login tab to sign in.</p>
+                `;
+                resultDiv.style.display = 'block';
+                e.target.reset();
+            } catch (error) {
+                showFeedback('volunteer-register-feedback', `Error: ${error.message}`, 'error');
+            }
+        });
+
+        async function runMatchEngine() {
+            const btn = event.target;
+            const loading = document.getElementById('match-loading');
+            const results = document.getElementById('match-results');
+
+            btn.disabled = true;
+            btn.textContent = 'Running...';
+            loading.style.display = 'block';
+            results.style.display = 'none';
+
+            try {
+                const result = await api.runMatchEngine();
+                document.getElementById('match-count').textContent = result.total_matches_made || 0;
+
+                const matchList = document.getElementById('match-list');
+                if (result.matches && result.matches.length > 0) {
+                    matchList.innerHTML = result.matches.map(m => `
+                        <li class="list-item">
+                            <div>
+                                <div class="list-item-title">Need #${m.need_id}</div>
+                                <div class="list-item-meta">${m.assigned_volunteer}${m.distance_km ? ` (${m.distance_km} km away)` : ''}</div>
+                            </div>
+                            <span class="badge-status ${m.status}">${m.status}</span>
+                        </li>
+                    `).join('');
+                } else {
+                    matchList.innerHTML = '<li class="list-item"><p class="text-muted">No matches generated.</p></li>';
+                }
+
+                results.style.display = 'block';
+                showFeedback('match-feedback', `Match complete: ${result.total_matches_made || 0} assignments evaluated`, 'success');
+            } catch (error) {
+                showFeedback('match-feedback', `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Run Match Engine';
+                loading.style.display = 'none';
+            }
+        }
+
+        window.addEventListener('load', () => {
+            refreshDashboard();
+            setInterval(refreshDashboard, 30000);
+            setupVolunteerTabs();
+        });
+
+        function setupVolunteerTabs() {
+            document.querySelectorAll('.vol-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabName = btn.getAttribute('data-tab');
+                    // Hide all tabs
+                    document.querySelectorAll('.vol-tab-content').forEach(tab => tab.style.display = 'none');
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.vol-tab-btn').forEach(b => b.classList.remove('active'));
+                    // Show selected tab
+                    document.getElementById(tabName).style.display = 'block';
+                    // Add active class to clicked button
+                    btn.classList.add('active');
+                    // Update button style
+                    document.querySelectorAll('.vol-tab-btn').forEach(b => {
+                        if (b.classList.contains('active')) {
+                            b.style.borderBottomColor = 'var(--text)';
+                            b.style.color = 'var(--text)';
+                        } else {
+                            b.style.borderBottomColor = 'transparent';
+                            b.style.color = 'var(--muted)';
+                        }
+                    });
+                });
+            });
+        }
+
+        function scrollToForm() {
+            const formCard = document.querySelector('#report .card form');
+            if (formCard) {
+                formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                formCard.parentElement.querySelector('input').focus();
+            }
+        }
+    </script>
+</body>
+
+</html>
