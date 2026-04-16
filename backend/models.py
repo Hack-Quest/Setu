@@ -20,6 +20,8 @@ class VolunteerInput(BaseModel):
     skills: List[str]
     lat: float = 0.0
     lng: float = 0.0
+    email: str  
+    password: str
 
 
 class VolunteerRegisterInput(BaseModel):

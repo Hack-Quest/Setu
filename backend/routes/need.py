@@ -9,20 +9,10 @@ from notifications.gmail_alert import send_alert
 
 router = APIRouter(prefix="/need")  # ✅ IMPORTANT
 
-
 needs_storage = []
 
-
-<<<<<<< Updated upstream
 def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
-=======
-@router.post("")
-def create_need(
-    data: NeedInput,
-    background_tasks: BackgroundTasks,
-    token: str = Depends(verify_token),
-):
->>>>>>> Stashed changes
+    """Core logic separated so it can be called internally (webhook) or via API."""
     try:
         print("📥 Incoming Data:", data)
 
@@ -54,7 +44,8 @@ def create_need(
         flag = "suspicious" if confidence == "low" else "verified"
 
         # 🌍 LOCATION
-        coords = get_coordinates(data.location_text) or {"lat": 0, "lng": 0}
+        # ✅ FIXED: Using data.location based on models.py
+        coords = get_coordinates(data.location) or {"lat": 0, "lng": 0}
 
         # 🛡️ VERIFICATION
         corroboration_count = check_corroboration(
@@ -62,8 +53,7 @@ def create_need(
         )
 
         trust_result = calculate_trust_score(
-            (data.model_dump() if hasattr(data, "model_dump") else data.dict())
-            | coords,
+            (data.model_dump() if hasattr(data, "model_dump") else data.dict()) | coords,
             ai_consistency,
             corroboration_count,
         )
@@ -84,7 +74,7 @@ def create_need(
             "description": data.description,
             "category": category,
             "severity": severity,
-            "location_text": data.location_text,
+            "location_text": data.location, # Passed to DB for logging
             "confidence": confidence,
             "flag": flag,
             "lat": coords["lat"],
@@ -112,11 +102,11 @@ def create_need(
 
     except Exception as e:
         print("❌ Error:", e)
-<<<<<<< Updated upstream
         return {
             "error": str(e),
             "message": "Fallback response used"
         }
+
 
 @router.post("")
 def create_need(
@@ -124,7 +114,5 @@ def create_need(
     background_tasks: BackgroundTasks,
     token: str = Depends(verify_token)
 ):
+    """API endpoint wrapper."""
     return process_and_save_need(data, background_tasks)
-=======
-        return {"error": str(e), "message": "Fallback response used"}
->>>>>>> Stashed changes
