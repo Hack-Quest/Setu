@@ -44,63 +44,58 @@ def health():
 
 # 🔗 NEED WEBHOOK (FIXED)
 @app.post("/webhook")
-async def webhook(request: Request, background_tasks: BackgroundTasks):
+def webhook(payload: dict, background_tasks: BackgroundTasks):  # ✅ Removed 'async', changed Request to dict
     try:
-        data = await request.json()
-
+        # ✅ No more 'await request.json()' needed! FastAPI parses it automatically.
         mapped_data = {
-            "reporter_name": data.get("name", "Unknown"),
-            "reporter_phone": data.get("phone", "0000000000"),
-            "description": data.get("description", ""),
-            "location": data.get("address", "Unknown Location"),  # ✅ FIX 2: Changed to "location"
-            "disaster_type": data.get("disaster_type", "Not Specified"),
-            "help_needed": data.get("help_needed", "Not Specified"),
+            "reporter_name": payload.get("name", "Unknown"),
+            "reporter_phone": payload.get("phone", "0000000000"),
+            "description": payload.get("description", ""),
+            "location": payload.get("address", "Unknown Location"),
+            "disaster_type": payload.get("disaster_type", "Not Specified"),
+            "help_needed": payload.get("help_needed", "Not Specified"),
         }
 
-        # API call
-        response = requests.post(
-            "http://127.0.0.1:8000/need",
-            json=mapped_data,
-            headers={"Authorization": "Bearer hackathon-secret"},
-        )
+        # Direct function call
+        need_input = NeedInput(**mapped_data)
+        
+        # Adding flush=True to force Python to print immediately before moving on
+        print("🚀 [SYSTEM] Routing to Core AI Engine...", flush=True) 
+        
+        result = create_need(data=need_input, background_tasks=background_tasks, token="webhook_override")
 
-        response.raise_for_status()
-
-        return {"message": "Webhook processed successfully", "data": response.json()}
+        return {"message": "Webhook processed successfully", "data": result}
 
     except Exception as e:
-        print("❌ Webhook Error:", e)
+        print("❌ Webhook Error:", e, flush=True)
         return {"error": str(e)}
-
 
 # 🔗 VOLUNTEER WEBHOOK (FIXED)
 @app.post("/volunteer_webhook")
-async def volunteer_webhook(request: Request):
+def volunteer_webhook(payload: dict):  # ✅ Removed 'async'
     try:
-        data = await request.json()
-
-        coords = get_coordinates(data.get("location", "")) or {"lat": 0, "lng": 0}
+        coords = get_coordinates(payload.get("location", "")) or {"lat": 0, "lng": 0}
 
         mapped_volunteer = {
-            "name": data.get("volunteer_name", "Unknown"),
-            "phone": data.get("phone", "0000000000"),
+            "name": payload.get("volunteer_name", "Unknown"),
+            "phone": payload.get("phone", "0000000000"),
             "skills": (
-                [skill.strip().lower() for skill in data.get("skills", "").split(",")]
-                if data.get("skills")
+                [skill.strip().lower() for skill in payload.get("skills", "").split(",")]
+                if payload.get("skills")
                 else []
             ),
             "lat": coords["lat"],
             "lng": coords["lng"],
         }
 
-        print("📥 Incoming Volunteer:", mapped_volunteer)
+        print("📥 Incoming Volunteer:", mapped_volunteer, flush=True)
 
         doc_id = save_volunteer(mapped_volunteer)
 
         return {"message": "Volunteer registered successfully", "id": doc_id}
 
     except Exception as e:
-        print("❌ Volunteer Webhook Error:", e)
+        print("❌ Volunteer Webhook Error:", e, flush=True)
         return {"error": str(e)}
 
 
