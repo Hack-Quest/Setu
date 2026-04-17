@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setu • NGO Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        base: '#F8FAFC',
+                        surface: '#FFFFFF',
+                        muted: '#E2E8F0',
+                        ink: {
+                            900: '#0F172A',
+                            700: '#334155',
+                            500: '#64748B',
+                            300: '#CBD5E1'
+                        },
+                        accent: {
+                            DEFAULT: '#0F766E',
+                            light: '#ECFDF5',
+                            hover: '#115E59'
+                        },
+                        signal: {
+                            DEFAULT: '#F97316',
+                            light: '#FFF7ED'
+                        }
+                    },
+                    boxShadow: {
+                        soft: '0 12px 40px rgba(15, 23, 42, 0.06)',
+                        float: '0 24px 50px -18px rgba(15, 23, 42, 0.18)'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body
+    class="bg-base text-ink-900 font-sans antialiased overflow-x-hidden selection:bg-accent-light selection:text-ink-900">
+    <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+        <div class="absolute top-[-16%] left-[-12%] w-[42%] h-[42%] bg-emerald-100/60 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-8%] w-[38%] h-[38%] bg-orange-100/50 rounded-full blur-[120px]">
+        </div>
+    </div>
+
+    <main class="mx-auto w-full max-w-7xl px-6 py-8 md:py-10">
+        <header class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between fade-in-up">
+            <div class="flex items-center gap-4">
+                <div class="h-11 w-11 rounded-2xl bg-ink-900 text-white flex items-center justify-center shadow-soft">
+                    <i data-feather="layers" class="h-5 w-5"></i>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-[0.24em] text-ink-500 font-semibold">NGO Command</p>
+                    <h1 id="ngoName" class="text-2xl md:text-3xl font-semibold tracking-tight">Loading dashboard...</h1>
+                </div>
+            </div>
+            <nav class="flex flex-wrap items-center gap-3 text-sm font-medium text-ink-500">
+                <a href="index.html"
+                    class="px-4 py-2 rounded-full border border-muted bg-surface hover:border-ink-300 hover:text-ink-900 transition-colors">Overview</a>
+                <a href="reports.html"
+                    class="px-4 py-2 rounded-full border border-muted bg-surface hover:border-ink-300 hover:text-ink-900 transition-colors">Reports</a>
+                <a href="ngo-register.html"
+                    class="px-4 py-2 rounded-full border border-muted bg-surface hover:border-ink-300 hover:text-ink-900 transition-colors">NGO
+                    Register</a>
+            </nav>
+        </header>
+
+        <section class="mt-10 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] items-start fade-in-up"
+            style="animation-delay: 0.1s;">
+            <div class="rounded-[2rem] border border-muted bg-surface p-7 md:p-8 shadow-float">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span id="verificationBadge"
+                        class="rounded-full bg-signal-light px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-signal">Pending
+                        verification</span>
+                    <span id="regNumber" class="text-sm font-medium text-ink-500"></span>
+                </div>
+                <h2 class="mt-5 text-4xl md:text-5xl font-semibold tracking-tight leading-tight max-w-3xl">
+                    Two live sections for operational control.
+                </h2>
+                <p id="coverageText" class="mt-4 max-w-2xl text-base md:text-lg leading-8 text-ink-500"></p>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-3">
+                <div class="rounded-[1.5rem] border border-muted bg-surface p-5 shadow-soft">
+                    <p class="text-xs uppercase tracking-[0.18em] text-ink-500 font-semibold">Active Assignments</p>
+                    <p id="assignmentCount" class="mt-2 text-3xl font-semibold">0</p>
+                </div>
+                <div class="rounded-[1.5rem] border border-muted bg-surface p-5 shadow-soft">
+                    <p class="text-xs uppercase tracking-[0.18em] text-ink-500 font-semibold">Managed Volunteers</p>
+                    <p id="volunteerCount" class="mt-2 text-3xl font-semibold">0</p>
+                </div>
+                <div class="rounded-[1.5rem] border border-muted bg-surface p-5 shadow-soft">
+                    <p class="text-xs uppercase tracking-[0.18em] text-ink-500 font-semibold">Verified Professionals</p>
+                    <p id="verifiedCount" class="mt-2 text-3xl font-semibold">0</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="mt-10 grid gap-6 xl:grid-cols-2">
+            <div class="rounded-[2rem] border border-muted bg-surface p-6 md:p-8 shadow-soft fade-in-up"
+                style="animation-delay: 0.2s;">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-ink-500 font-semibold">Operations</p>
+                        <h3 class="mt-1 text-2xl font-semibold tracking-tight">Active Assignments</h3>
+                    </div>
+                    <span id="assignmentSummary" class="text-sm font-medium text-ink-500"></span>
+                </div>
+                <div id="assignmentsGrid" class="mt-6 grid gap-4"></div>
+            </div>
+
+            <div class="rounded-[2rem] border border-muted bg-surface p-6 md:p-8 shadow-soft fade-in-up"
+                style="animation-delay: 0.3s;">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs uppercase tracking-[0.2em] text-ink-500 font-semibold">Team</p>
+                        <h3 class="mt-1 text-2xl font-semibold tracking-tight">Managed Volunteers</h3>
+                    </div>
+                    <span id="volunteerSummary" class="text-sm font-medium text-ink-500"></span>
+                </div>
+                <div id="volunteersGrid" class="mt-6 grid gap-4"></div>
+            </div>
+        </section>
+
+        <div id="loadingState"
+            class="mt-8 rounded-[2rem] border border-dashed border-muted bg-white/70 px-6 py-8 text-sm text-ink-500 shadow-soft fade-in-up"
+            style="animation-delay: 0.4s;">
+            Loading the latest NGO mock data...
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+        feather.replace();
+
+        const params = new URLSearchParams(window.location.search);
+        const loadingState = document.getElementById('loadingState');
+        const ngoName = document.getElementById('ngoName');
+        const regNumber = document.getElementById('regNumber');
+        const coverageText = document.getElementById('coverageText');
+        const verificationBadge = document.getElementById('verificationBadge');
+        const assignmentCount = document.getElementById('assignmentCount');
+        const volunteerCount = document.getElementById('volunteerCount');
+        const verifiedCount = document.getElementById('verifiedCount');
+        const assignmentSummary = document.getElementById('assignmentSummary');
+        const volunteerSummary = document.getElementById('volunteerSummary');
+        const assignmentsGrid = document.getElementById('assignmentsGrid');
+        const volunteersGrid = document.getElementById('volunteersGrid');
+
+        function getNgoId() {
+            return params.get('ngo_id') || localStorage.getItem('setu_active_ngo_id') || 'ngo-hope-horizon';
+        }
+
+        function assignmentCard(assignment) {
+            const priorityTone = assignment.priority === 'Critical'
+                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                : assignment.priority === 'High'
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+
+            return `
+                <article class="rounded-[1.5rem] border border-muted bg-base p-5 transition-transform hover:-translate-y-0.5">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${priorityTone}">${assignment.priority}</span>
+                                <span class="text-xs uppercase tracking-[0.18em] text-ink-300 font-semibold">${assignment.status}</span>
+                            </div>
+                            <h4 class="mt-3 text-lg font-semibold text-ink-900">${assignment.title}</h4>
+                            <p class="mt-1 text-sm text-ink-500">${assignment.location}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs uppercase tracking-[0.18em] text-ink-500 font-semibold">ETA</p>
+                            <p class="mt-1 text-lg font-semibold text-ink-900">${assignment.eta}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center justify-between text-sm text-ink-500">
+                        <span>Lead: ${assignment.lead}</span>
+                        <span>ID: ${assignment.id}</span>
+                    </div>
+                </article>
+            `;
+        }
+
+        function volunteerCard(volunteer) {
+            const hasNgoId = Boolean(volunteer.ngo_id);
+            const statusTone = volunteer.status === 'On Call'
+                ? 'bg-signal-light text-signal'
+                : 'bg-emerald-50 text-emerald-700';
+            const badgeMarkup = hasNgoId
+                ? '<span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700"><i data-feather="award" class="h-3 w-3"></i>Verified Professional</span>'
+                : '<span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600">Community Volunteer</span>';
+
+            return `
+                <article class="rounded-[1.5rem] border border-muted bg-base p-5 transition-transform hover:-translate-y-0.5">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h4 class="text-lg font-semibold text-ink-900">${volunteer.name}</h4>
+                                ${badgeMarkup}
+                            </div>
+                            <p class="mt-1 text-sm text-ink-500">${volunteer.role}</p>
+                        </div>
+                        <span class="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${statusTone}">${volunteer.status}</span>
+                    </div>
+                    <div class="mt-4 grid gap-2 text-sm text-ink-500">
+                        <div class="flex items-center justify-between gap-4"><span>Zone</span><span class="font-medium text-ink-900">${volunteer.zone}</span></div>
+                        <div class="flex items-center justify-between gap-4"><span>NGO ID</span><span class="font-medium text-ink-900">${volunteer.ngo_id || 'Not linked'}</span></div>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        ${volunteer.skills.map((skill) => `<span class="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink-500 border border-muted">${skill}</span>`).join('')}
+                    </div>
+                </article>
+            `;
+        }
+
+        async function loadDashboard() {
+            const ngoId = getNgoId();
+            const data = await api.getNGODashboard(ngoId);
+
+            ngoName.textContent = data.ngo.name;
+            regNumber.textContent = data.ngo.reg_number;
+            coverageText.textContent = `${data.ngo.coverage_area}. The mocked dashboard keeps assignments and volunteers tied to this organization so the UI can be reviewed without backend wiring.`;
+
+            if (data.ngo.verified) {
+                verificationBadge.textContent = 'Verified NGO';
+                verificationBadge.className = 'rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700';
+            } else {
+                verificationBadge.textContent = 'Pending verification';
+                verificationBadge.className = 'rounded-full bg-signal-light px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-signal';
+            }
+
+            assignmentCount.textContent = data.stats.active_assignments;
+            volunteerCount.textContent = data.stats.managed_volunteers;
+            verifiedCount.textContent = data.stats.verified_professionals;
+            assignmentSummary.textContent = `${data.active_assignments.length} open assignment${data.active_assignments.length === 1 ? '' : 's'}`;
+            volunteerSummary.textContent = `${data.managed_volunteers.length} volunteer${data.managed_volunteers.length === 1 ? '' : 's'}`;
+
+            assignmentsGrid.innerHTML = data.active_assignments.length
+                ? data.active_assignments.map(assignmentCard).join('')
+                : '<div class="rounded-[1.5rem] border border-dashed border-muted bg-white/70 p-6 text-sm text-ink-500">No active assignments right now.</div>';
+
+            volunteersGrid.innerHTML = data.managed_volunteers.length
+                ? data.managed_volunteers.map(volunteerCard).join('')
+                : '<div class="rounded-[1.5rem] border border-dashed border-muted bg-white/70 p-6 text-sm text-ink-500">No managed volunteers have been linked yet.</div>';
+
+            loadingState.classList.add('hidden');
+            feather.replace();
+        }
+
+        loadDashboard().catch((error) => {
+            loadingState.textContent = error.message || 'Unable to load NGO dashboard.';
+        });
+    </script>
+</body>
+
+</html>
