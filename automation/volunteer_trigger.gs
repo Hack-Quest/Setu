@@ -14,6 +14,7 @@ function onVolunteerFormSubmit(e) {
     availability: answers["Are you available immediately?"]
       ? answers["Are you available immediately?"][0]
       : "",
+    ngo_id: answers["NGO Code (Optional)"] ? answers["NGO Code (Optional)"][0] : "",
   };
 
   var shippingDetails = {

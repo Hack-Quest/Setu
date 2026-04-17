@@ -11,6 +11,7 @@ from backend.routes.volunteer_auth import router as volunteer_auth_router
 from backend.routes.match import router as match_router
 from backend.routes.dashboard import router as dashboard_router
 from backend.routes.assignment import router as assignment_router
+from backend.routes.ngo import router as ngo_router
 
 # Volunteer helpers
 from database.volunteers_db import save_volunteer
@@ -86,7 +87,15 @@ def volunteer_webhook(payload: dict):  # ✅ Removed 'async'
             ),
             "lat": coords["lat"],
             "lng": coords["lng"],
+            "ngo_id": payload.get("ngo_id", None)
         }
+
+        # Validate NGO and grant Tier 1 status if verified
+        if mapped_volunteer.get("ngo_id"):
+            from database.ngos_db import get_ngo
+            ngo = get_ngo(mapped_volunteer["ngo_id"])
+            if ngo and ngo.get("verified") is True:
+                mapped_volunteer["ngo_verified"] = True
 
         print("📥 Incoming Volunteer:", mapped_volunteer, flush=True)
 
@@ -106,3 +115,4 @@ app.include_router(volunteer_auth_router)
 app.include_router(match_router)
 app.include_router(dashboard_router)
 app.include_router(assignment_router)  # ✅ FIX 3: Added missing router
+app.include_router(ngo_router)
