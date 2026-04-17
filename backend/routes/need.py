@@ -9,11 +9,10 @@ from notifications.gmail_alert import send_alert
 
 router = APIRouter(prefix="/need")  # ✅ IMPORTANT
 
-
 needs_storage = []
 
-
 def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
+    """Core logic separated so it can be called internally (webhook) or via API."""
     try:
         print("📥 Incoming Data:", data)
 
@@ -29,7 +28,14 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
 
         category = ai_result.get("category", "general")
         severity = ai_result.get("severity", "low")
-        confidence = ai_result.get("confidence", "medium")
+        ai_consistency = int(ai_result.get("consistency", 5))
+
+        if ai_consistency <= 3:
+            confidence = "low"
+        elif ai_consistency <= 6:
+            confidence = "medium"
+        else:
+            confidence = "high"
 
         # 🔥 CATEGORY FALLBACK (IMPORTANT FOR MATCHING)
         if category == "other":
@@ -38,6 +44,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         flag = "suspicious" if confidence == "low" else "verified"
 
         # 🌍 LOCATION
+        # ✅ FIXED: Using data.location based on models.py
         coords = get_coordinates(data.location) or {"lat": 0, "lng": 0}
 
         # 🛡️ VERIFICATION
@@ -45,12 +52,10 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             coords["lat"], coords["lng"], category
         )
 
-        ai_consistency = int(ai_result.get("consistency", 5))
-
         trust_result = calculate_trust_score(
             (data.model_dump() if hasattr(data, "model_dump") else data.dict()) | coords,
             ai_consistency,
-            corroboration_count
+            corroboration_count,
         )
 
         trust_score = trust_result["score"]
@@ -69,6 +74,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             "description": data.description,
             "category": category,
             "severity": severity,
+            "location_text": data.location, # Passed to DB for logging
             "confidence": confidence,
             "flag": flag,
             "lat": coords["lat"],
@@ -79,7 +85,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             "trust_score": trust_score,
             "trust_reasons": trust_result.get("reasons", []),
             "dispatch_action": trust_result.get("dispatch_action", "manual"),
-            "priority": priority
+            "priority": priority,
         }
 
         # 💾 SAVE
@@ -101,10 +107,12 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             "message": "Fallback response used"
         }
 
+
 @router.post("")
 def create_need(
     data: NeedInput,
     background_tasks: BackgroundTasks,
     token: str = Depends(verify_token)
 ):
+    """API endpoint wrapper."""
     return process_and_save_need(data, background_tasks)

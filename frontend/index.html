@@ -1,436 +1,1167 @@
 <!DOCTYPE html>
-<html class="dark scroll-smooth" lang="en">
+<html lang="en">
+
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>SETU AI | Tactical Emergency Command</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script src="js/api.js" defer></script>
-<script src="js/theme.js" defer></script>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "surface-dim": "#0b1326",
-                        "tertiary": "#ffb95f",
-                        "surface-container-highest": "#2d3449",
-                        "primary-fixed": "#acedff",
-                        "on-primary": "#003640",
-                        "secondary-container": "#a40217",
-                        "background": "#0b1326",
-                        "surface-tint": "#4cd7f6",
-                        "error-container": "#93000a",
-                        "surface": "#0b1326",
-                        "primary-container": "#06b6d4",
-                        "surface-variant": "#2d3449",
-                        "surface-container": "#171f33",
-                        "primary": "#4cd7f6",
-                        "error": "#ffb4ab",
-                        "secondary": "#ffb3ad"
-                    },
-                    fontFamily: {
-                        "headline": ["Space Grotesk"],
-                        "body": ["Inter"],
-                        "label": ["Inter"]
-                    },
-                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
-                },
-            },
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SETU AI - Emergency Response Coordination</title>
+    <script src="api.js" defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    </script>
-<style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+
+        :root {
+            --bg: #f6f4ef;
+            --surface: #ffffff;
+            --surface-soft: #fbfaf8;
+            --line: #e7e1d9;
+            --text: #111111;
+            --muted: #6f6a63;
+            --accent: #111111;
+            --accent-soft: #f0ede7;
+            --success: #2f7d5a;
+            --warning: #8b6b20;
+            --error: #a33a3a;
+            --shadow: 0 18px 50px rgba(17, 17, 17, 0.06);
+        }
+
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(17, 17, 17, 0.03), transparent 35%),
+                linear-gradient(180deg, #fcfbf8 0%, var(--bg) 100%);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid var(--line);
+            background: rgba(252, 251, 248, 0.86);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        .brand-mark {
+            width: 0.65rem;
+            height: 0.65rem;
+            border-radius: 999px;
+            background: var(--text);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.82rem;
+            color: var(--success);
+        }
+
+        .badge {
+            padding: 0.45rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid rgba(47, 125, 90, 0.25);
+            background: rgba(47, 125, 90, 0.06);
+        }
+
+        nav {
+            display: flex;
+            gap: 0;
+            padding: 0 2rem;
+            border-bottom: 1px solid var(--line);
+            background: rgba(252, 251, 248, 0.72);
+            backdrop-filter: blur(8px);
+            overflow-x: auto;
+        }
+
+        nav button {
+            flex: 1;
+            min-width: 0;
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            padding: 1rem 1.25rem;
+            font: inherit;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+
+        nav button:hover {
+            color: var(--text);
+            background: rgba(17, 17, 17, 0.03);
+        }
+
+        nav button.active {
+            color: var(--text);
+            border-bottom-color: var(--text);
+            background: rgba(17, 17, 17, 0.02);
+        }
+
+        .container {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 2.25rem 1.75rem 3rem;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.25fr 0.9fr;
+            gap: 2rem;
+            align-items: end;
+            padding: 1.75rem 0 2.25rem;
+        }
+
+        .eyebrow {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
+        .hero h2 {
+            border: 0;
+            padding: 0;
+            margin: 0;
+            font-size: clamp(2.8rem, 7vw, 5.75rem);
+            line-height: 0.95;
+            letter-spacing: -0.06em;
+            font-weight: 500;
+            max-width: 8ch;
+        }
+
+        .hero .subcopy {
+            margin-top: 1.4rem;
+            max-width: 36rem;
+            font-size: 1.05rem;
+            color: var(--muted);
+        }
+
+        .hero-panel {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .hero-note {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 1.5rem;
+            padding: 1.35rem 1.4rem;
+            box-shadow: var(--shadow);
+        }
+
+        .hero-note strong {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .hero-note p {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 1.25rem;
+            padding: 1.35rem;
+            box-shadow: var(--shadow);
+        }
+
+        .card h3 {
+            color: var(--text);
+            margin-bottom: 0.45rem;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .card p {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.9rem;
+            margin-top: 1.75rem;
+        }
+
+        .stat-box {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 1.25rem;
+            padding: 1.1rem 1.25rem;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            line-height: 1;
+            font-weight: 500;
+            letter-spacing: -0.05em;
+            color: var(--text);
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-top: 0.35rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+        }
+
+        .form-group {
+            margin-bottom: 1.1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.45rem;
+            color: var(--text);
+            font-weight: 500;
+            font-size: 0.88rem;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.95rem 1rem;
+            border: 1px solid var(--line);
+            border-radius: 0.9rem;
+            background: var(--surface-soft);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #9a948b;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #b5b0a8;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(17, 17, 17, 0.05);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 110px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+
+            .form-row,
+            .hero {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        button {
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+            font-weight: 500;
+        }
+
+        .btn {
+            padding: 0.95rem 1.25rem;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--text);
+            color: #fff;
+            border-color: var(--text);
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #2a2a2a;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--line);
+            padding: 0.8rem 1.1rem;
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent-soft);
+        }
+
+        .btn-small {
+            padding: 0.7rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .feedback {
+            padding: 0.95rem 1rem;
+            border-radius: 0.9rem;
+            margin-bottom: 1rem;
+            display: none;
+            border: 1px solid var(--line);
+            background: var(--surface);
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .feedback.success {
+            border-color: rgba(47, 125, 90, 0.22);
+            background: rgba(47, 125, 90, 0.06);
+            color: var(--success);
+        }
+
+        .feedback.error {
+            border-color: rgba(163, 58, 58, 0.22);
+            background: rgba(163, 58, 58, 0.06);
+            color: var(--error);
+        }
+
+        .feedback.warning {
+            border-color: rgba(139, 107, 32, 0.22);
+            background: rgba(139, 107, 32, 0.06);
+            color: var(--warning);
+        }
+
+        .feedback.info {
+            color: var(--muted);
+        }
+
+        .list {
+            list-style: none;
+        }
+
+        .list-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .list-item-meta {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .badge-status {
             display: inline-block;
-            vertical-align: middle;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border: 1px solid var(--line);
+            background: var(--surface-soft);
+            color: var(--text);
         }
-        .glow-secondary {
-            box-shadow: 0 0 40px rgba(164, 2, 23, 0.3);
+
+        .badge-status.assigned {
+            border-color: rgba(47, 125, 90, 0.22);
+            background: rgba(47, 125, 90, 0.08);
+            color: var(--success);
         }
-        .dark .glow-primary {
-            box-shadow: 0 0 20px rgba(76, 215, 246, 0.15);
+
+        .badge-status.pending {
+            border-color: rgba(139, 107, 32, 0.22);
+            background: rgba(139, 107, 32, 0.08);
+            color: var(--warning);
         }
-        .scanline {
-            background: linear-gradient(to bottom, transparent 50%, rgba(76, 215, 246, 0.02) 50%);
-            background-size: 100% 4px;
+
+        footer {
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            text-align: center;
+            padding: 1.25rem 1rem 2rem;
+            margin-top: 3rem;
+            font-size: 0.82rem;
         }
-        @keyframes pulse-red {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            50% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+
+        .spinner {
+            border: 2px solid rgba(17, 17, 17, 0.12);
+            border-top: 2px solid var(--text);
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            animation: spin 0.9s linear infinite;
         }
-        .animate-pulse-red {
-            animation: pulse-red 2s infinite;
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.85rem;
+            color: var(--muted);
+        }
+
+        .mt-2 {
+            margin-top: 1rem;
+        }
+
+        .mb-2 {
+            margin-bottom: 1rem;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: var(--muted);
+        }
+
+        .stack {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .emergency-cta {
+            position: relative;
+            overflow: hidden;
+            border-radius: 1.5rem;
+            padding: 2rem 2rem;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            text-align: center;
+            margin: 2.5rem 0 2rem;
+        }
+
+        .emergency-cta::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(17, 17, 17, 0.02), transparent 70%);
+            animation: pulse-subtle 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .emergency-cta>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes pulse-subtle {
+
+            0%,
+            100% {
+                transform: scale(0.95);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        .emergency-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(163, 58, 58, 0.08);
+            border: 1px solid rgba(163, 58, 58, 0.22);
+            border-radius: 999px;
+            color: var(--error);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 1rem;
+        }
+
+        .emergency-icon {
+            font-size: 2.75rem;
+            line-height: 1;
+            margin: 0.5rem 0 1rem;
+            animation: pulse-icon 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-icon {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .emergency-cta h2 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            line-height: 1.1;
+            letter-spacing: -0.04em;
+            margin: 0.5rem 0 1rem;
+            color: var(--text);
+        }
+
+        .emergency-cta .subcopy {
+            font-size: 0.95rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+            max-width: 45rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .emergency-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            padding: 1.1rem 2rem;
+            background: #111;
+            color: #fff;
+            border: 1px solid #111;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+            animation: pulse-btn 2s ease-in-out infinite;
+            text-decoration: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes pulse-btn {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(17, 17, 17, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 12px rgba(17, 17, 17, 0);
+            }
+        }
+
+        .emergency-btn:hover {
+            transform: translateY(-2px);
+            background: #2a2a2a;
+        }
+
+        .emergency-btn:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+
+            header,
+            nav,
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .hero h2 {
+                max-width: 10ch;
+            }
+
+            .emergency-cta h2 {
+                font-size: 1.8rem;
+            }
         }
     </style>
 </head>
-<body class="text-slate-900 dark:text-slate-100 font-body selection:bg-primary/30 selection:text-white antialiased overflow-x-hidden transition-colors duration-300 relative">
 
-<div class="fixed inset-0 z-[-1] pointer-events-none">
-    <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop" class="w-full h-full object-cover opacity-40 dark:opacity-30" alt="Global Dashboard Background">
-    <div class="absolute inset-0 bg-slate-50/90 dark:bg-[#0b1326]/90 transition-colors duration-300"></div>
-</div>
-
-<header class="fixed top-0 w-full z-50 bg-white/80 dark:bg-[#0b1326]/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10 shadow-[0_0_15px_rgba(76,215,246,0.1)] flex items-center justify-between px-6 py-3 transition-colors duration-300">
-<div class="flex items-center gap-8">
-<span class="text-2xl font-bold tracking-tighter text-slate-900 dark:text-white uppercase font-['Space_Grotesk']">SETU AI</span>
-<nav class="hidden md:flex gap-6 items-center">
-<a class="font-['Space_Grotesk'] text-sm font-bold tracking-tighter uppercase text-cyan-600 dark:text-cyan-400 border-b-2 border-cyan-600 dark:border-cyan-400 pb-1" href="#">Dashboard</a>
-<a class="font-['Space_Grotesk'] text-sm tracking-tighter uppercase text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-white transition-colors" href="#missions">Missions</a>
-<a class="font-['Space_Grotesk'] text-sm tracking-tighter uppercase text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-white transition-colors" href="#telemetry">Telemetry</a>
-<a class="font-['Space_Grotesk'] text-sm tracking-tighter uppercase text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-white transition-colors cursor-pointer" onclick="alert('🔒 ASSETS MODULE: Access Restricted.')">Assets</a>
-</nav>
-</div>
-<div class="flex items-center gap-4">
-<div class="hidden sm:flex items-center gap-2">
-<span class="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[10px] font-bold tracking-widest rounded-full border border-emerald-500/20">🟢 API ACTIVE</span>
-<span class="px-3 py-1 bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 text-[10px] font-bold tracking-widest rounded-full border border-cyan-500/20">🧠 GEMINI NEURAL LIVE</span>
-</div>
-<div class="h-6 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
-<div class="flex items-center gap-2 relative">
-    <button class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-300 text-slate-500 dark:text-slate-400 active:scale-95" id="theme-toggle">
-    <span class="material-symbols-outlined dark:hidden" data-icon="dark_mode">dark_mode</span>
-    <span class="material-symbols-outlined hidden dark:inline-block" data-icon="light_mode">light_mode</span>
-    </button>
-    
-    <button onclick="toggleNotifications()" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-all duration-300 text-slate-500 dark:text-slate-400 relative active:scale-95">
-    <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
-    <span id="notif-badge" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#0b1326] transition-opacity"></span>
-    </button>
-
-    <div id="notification-dropdown" class="hidden absolute top-full right-0 mt-3 w-80 bg-white dark:bg-[#171f33] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden transition-colors duration-300 z-50">
-        <div class="p-4 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex items-center justify-between">
-            <h3 class="font-headline font-bold text-sm uppercase tracking-widest text-slate-800 dark:text-white">System Alerts</h3>
-            <span class="px-2 py-0.5 bg-red-500/20 text-red-600 dark:text-[#ffb4ab] text-[10px] font-bold rounded">2 NEW</span>
+<body>
+    <header>
+        <div class="brand"><span class="brand-mark"></span><span>Setu</span></div>
+        <div class="status-badge">
+            <div class="badge online">API Active</div>
         </div>
-        <div class="divide-y divide-slate-100 dark:divide-white/5 max-h-[300px] overflow-y-auto bg-white dark:bg-[#0b1326]">
-            <div class="p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer">
-                <div class="flex items-center gap-3 mb-1">
-                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                    <span class="text-xs font-bold text-slate-900 dark:text-white uppercase">Priority 0 Threat</span>
-                    <span class="text-[10px] text-slate-500 ml-auto font-mono">Just now</span>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" data-section="dashboard">Dashboard</button>
+        <button class="nav-btn" data-section="report">Report Need</button>
+        <button class="nav-btn" data-section="volunteer">Volunteer</button>
+        <button class="nav-btn" data-section="match">Match Engine</button>
+    </nav>
+
+    <div class="container">
+        <section id="dashboard" class="section active">
+            <div class="hero">
+                <div>
+                    <div class="eyebrow">Emergency coordination / minimalist control room</div>
+                    <h2>Coordinate relief effortlessly.</h2>
+                    <p class="subcopy">A unified interface to process incoming distress signals, match active personnel,
+                        and deploy supply lines without visual noise.</p>
                 </div>
-                <p class="text-xs text-slate-600 dark:text-[#bcc9cd] ml-5 leading-relaxed">SOS protocol activated by citizen in Western Ghats. Immediate dispatch required.</p>
-            </div>
-            <div class="p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer">
-                <div class="flex items-center gap-3 mb-1">
-                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                    <span class="text-xs font-bold text-slate-900 dark:text-white uppercase">Network Update</span>
-                    <span class="text-[10px] text-slate-500 ml-auto font-mono">10m ago</span>
+                <div class="hero-panel">
+                    <div class="hero-note">
+                        <strong>Process New Need</strong>
+                        <p>Capture details from ground zero directly into the central databank.</p>
+                    </div>
+                    <div class="hero-note" style="background:#1a1a1a;color:#fff; border-color:#1a1a1a;">
+                        <strong style="color:#fff;">Register Unit</strong>
+                        <p style="color:rgba(255,255,255,0.72);">Onboard new response volunteers.</p>
+                    </div>
                 </div>
-                <p class="text-xs text-slate-600 dark:text-[#bcc9cd] ml-5 leading-relaxed">22 new volunteers have successfully linked their field HUDs to Command.</p>
             </div>
-        </div>
-        <div class="p-3 border-t border-slate-100 dark:border-white/5 text-center bg-slate-50 dark:bg-white/5">
-            <button class="text-[10px] font-headline font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 hover:underline" onclick="toggleNotifications()">Mark all as read</button>
-        </div>
-    </div>
-</div>
-</div>
-</header>
 
-<main class="pt-24 pb-20 px-8 min-h-screen scanline relative z-0">
-<section class="max-w-5xl mx-auto mb-16 relative">
-    <div class="relative overflow-hidden rounded-2xl border border-red-500/30 shadow-[0_0_30px_rgba(239,68,68,0.1)] group transition-all duration-300 hover:border-red-500/50">
-        <div class="absolute inset-0 z-0">
-            <img src="https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=80&w=1600&auto=format&fit=crop" class="w-full h-full object-cover opacity-20 dark:opacity-30 mix-blend-overlay" alt="Tactical Background">
-            <div class="absolute inset-0 bg-gradient-to-b from-red-50/95 to-white/95 dark:from-[#0b1326]/95 dark:to-[#131b2e]/95"></div>
-        </div>
-        <div class="relative z-10 p-8 md:p-12 flex flex-col items-center text-center">
-            <div class="mb-4 relative">
-                <div class="absolute inset-0 bg-red-500/20 blur-xl rounded-full scale-150 animate-pulse"></div>
-                <span class="material-symbols-outlined text-red-600 dark:text-red-500 text-6xl relative z-10" style="font-variation-settings: 'FILL' 1, 'wght' 300;">warning</span>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-number" id="total-needs">-</div>
+                    <div class="stat-label">Open Needs</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="total-volunteers">-</div>
+                    <div class="stat-label">Volunteers</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="critical-cases">-</div>
+                    <div class="stat-label">Critical</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number" id="high-cases">-</div>
+                    <div class="stat-label">High Priority</div>
+                </div>
             </div>
-            <div class="inline-flex items-center gap-2 mb-4 px-3 py-1 bg-red-500/10 border border-red-400/30 rounded-full">
-                <span class="material-symbols-outlined text-red-500 text-sm animate-pulse" data-icon="emergency" style="font-variation-settings: 'FILL' 1;">emergency</span>
-                <span class="text-[10px] font-bold tracking-[0.2em] text-red-600 dark:text-[#ffb4ab] uppercase">Priority 0: Life Threat</span>
+
+            <!-- EMERGENCY BUTTON -->
+            <div class="emergency-cta" style="margin-top: 2.5rem;">
+                <div class="emergency-badge">🚨 Direct Access</div>
+                <div class="emergency-icon">⚠️</div>
+                <h2>Report Emergency Now</h2>
+                <p class="subcopy">In immediate need of help? Fill out this quick form to get instant AI processing and
+                    automated dispatch to nearest responders.</p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScEK6_bVlHR_NuSk7Ktl1dzXQNV1iXMYJnIiRXsaUXcLFgn6Q/viewform"
+                    target="_blank" rel="noopener noreferrer" class="emergency-btn">
+                    <span>📝</span> Open Emergency Form
+                </a>
             </div>
-            <h1 class="text-4xl md:text-5xl font-headline font-bold text-slate-900 dark:text-white mb-4 tracking-tighter transition-colors duration-300">
-                REPORTER / CITIZEN <span class="text-red-600 dark:text-red-500">SOS</span>
-            </h1>
-            <p class="text-sm md:text-base text-slate-600 dark:text-[#bcc9cd] font-body mb-8 max-w-2xl transition-colors duration-300">
-                I need immediate rescue or medical aid. Activating this protocol bypasses all queues and initiates <span class="text-red-600 dark:text-[#ffb4ab] font-bold">SETU Response Level 5</span>.
-            </p>
-            <div class="relative group/btn">
-                <div class="absolute -inset-1 bg-red-500 rounded-lg blur opacity-40 group-hover/btn:opacity-70 transition duration-500"></div>
-                <button onclick="openModal()" class="relative bg-red-600 dark:bg-[#a40217] text-white px-8 py-4 rounded-lg text-lg font-headline font-bold uppercase tracking-widest flex items-center gap-3 transition-all active:scale-95 animate-pulse-red hover:bg-red-700 dark:hover:bg-red-700">
-                    <span class="material-symbols-outlined text-2xl" data-icon="sos">sos</span>
-                    Initiate Emergency SOS
+
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Recent Report</h3>
+                    <div id="recent-need-card">
+                        <p class="text-muted">Loading...</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>System Notes</h3>
+                    <p>All requests are authenticated and routed through the live backend. The interface stays light on
+                        purpose so the data is what stands out.</p>
+                </div>
+            </div>
+
+            <div class="mt-2 text-center">
+                <button class="btn btn-secondary btn-small" onclick="refreshDashboard()">Refresh Now</button>
+            </div>
+        </section>
+
+        <section id="report" class="section">
+            <div class="emergency-cta">
+                <div class="emergency-badge">🚨 Priority Access</div>
+                <div class="emergency-icon">⚠️</div>
+                <h2>Report Emergency Need</h2>
+                <p class="subcopy">Submit an urgent request for assistance. Your report will be processed by AI,
+                    verified, and automatically routed to available responders.</p>
+                <button class="emergency-btn" onclick="scrollToForm()">
+                    <span>➜</span> Open Report Form
                 </button>
             </div>
-        </div>
-    </div>
-</section>
 
-<section id="missions" class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-<div class="bg-white/90 dark:bg-[#171f33]/90 backdrop-blur-md p-8 rounded-xl border border-slate-200 dark:border-primary/20 shadow-sm hover:border-cyan-400 dark:hover:border-primary/40 glow-primary transition-all duration-300 group">
-<div class="flex justify-between items-start mb-6">
-<div class="p-3 bg-cyan-50 dark:bg-primary/10 rounded-lg text-cyan-600 dark:text-primary transition-colors">
-<span class="material-symbols-outlined text-3xl" data-icon="volunteer_activism">volunteer_activism</span>
-</div>
-<span class="text-[10px] font-bold text-cyan-600/60 dark:text-primary/60 tracking-widest uppercase">Personnel Only</span>
-</div>
-<h3 class="text-2xl font-headline font-bold text-slate-900 dark:text-[#dae2fd] mb-3 uppercase tracking-tight transition-colors">Ground Volunteer</h3>
-<p class="text-slate-500 dark:text-[#bcc9cd] text-sm mb-8 leading-relaxed transition-colors">
-                    Access mission tactical data, real-time victim coordinates, and field logistics. Requires Level 1 Clearance.
-                </p>
-<button onclick="openAuthModal()" class="w-full py-4 bg-slate-50 dark:bg-[#2d3449] border border-slate-200 dark:border-primary/30 text-cyan-600 dark:text-primary font-headline font-bold uppercase tracking-widest text-sm hover:bg-cyan-600 hover:text-white dark:hover:bg-primary dark:hover:text-slate-900 transition-all duration-300 flex items-center justify-center gap-2">
-                    Enter Tactical Field HUD
-                    <span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span>
-</button>
-</div>
+            <div class="card">
+                <form id="need-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="need-name">Reporter Name *</label>
+                            <input type="text" id="need-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="need-phone">Phone Number *</label>
+                            <input type="tel" id="need-phone" required>
+                        </div>
+                    </div>
 
-<div class="bg-white/90 dark:bg-[#171f33]/90 backdrop-blur-md p-8 rounded-xl border border-slate-200 dark:border-tertiary/20 shadow-sm hover:border-amber-500 dark:hover:border-tertiary/40 transition-all duration-300 group">
-<div class="flex justify-between items-start mb-6">
-<div class="p-3 bg-amber-50 dark:bg-tertiary/10 rounded-lg text-amber-600 dark:text-tertiary transition-colors">
-<span class="material-symbols-outlined text-3xl" data-icon="corporate_fare">corporate_fare</span>
-</div>
-<span class="text-[10px] font-bold text-amber-600/60 dark:text-tertiary/60 tracking-widest uppercase">Admin Auth</span>
-</div>
-<h3 class="text-2xl font-headline font-bold text-slate-900 dark:text-[#dae2fd] mb-3 uppercase tracking-tight transition-colors">NGO Command</h3>
-<p class="text-slate-500 dark:text-[#bcc9cd] text-sm mb-8 leading-relaxed transition-colors">
-                    Orchestrate resources, manage relief zones, and authorize high-level AI deployment. Requires Admin Token.
-                </p>
-<button onclick="openAdminAuthModal()" class="w-full py-4 bg-slate-50 dark:bg-[#2d3449] border border-slate-200 dark:border-tertiary/30 text-amber-600 dark:text-tertiary font-headline font-bold uppercase tracking-widest text-sm hover:bg-amber-600 hover:text-white dark:hover:bg-tertiary dark:hover:text-slate-900 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer">
-                    Access Resource Command
-                    <span class="material-symbols-outlined text-sm" data-icon="shield_lock">shield_lock</span>
-</button>
-</div>
-</section>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="need-location">Location *</label>
+                            <input type="text" id="need-location" placeholder="e.g., Gomti Nagar, Lucknow" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="need-disaster">Disaster Type *</label>
+                            <input type="text" id="need-disaster" placeholder="e.g., flood, earthquake" required>
+                        </div>
+                    </div>
 
-<section id="telemetry" class="max-w-6xl mx-auto">
-<div class="flex items-center justify-between mb-6">
-<div class="flex items-center gap-3">
-<span class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
-<h2 class="text-lg font-headline font-bold tracking-widest uppercase text-slate-900 dark:text-[#dae2fd] transition-colors duration-300">Live Telemetry Feed</h2>
-</div>
-</div>
-<div class="bg-white/90 dark:bg-[#131b2e]/90 backdrop-blur-md border border-slate-200 dark:border-outline-variant/20 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-outline-variant/10 shadow-sm transition-colors duration-300">
-<div class="p-6 flex items-start gap-8 hover:bg-slate-50/50 dark:hover:bg-[#222a3d]/50 transition-colors">
-<span class="font-mono text-xs text-red-600/70 dark:text-red-500/70 whitespace-nowrap pt-1">14:22:18 UTC</span>
-<div class="flex-1">
-<div class="flex items-center gap-3 mb-2">
-<span class="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded">CRITICAL</span>
-<span class="text-slate-900 dark:text-[#dae2fd] font-headline font-medium transition-colors duration-300">Flash Flood - Zone Alpha 9 (Western Ghats)</span>
-</div>
-<p class="text-sm text-slate-600 dark:text-[#bcc9cd] leading-relaxed mb-4 transition-colors duration-300">
-                            Abnormal precipitation detected. Water levels rising @ 1.2m/hr. Neural prediction suggests evacuation mandate for sub-sectors 4-9.
-                        </p>
-</div>
-</div>
-</div>
-</section>
-</main>
+                    <div class="form-group">
+                        <label for="need-help">Help Needed *</label>
+                        <input type="text" id="need-help" placeholder="e.g., rescue, medical, food" required>
+                    </div>
 
-<footer class="fixed bottom-0 w-full z-50 bg-white/80 dark:bg-[#0b1326]/80 backdrop-blur-md border-t border-slate-200 dark:border-white/5 flex justify-between items-center px-6 py-2 transition-colors duration-300">
-<div class="flex items-center gap-4">
-<span class="text-slate-500 text-[10px] tabular-nums tracking-normal font-['Inter']">SETU AI DASHBOARD</span>
-<span class="text-slate-500 text-[10px] tabular-nums tracking-normal font-['Inter']">© 2024 EMERGENCY PROTOCOL v4.2</span>
-</div>
-</footer>
+                    <div class="form-group">
+                        <label for="need-description">Description (min 10 chars) *</label>
+                        <textarea id="need-description"
+                            placeholder="Provide detailed information about the situation..." required></textarea>
+                    </div>
 
-<div id="sosModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 transition-opacity duration-300">
-    <div class="relative w-full max-w-2xl bg-white dark:bg-[#131b2e] rounded-2xl shadow-2xl overflow-hidden flex flex-col h-[85vh] border border-red-500/30">
-        <div class="flex justify-between items-center p-5 bg-red-600 text-white shadow-md z-10">
-            <h2 class="font-headline font-bold text-xl tracking-widest uppercase flex items-center gap-2">
-                <span class="material-symbols-outlined">warning</span>
-                Emergency SOS Protocol
-            </h2>
-            <button onclick="closeModal()" class="text-white hover:text-red-200 transition-colors outline-none">
-                <span class="material-symbols-outlined text-3xl">close</span>
-            </button>
-        </div>
-        <div class="flex-1 w-full bg-slate-50 dark:bg-[#0b1326] relative">
-            <iframe src="https://docs.google.com/forms/d/13BbRMNijCOY15XiW61WrUGWtuumdP0sZyCfpuAHYjKs/viewform?embedded=true" width="100%" height="100%" frameborder="0" marginheight="0" marginwidth="0" class="absolute inset-0">Loading form...</iframe>
-        </div>
-    </div>
-</div>
+                    <div id="need-feedback" class="feedback"></div>
 
-<div id="auth-modal" class="fixed inset-0 bg-slate-900/80 dark:bg-black/80 z-[100] hidden items-center justify-center p-6 backdrop-blur-sm transition-opacity duration-300">
-    <div class="bg-white dark:bg-[#171f33] border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transition-colors duration-300">
-        <div class="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex items-center justify-between transition-colors duration-300">
-            <h3 class="font-headline font-bold text-lg uppercase tracking-tight text-cyan-700 dark:text-[#00fbfb]">System Authentication</h3>
-            <button class="text-slate-400 dark:text-[#b9cac9] hover:text-slate-900 dark:hover:text-white transition-colors" onclick="closeAuthModal()">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-        
-        <div id="auth-choice-step" class="p-6 space-y-4">
-            <button onclick="window.open('https://docs.google.com/forms/d/e/1FAIpQLSclY6jrgE1n3PmEiBQuTwO8o5Ew9QuOrN3_zyTnDLEUbpladw/viewform?usp=header', '_blank')" class="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-cyan-500 dark:hover:border-[#00fbfb] bg-slate-50 dark:bg-[#060d20] flex items-center gap-4 transition-all group">
-                <div class="w-10 h-10 rounded-full bg-cyan-100 dark:bg-[#00fbfb]/10 flex items-center justify-center text-cyan-600 dark:text-[#00fbfb]">
-                    <span class="material-symbols-outlined">person_add</span>
+                    <button type="submit" class="btn btn-primary">Submit Report</button>
+                </form>
+            </div>
+
+            <div id="need-result" class="card" style="margin-top: 2rem; display: none;">
+                <h3>Report Processed</h3>
+                <div id="need-result-content"></div>
+            </div>
+        </section>
+
+        <section id="volunteer" class="section">
+            <h2>Volunteer Portal</h2>
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--line);">
+                <button class="vol-tab-btn active" data-tab="vol-login"
+                    style="padding: 0.8rem 1rem; border: 0; background: transparent; cursor: pointer; border-bottom: 2px solid var(--text); font-weight: 500;">Login</button>
+                <button class="vol-tab-btn" data-tab="vol-register"
+                    style="padding: 0.8rem 1rem; border: 0; background: transparent; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; font-weight: 500;">Register</button>
+            </div>
+
+            <!-- Login Tab -->
+            <div id="vol-login" class="vol-tab-content active" style="display: block;">
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Sign In to Volunteer Portal</h3>
+                    <form id="volunteer-login-form">
+                        <div class="form-group">
+                            <label for="vol-login-email">Email Address *</label>
+                            <input type="email" id="vol-login-email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vol-login-password">Password *</label>
+                            <input type="password" id="vol-login-password" required>
+                        </div>
+
+                        <div id="volunteer-login-feedback" class="feedback"></div>
+
+                        <button type="submit" class="btn btn-primary">Sign In</button>
+                    </form>
                 </div>
-                <div class="text-left">
-                    <div class="font-bold text-slate-900 dark:text-white">Register as New User</div>
-                    <div class="text-[10px] text-slate-500 uppercase tracking-widest">Fill out the Registration Form</div>
-                </div>
-            </button>
 
-            <button onclick="showLoginStep()" class="w-full p-4 rounded-xl border border-slate-200 dark:border-white/10 hover:border-emerald-500 dark:hover:border-emerald-400 bg-slate-50 dark:bg-[#060d20] flex items-center gap-4 transition-all group">
-                <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                    <span class="material-symbols-outlined">login</span>
+                <div id="volunteer-login-result" class="card" style="margin-top: 2rem; display: none;">
+                    <h3>✓ Login Successful</h3>
+                    <div id="volunteer-login-result-content"></div>
                 </div>
-                <div class="text-left">
-                    <div class="font-bold text-slate-900 dark:text-white">Already a User</div>
-                    <div class="text-[10px] text-slate-500 uppercase tracking-widest">Login with ID & Password</div>
-                </div>
-            </button>
-        </div>
+            </div>
 
-        <div id="auth-login-step" class="p-6 space-y-4 hidden">
-            <div>
-                <label class="text-[10px] uppercase text-slate-500 dark:text-[#b9cac9] font-bold tracking-widest block mb-1">User ID</label>
-                <input id="login-userid" class="w-full bg-white dark:bg-[#060d20] border-slate-300 dark:border-white/10 rounded-lg p-3 text-sm text-slate-900 dark:text-[#dbe2fd] focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-colors duration-300" type="text" placeholder="e.g. VT-8812"/>
+            <!-- Register Tab -->
+            <div id="vol-register" class="vol-tab-content" style="display: none;">
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Register as a Volunteer</h3>
+                    <form id="volunteer-register-form">
+                        <div class="form-group">
+                            <label for="vol-reg-email">Email Address *</label>
+                            <input type="email" id="vol-reg-email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vol-reg-password">Password *</label>
+                            <input type="password" id="vol-reg-password" placeholder="Min. 6 characters" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="vol-reg-name">Full Name *</label>
+                                <input type="text" id="vol-reg-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="vol-reg-phone">Phone Number *</label>
+                                <input type="tel" id="vol-reg-phone" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vol-reg-location">Location *</label>
+                            <input type="text" id="vol-reg-location" placeholder="Base location or home address"
+                                required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vol-reg-skills">Skills (comma-separated) *</label>
+                            <input type="text" id="vol-reg-skills" placeholder="e.g., rescue, medical, food, shelter"
+                                required>
+                        </div>
+
+                        <div id="volunteer-register-feedback" class="feedback"></div>
+
+                        <button type="submit" class="btn btn-primary">Create Account</button>
+                    </form>
+                </div>
+
+                <div id="volunteer-register-result" class="card" style="margin-top: 2rem; display: none;">
+                    <h3>✓ Registration Complete</h3>
+                    <div id="volunteer-register-result-content"></div>
+                </div>
             </div>
-            <div>
-                <label class="text-[10px] uppercase text-slate-500 dark:text-[#b9cac9] font-bold tracking-widest block mb-1">Password</label>
-                <input id="login-password" class="w-full bg-white dark:bg-[#060d20] border-slate-300 dark:border-white/10 rounded-lg p-3 text-sm text-slate-900 dark:text-[#dbe2fd] focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-colors duration-300" type="password" placeholder="••••••••"/>
+        </section>
+
+        <section id="match" class="section">
+            <h2>Match Engine - Assign Volunteers to Needs</h2>
+            <div class="card">
+                <p class="text-muted">The match engine uses AI to automatically assign available volunteers to open
+                    emergency needs based on proximity, skills, and priority.</p>
+                <button class="btn btn-primary" onclick="runMatchEngine()">Run Match Engine</button>
             </div>
-            <div class="pt-4 flex gap-3">
-                <button class="flex-1 py-3 rounded-lg font-headline text-xs font-bold uppercase border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-white transition-colors" onclick="showChoiceStep()">Back</button>
-                <button class="flex-1 py-3 rounded-lg font-headline text-xs font-bold uppercase bg-cyan-600 dark:bg-[#00fbfb] text-white dark:text-[#003737] hover:bg-cyan-700 hover:brightness-110 transition-all" onclick="processLogin()">Login</button>
+
+            <div id="match-feedback" class="feedback"></div>
+
+            <div id="match-results" style="margin-top: 2rem; display: none;">
+                <h3>Assignment Results</h3>
+                <div class="card">
+                    <p><strong>Total Assignments Made: </strong><span id="match-count">0</span></p>
+                    <ul class="list" id="match-list"></ul>
+                </div>
             </div>
-        </div>
+
+            <div id="match-loading" style="margin-top: 2rem; display: none;">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <span>Running match engine...</span>
+                </div>
+            </div>
+        </section>
     </div>
-</div>
 
-<div id="admin-auth-modal" class="fixed inset-0 bg-slate-900/80 dark:bg-black/80 z-[100] hidden items-center justify-center p-6 backdrop-blur-sm transition-opacity duration-300">
-    <div class="bg-white dark:bg-[#171f33] border border-amber-500/30 rounded-2xl w-full max-w-md overflow-hidden shadow-[0_0_30px_rgba(245,158,11,0.15)] transition-colors duration-300">
-        <div class="p-6 border-b border-slate-100 dark:border-white/5 bg-amber-50 dark:bg-tertiary/10 flex items-center justify-between">
-            <h3 class="font-headline font-bold text-lg uppercase tracking-tight text-amber-700 dark:text-tertiary flex items-center gap-2">
-                <span class="material-symbols-outlined">shield_lock</span>
-                Admin Clearance
-            </h3>
-            <button class="text-slate-400 dark:text-[#b9cac9] hover:text-slate-900 dark:hover:text-white transition-colors" onclick="closeAdminAuthModal()">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-        
-        <div class="p-6 space-y-4">
-            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Please enter your Level 4 Authorization Code to access the NGO Command Center.</p>
-            <div>
-                <label class="text-[10px] uppercase text-slate-500 dark:text-[#b9cac9] font-bold tracking-widest block mb-1">Authorization Code</label>
-                <input id="admin-passcode" class="w-full bg-white dark:bg-[#060d20] border-slate-300 dark:border-white/10 rounded-lg p-3 text-sm text-slate-900 dark:text-[#dbe2fd] focus:ring-amber-500 focus:border-amber-500 outline-none transition-colors duration-300 font-mono tracking-widest text-center" type="password" placeholder="ENTER CODE"/>
-                <p id="admin-error" class="text-red-500 dark:text-error text-xs mt-2 hidden font-bold text-center">❌ ACCESS DENIED: Invalid Clearance Code.</p>
-            </div>
-            
-            <div class="pt-4 flex gap-3">
-                <button class="flex-1 py-3 rounded-lg font-headline text-xs font-bold uppercase border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-white transition-colors" onclick="closeAdminAuthModal()">Cancel</button>
-                <button class="flex-1 py-3 rounded-lg font-headline text-xs font-bold uppercase bg-amber-600 dark:bg-tertiary text-white dark:text-[#2a1700] hover:bg-amber-700 hover:brightness-110 transition-all" onclick="verifyAdminPasscode()">Verify</button>
-            </div>
-        </div>
-    </div>
-</div>
+    <footer>
+        <p>&copy; 2026 SETU AI Emergency Response System | Deep Integration v1.0</p>
+    </footer>
 
-<script>
-        // --- ✨ NOTIFICATION SYSTEM LOGIC ✨ ---
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notification-dropdown');
-            const badge = document.getElementById('notif-badge');
-            
-            if (dropdown.classList.contains('hidden')) {
-                dropdown.classList.remove('hidden');
-                // Optional: remove red dot immediately upon opening
-                if(badge) badge.classList.add('opacity-0');
-            } else {
-                dropdown.classList.add('hidden');
-                // Ensure red dot stays hidden once checked
-                if(badge) badge.style.display = 'none';
+    <script>
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const sectionId = e.target.getAttribute('data-section');
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(sectionId).classList.add('active');
+                if (sectionId === 'dashboard') {
+                    refreshDashboard();
+                }
+            });
+        });
+
+        function showFeedback(elementId, message, type = 'info') {
+            const feedback = document.getElementById(elementId);
+            feedback.textContent = message;
+            feedback.className = `feedback show ${type}`;
+            setTimeout(() => feedback.classList.remove('show'), 5000);
+        }
+
+        async function refreshDashboard() {
+            try {
+                const data = await api.getDashboardStats();
+                document.getElementById('total-needs').textContent = data.total_needs || 0;
+                document.getElementById('total-volunteers').textContent = data.total_volunteers || 0;
+                document.getElementById('critical-cases').textContent = data.critical_priority_cases || 0;
+                document.getElementById('high-cases').textContent = data.high_priority_cases || 0;
+
+                const recentNeed = data.recent_need;
+                const recentCard = document.getElementById('recent-need-card');
+                if (recentNeed) {
+                    recentCard.innerHTML = `
+                        <div><strong>Description:</strong> ${recentNeed.description || 'N/A'}</div>
+                        <div class="mt-2"><strong>Category:</strong> ${recentNeed.category || 'N/A'} | <strong>Severity:</strong> ${recentNeed.severity || 'N/A'}</div>
+                        <div class="mt-2"><strong>Status:</strong> ${recentNeed.status || 'N/A'} | <strong>Trust Score:</strong> ${recentNeed.trust_score || 'N/A'}</div>
+                    `;
+                } else {
+                    recentCard.innerHTML = '<p class="text-muted">No recent reports yet.</p>';
+                }
+            } catch (error) {
+                console.error('Dashboard load failed:', error);
             }
         }
 
-        // Close notifications if clicked outside
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('notification-dropdown');
-            const notifBtn = document.getElementById('notif-btn'); // Needs id added if implementing strict outside click
-            
-            // Basic close logic
-            if (!event.target.closest('#notification-dropdown') && !event.target.closest('button[onclick="toggleNotifications()"]')) {
-                dropdown.classList.add('hidden');
+        document.getElementById('need-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                reporter_name: document.getElementById('need-name').value,
+                reporter_phone: document.getElementById('need-phone').value,
+                location_text: document.getElementById('need-location').value,
+                disaster_type: document.getElementById('need-disaster').value,
+                help_needed: document.getElementById('need-help').value,
+                description: document.getElementById('need-description').value,
+            };
+
+            try {
+                const result = await api.submitNeed(payload);
+                if (result.error) {
+                    showFeedback('need-feedback', `Error: ${result.error}`, 'error');
+                    return;
+                }
+
+                showFeedback('need-feedback', `Report submitted successfully! Priority: ${result.priority || 'Pending'}`, 'success');
+                const resultDiv = document.getElementById('need-result');
+                const content = document.getElementById('need-result-content');
+                content.innerHTML = `
+                    <div class="card">
+                        <p><strong>Category:</strong> ${result.category || 'N/A'}</p>
+                        <p><strong>Severity:</strong> ${result.severity || 'N/A'}</p>
+                        <p><strong>Trust Score:</strong> ${result.trust_score || 0}/100</p>
+                        <p><strong>Dispatch Action:</strong> <span class="badge-status ${result.dispatch_action === 'auto_dispatch' ? 'assigned' : 'pending'}">${result.dispatch_action || 'N/A'}</span></p>
+                        <p><strong>Priority:</strong> ${result.priority || 'N/A'}</p>
+                        <div style="margin-top: 1rem;">
+                            <strong>Trust Reasons:</strong>
+                            <ul style="margin-left: 1rem; margin-top: 0.5rem;">
+                                ${(result.trust_reasons || []).map(r => `<li>${r}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+                e.target.reset();
+            } catch (error) {
+                showFeedback('need-feedback', `Error: ${error.message}`, 'error');
             }
         });
 
+        document.getElementById('volunteer-login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('vol-login-email').value;
+            const password = document.getElementById('vol-login-password').value;
 
-        // Form Popup Logic (SOS)
-        function openModal() {
-            document.getElementById('sosModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeModal() {
-            document.getElementById('sosModal').classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-
-        // --- ADMIN AUTHENTICATION LOGIC ---
-        function openAdminAuthModal() {
-            const modal = document.getElementById('admin-auth-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.getElementById('admin-error').classList.add('hidden'); 
-            document.getElementById('admin-passcode').value = ''; 
-            document.body.style.overflow = 'hidden';
-        }
-        function closeAdminAuthModal() {
-            const modal = document.getElementById('admin-auth-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = 'auto';
-        }
-        function verifyAdminPasscode() {
-            const passcode = document.getElementById('admin-passcode').value;
-            if (passcode === "ADMIN123") {
-                window.location.href = "ngo-dashboard.html";
-            } else {
-                document.getElementById('admin-error').classList.remove('hidden');
-            }
-        }
-
-        // --- VOLUNTEER AUTHENTICATION MODAL LOGIC ---
-        function openAuthModal() {
-            const modal = document.getElementById('auth-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
-            showChoiceStep(); 
-        }
-        function closeAuthModal() {
-            const modal = document.getElementById('auth-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = 'auto';
-        }
-        function showLoginStep() {
-            document.getElementById('auth-choice-step').classList.add('hidden');
-            document.getElementById('auth-login-step').classList.remove('hidden');
-        }
-        function showChoiceStep() {
-            document.getElementById('auth-login-step').classList.add('hidden');
-            document.getElementById('auth-choice-step').classList.remove('hidden');
-        }
-        async function processLogin() {
-            const userId = document.getElementById('login-userid').value;
-            const password = document.getElementById('login-password').value;
-            if(userId.trim() !== "" && password.trim() !== "") {
-                try {
-                    const res = await api.login(userId, password);
-                    if (res.success) {
-                        window.location.href = "code.html"; 
-                    }
-                } catch (e) {
-                    alert("Login failed.");
+            try {
+                const result = await api.loginVolunteer(email, password);
+                if (result.error) {
+                    showFeedback('volunteer-login-feedback', `Error: ${result.error}`, 'error');
+                    return;
                 }
-            } else {
-                alert("Please enter a valid User ID and Password to proceed!");
+
+                showFeedback('volunteer-login-feedback', `Welcome back, ${result.name}!`, 'success');
+                const resultDiv = document.getElementById('volunteer-login-result');
+                const content = document.getElementById('volunteer-login-result-content');
+                content.innerHTML = `
+                    <p><strong>Email:</strong> ${result.email}</p>
+                    <p><strong>Volunteer ID:</strong> ${result.volunteer_id}</p>
+                    <p class="text-muted" style="margin-top: 1rem;">You're now logged in and ready to receive emergency assignments.</p>
+                `;
+                resultDiv.style.display = 'block';
+                e.target.reset();
+            } catch (error) {
+                showFeedback('volunteer-login-feedback', `Error: ${error.message}`, 'error');
+            }
+        });
+
+        document.getElementById('volunteer-register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                email: document.getElementById('vol-reg-email').value,
+                password: document.getElementById('vol-reg-password').value,
+                name: document.getElementById('vol-reg-name').value,
+                phone: document.getElementById('vol-reg-phone').value,
+                location: document.getElementById('vol-reg-location').value,
+                skills: document.getElementById('vol-reg-skills').value.split(',').map(s => s.trim().toLowerCase()).filter(s => s),
+            };
+
+            if (payload.password.length < 6) {
+                showFeedback('volunteer-register-feedback', 'Password must be at least 6 characters', 'warning');
+                return;
+            }
+
+            try {
+                const result = await api.registerVolunteerWithAuth(payload);
+                if (result.error) {
+                    showFeedback('volunteer-register-feedback', `Error: ${result.error}`, 'error');
+                    return;
+                }
+
+                showFeedback('volunteer-register-feedback', 'Account created successfully! You can now login.', 'success');
+                const resultDiv = document.getElementById('volunteer-register-result');
+                const content = document.getElementById('volunteer-register-result-content');
+                content.innerHTML = `
+                    <p><strong>Volunteer ID:</strong> ${result.volunteer_id}</p>
+                    <p class="mt-2">Your account has been created and added to the system. Use your email and password to login anytime.</p>
+                    <p class="text-muted" style="margin-top: 1rem; font-size: 0.9rem;">Switch to the Login tab to sign in.</p>
+                `;
+                resultDiv.style.display = 'block';
+                e.target.reset();
+            } catch (error) {
+                showFeedback('volunteer-register-feedback', `Error: ${error.message}`, 'error');
+            }
+        });
+
+        async function runMatchEngine() {
+            const btn = event.target;
+            const loading = document.getElementById('match-loading');
+            const results = document.getElementById('match-results');
+
+            btn.disabled = true;
+            btn.textContent = 'Running...';
+            loading.style.display = 'block';
+            results.style.display = 'none';
+
+            try {
+                const result = await api.runMatchEngine();
+                document.getElementById('match-count').textContent = result.total_matches_made || 0;
+
+                const matchList = document.getElementById('match-list');
+                if (result.matches && result.matches.length > 0) {
+                    matchList.innerHTML = result.matches.map(m => `
+                        <li class="list-item">
+                            <div>
+                                <div class="list-item-title">Need #${m.need_id}</div>
+                                <div class="list-item-meta">${m.assigned_volunteer}${m.distance_km ? ` (${m.distance_km} km away)` : ''}</div>
+                            </div>
+                            <span class="badge-status ${m.status}">${m.status}</span>
+                        </li>
+                    `).join('');
+                } else {
+                    matchList.innerHTML = '<li class="list-item"><p class="text-muted">No matches generated.</p></li>';
+                }
+
+                results.style.display = 'block';
+                showFeedback('match-feedback', `Match complete: ${result.total_matches_made || 0} assignments evaluated`, 'success');
+            } catch (error) {
+                showFeedback('match-feedback', `Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Run Match Engine';
+                loading.style.display = 'none';
             }
         }
 
+        window.addEventListener('load', () => {
+            refreshDashboard();
+            setInterval(refreshDashboard, 30000);
+            setupVolunteerTabs();
+        });
 
+        function setupVolunteerTabs() {
+            document.querySelectorAll('.vol-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabName = btn.getAttribute('data-tab');
+                    // Hide all tabs
+                    document.querySelectorAll('.vol-tab-content').forEach(tab => tab.style.display = 'none');
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.vol-tab-btn').forEach(b => b.classList.remove('active'));
+                    // Show selected tab
+                    document.getElementById(tabName).style.display = 'block';
+                    // Add active class to clicked button
+                    btn.classList.add('active');
+                    // Update button style
+                    document.querySelectorAll('.vol-tab-btn').forEach(b => {
+                        if (b.classList.contains('active')) {
+                            b.style.borderBottomColor = 'var(--text)';
+                            b.style.color = 'var(--text)';
+                        } else {
+                            b.style.borderBottomColor = 'transparent';
+                            b.style.color = 'var(--muted)';
+                        }
+                    });
+                });
+            });
+        }
 
-        // --- Dark/Light Theme Logic ---
-        // Extracted to js/theme.js
+        function scrollToForm() {
+            const formCard = document.querySelector('#report .card form');
+            if (formCard) {
+                formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                formCard.parentElement.querySelector('input').focus();
+            }
+        }
     </script>
 </body>
+
 </html>

@@ -6,10 +6,11 @@ from dotenv import load_dotenv
 # Load from shared config folder
 load_dotenv(dotenv_path="config/.env")
 
-SECRET_TOKEN = os.getenv("SECRET_TOKEN")
+SECRET_TOKEN = os.getenv("SECRET_TOKEN", "hackathon-secret")
 
 # Single shared security scheme for all routers
 security = HTTPBearer(auto_error=False)
+
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """
@@ -17,8 +18,5 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     Raises 401 if token is missing or incorrect.
     """
     if not credentials or credentials.credentials != SECRET_TOKEN:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or missing token."
-        )
+        raise HTTPException(status_code=401, detail="Invalid or missing token.")
     return credentials.credentials

@@ -15,7 +15,7 @@ def dashboard():
     total_needs = len(needs)
     total_volunteers = len(vols)
 
-    # 🔥 severity counts
+    # 🔥 severity counts (Using safe .get() to prevent KeyErrors)
     critical = sum(1 for n in needs if n.get("severity") == "critical")
     high = sum(1 for n in needs if n.get("severity") == "high")
     medium = sum(1 for n in needs if n.get("severity") == "medium")
