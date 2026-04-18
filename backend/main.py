@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, BackgroundTasks  # ✅ FIX 1: Added BackgroundTasks
+from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -22,40 +22,35 @@ from database.geocoding import get_coordinates
 
 app = FastAPI()
 
+# 🔒 Rate limiter
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# 🔥 CORS FIX (IMPORTANT)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-    ],
+    allow_origins=["*"],   # 🔥 allow all for demo
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # 🏠 Home
 @app.get("/")
 def home():
     return {"message": "Backend is running"}
 
-
 # 💚 Health
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
-
-# 🔗 NEED WEBHOOK (FIXED)
+# 🔗 NEED WEBHOOK
 @app.post("/webhook")
 @limiter.limit("5/minute")
-def webhook(request: Request, payload: dict, background_tasks: BackgroundTasks):  # ✅ Removed 'async', changed Request to dict
+def webhook(request: Request, payload: dict, background_tasks: BackgroundTasks):
     try:
-        # ✅ No more 'await request.json()' needed! FastAPI parses it automatically.
         mapped_data = {
             "reporter_name": payload.get("name", "Unknown"),
             "reporter_phone": payload.get("phone", "0000000000"),
@@ -65,13 +60,15 @@ def webhook(request: Request, payload: dict, background_tasks: BackgroundTasks):
             "help_needed": payload.get("help_needed", "Not Specified"),
         }
 
-        # Direct function call
         need_input = NeedInput(**mapped_data)
-        
-        # Adding flush=True to force Python to print immediately before moving on
-        print("🚀 [SYSTEM] Routing to Core AI Engine...", flush=True) 
-        
-        result = create_need(data=need_input, background_tasks=background_tasks, token="webhook_override")
+
+        print("🚀 [SYSTEM] Routing to Core AI Engine...", flush=True)
+
+        result = create_need(
+            data=need_input,
+            background_tasks=background_tasks,
+            token="webhook_override"
+        )
 
         return {"message": "Webhook processed successfully", "data": result}
 
@@ -79,10 +76,10 @@ def webhook(request: Request, payload: dict, background_tasks: BackgroundTasks):
         print("❌ Webhook Error:", e, flush=True)
         return {"error": str(e)}
 
-# 🔗 VOLUNTEER WEBHOOK (FIXED)
+# 🔗 VOLUNTEER WEBHOOK
 @app.post("/volunteer_webhook")
 @limiter.limit("5/minute")
-def volunteer_webhook(request: Request, payload: dict):  # ✅ Removed 'async'
+def volunteer_webhook(request: Request, payload: dict):
     try:
         coords = get_coordinates(payload.get("location", "")) or {"lat": 0, "lng": 0}
 
@@ -99,7 +96,7 @@ def volunteer_webhook(request: Request, payload: dict):  # ✅ Removed 'async'
             "ngo_id": payload.get("ngo_id", None)
         }
 
-        # Validate NGO and grant Tier 1 status if verified
+        # NGO verification
         if mapped_volunteer.get("ngo_id"):
             from database.ngos_db import get_ngo
             ngo = get_ngo(mapped_volunteer["ngo_id"])
@@ -116,12 +113,11 @@ def volunteer_webhook(request: Request, payload: dict):  # ✅ Removed 'async'
         print("❌ Volunteer Webhook Error:", e, flush=True)
         return {"error": str(e)}
 
-
 # 📦 Routers
 app.include_router(need_router)
 app.include_router(volunteer_router)
 app.include_router(volunteer_auth_router)
 app.include_router(match_router)
 app.include_router(dashboard_router)
-app.include_router(assignment_router)  # ✅ FIX 3: Added missing router
+app.include_router(assignment_router)
 app.include_router(ngo_router)

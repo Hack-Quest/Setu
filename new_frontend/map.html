@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Setu Tactical Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+        }
+
+        #map {
+            height: 100vh;
+        }
+
+        .leaflet-popup-content {
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script>
+        const API = "http://127.0.0.1:8000/dashboard/reports";
+
+        // 🌍 Initialize map
+        const map = L.map('map').setView([20.5937, 78.9629], 5);
+
+        // 🗺️ Base layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // 📦 Layer group
+        let markersLayer = L.layerGroup().addTo(map);
+
+        // 🎨 Severity colors
+        function getColor(severity) {
+            severity = (severity || '').toLowerCase();
+            if (severity === 'critical') return 'red';
+            if (severity === 'high') return 'orange';
+            if (severity === 'medium') return 'yellow';
+            return 'green';
+        }
+
+        // 🔄 Load data
+        async function loadNeeds() {
+            try {
+                const res = await fetch(API, {
+                    headers: { Authorization: 'Bearer hackathon-secret' }
+                });
+
+                const data = await res.json();
+
+                console.log("FULL API RESPONSE:", data); // 🔥 DEBUG
+
+                // clear old markers
+                markersLayer.clearLayers();
+
+                (data.reports || []).forEach(r => {
+
+                    console.log("REPORT:", r); // 🔥 DEBUG EACH ENTRY
+
+                    // ✅ FIXED CONDITION
+                    if (r.lat === null || r.lng === null || r.lat === undefined || r.lng === undefined) {
+                        console.log("❌ Skipping invalid coords:", r);
+                        return;
+                    }
+
+                    // 🧠 Force number (sometimes string comes)
+                    const lat = parseFloat(r.lat);
+                    const lng = parseFloat(r.lng);
+
+                    if (isNaN(lat) || isNaN(lng)) {
+                        console.log("❌ Invalid number coords:", r);
+                        return;
+                    }
+
+                    const marker = L.circleMarker([lat, lng], {
+                        radius: 0,
+                        color: getColor(r.severity),
+                        fillOpacity: 0.8
+                    });
+
+                    marker.bindPopup(`
+                <b>${r.disaster_type || 'Need'}</b><br>
+                ${r.description || ''}<br>
+                <b>Severity:</b> ${r.severity}<br>
+                <b>Priority:</b> ${r.priority || 'N/A'}<br>
+                <b>Lat:</b> ${lat}<br>
+                <b>Lng:</b> ${lng}<br>
+                <b>Time:</b> ${new Date().toLocaleTimeString()}
+            `);
+
+                    marker.addTo(markersLayer);
+
+                    // ✨ animation
+                    setTimeout(() => {
+                        marker.setStyle({ radius: 8 });
+                    }, 150);
+                });
+
+            } catch (err) {
+                console.error("❌ Map load error:", err);
+            }
+        }
+
+        // 🚀 initial
+        loadNeeds();
+
+        // 🔥 auto refresh
+        setInterval(loadNeeds, 5000);
+    </script>
+
+</body>
+
+</html>

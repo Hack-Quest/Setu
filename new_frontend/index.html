@@ -1,809 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SETU AI - Emergency Response Coordination</title>
-    <script src="api.js" defer></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <title>Setu • Operations</title>
 
-        :root {
-            --navy: #0b1326;
-            --navy-light: #1a2847;
-            --slate: #4a5f7f;
-            --slate-light: #6b7d9f;
-            --gray: #e8eef5;
-            --orange: #ff6b35;
-            --orange-dark: #e55a28;
-            --success: #2ecc71;
-            --warning: #f39c12;
-            --error: #e74c3c;
-            --text-dark: #0b1326;
-            --text-light: #f8f9fa;
-            --border: #d0d8e0;
-        }
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: var(--gray);
-            color: var(--text-dark);
-            line-height: 1.6;
-        }
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 
-        /* Header */
-        header {
-            background: var(--navy);
-            color: var(--text-light);
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        header h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-        }
-
-        .status-badge {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            font-size: 0.85rem;
-        }
-
-        .badge {
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.25rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .badge.online {
-            background: rgba(46, 204, 113, 0.2);
-            border-color: var(--success);
-            color: var(--success);
-        }
-
-        /* Navigation */
-        nav {
-            background: var(--navy-light);
-            padding: 0;
-            border-bottom: 2px solid var(--orange);
-            display: flex;
-            overflow-x: auto;
-        }
-
-        nav button {
-            flex: 1;
-            padding: 1rem;
-            background: transparent;
-            border: none;
-            color: var(--text-light);
-            cursor: pointer;
-            font-weight: 600;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-            white-space: nowrap;
-        }
-
-        nav button:hover {
-            background: rgba(255, 107, 53, 0.1);
-        }
-
-        nav button.active {
-            background: var(--orange);
-            color: var(--text-light);
-            border-bottom-color: var(--orange);
-        }
-
-        /* Main Container */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        /* Section */
-        .section {
-            display: none;
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        section h2 {
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-            color: var(--navy);
-            border-bottom: 2px solid var(--orange);
-            padding-bottom: 0.5rem;
-        }
-
-        /* Card Grid */
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s;
-        }
-
-        .card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border-color: var(--orange);
-        }
-
-        .card h3 {
-            color: var(--navy);
-            margin-bottom: 0.5rem;
-            font-size: 1.2rem;
-        }
-
-        .card p {
-            color: var(--slate);
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-box {
-            background: white;
-            border-left: 4px solid var(--orange);
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--navy);
-        }
-
-        .stat-label {
-            color: var(--slate);
-            font-size: 0.85rem;
-            margin-top: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        /* Forms */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--navy);
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        input, textarea, select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 0.4rem;
-            font-size: 0.95rem;
-            font-family: inherit;
-            transition: border-color 0.3s;
-        }
-
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--orange);
-            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        @media (max-width: 640px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Buttons */
-        button {
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 0.4rem;
-            font-size: 0.95rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .btn-primary {
-            background: var(--orange);
-            color: white;
-            width: 100%;
-        }
-
-        .btn-primary:hover {
-            background: var(--orange-dark);
-        }
-
-        .btn-primary:disabled {
-            background: var(--slate);
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background: white;
-            color: var(--orange);
-            border: 2px solid var(--orange);
-            padding: 0.65rem 1.4rem;
-        }
-
-        .btn-secondary:hover {
-            background: var(--orange);
-            color: white;
-        }
-
-        .btn-small {
-            padding: 0.5rem 1rem;
-            font-size: 0.85rem;
-        }
-
-        /* Feedback Messages */
-        .feedback {
-            padding: 1rem;
-            border-radius: 0.4rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
-
-        .feedback.show {
-            display: block;
-        }
-
-        .feedback.success {
-            background: rgba(46, 204, 113, 0.1);
-            color: #27ae60;
-            border-left: 4px solid var(--success);
-        }
-
-        .feedback.error {
-            background: rgba(231, 76, 60, 0.1);
-            color: #c0392b;
-            border-left: 4px solid var(--error);
-        }
-
-        .feedback.warning {
-            background: rgba(243, 156, 18, 0.1);
-            color: #d68910;
-            border-left: 4px solid var(--warning);
-        }
-
-        .feedback.info {
-            background: rgba(52, 152, 219, 0.1);
-            color: #2980b9;
-            border-left: 4px solid #3498db;
-        }
-
-        /* List */
-        .list {
-            list-style: none;
-        }
-
-        .list-item {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .list-item:last-child {
-            border-bottom: none;
-        }
-
-        .list-item-title {
-            font-weight: 600;
-            color: var(--navy);
-        }
-
-        .list-item-meta {
-            color: var(--slate);
-            font-size: 0.85rem;
-        }
-
-        .badge-status {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 0.25rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .badge-status.assigned {
-            background: rgba(46, 204, 113, 0.2);
-            color: #27ae60;
-        }
-
-        .badge-status.pending {
-            background: rgba(243, 156, 18, 0.2);
-            color: #d68910;
-        }
-
-        /* Footer */
-        footer {
-            background: var(--navy);
-            color: var(--text-light);
-            text-align: center;
-            padding: 1.5rem;
-            margin-top: 3rem;
-            font-size: 0.85rem;
-        }
-
-        /* Loading spinner */
-        .spinner {
-            border: 3px solid rgba(255, 107, 53, 0.3);
-            border-top: 3px solid var(--orange);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        /* Utility */
-        .mt-2 { margin-top: 1rem; }
-        .mb-2 { margin-bottom: 1rem; }
-        .text-center { text-align: center; }
-        .text-muted { color: var(--slate); }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            header h1 {
-                font-size: 1.3rem;
-            }
-
-            .card-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header>
-        <h1>🚨 SETU AI</h1>
-        <div class="status-badge">
-            <div class="badge online">✓ API Active</div>
-        </div>
-    </header>
-
-    <!-- Navigation -->
-    <nav>
-        <button class="nav-btn active" data-section="dashboard">Dashboard</button>
-        <button class="nav-btn" data-section="report">Report Need</button>
-        <button class="nav-btn" data-section="volunteer">Volunteer</button>
-        <button class="nav-btn" data-section="match">Match Engine</button>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="container">
-        <!-- Dashboard Section -->
-        <section id="dashboard" class="section active">
-            <h2>Live Dashboard</h2>
-            
-            <div class="stats-grid">
-                <div class="stat-box">
-                    <div class="stat-number" id="total-needs">-</div>
-                    <div class="stat-label">Open Needs</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="total-volunteers">-</div>
-                    <div class="stat-label">Volunteers</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="critical-cases">-</div>
-                    <div class="stat-label">Critical</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number" id="high-cases">-</div>
-                    <div class="stat-label">High Priority</div>
-                </div>
-            </div>
-
-            <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--navy);">Recent Report</h3>
-            <div class="card" id="recent-need-card">
-                <p class="text-muted">Loading...</p>
-            </div>
-
-            <div class="mt-2 text-center">
-                <button class="btn btn-secondary btn-small" onclick="refreshDashboard()">Refresh Now</button>
-            </div>
-        </section>
-
-        <!-- Report Need Section -->
-        <section id="report" class="section">
-            <h2>Report Emergency Need</h2>
-            
-            <div class="card">
-                <form id="need-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="need-name">Reporter Name *</label>
-                            <input type="text" id="need-name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="need-phone">Phone Number *</label>
-                            <input type="tel" id="need-phone" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="need-location">Location *</label>
-                            <input type="text" id="need-location" placeholder="e.g., Gomti Nagar, Lucknow" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="need-disaster">Disaster Type *</label>
-                            <input type="text" id="need-disaster" placeholder="e.g., flood, earthquake" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="need-help">Help Needed *</label>
-                        <input type="text" id="need-help" placeholder="e.g., rescue, medical, food" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="need-description">Description (min 10 chars) *</label>
-                        <textarea id="need-description" placeholder="Provide detailed information about the situation..." required></textarea>
-                    </div>
-
-                    <div id="need-feedback" class="feedback"></div>
-
-                    <button type="submit" class="btn btn-primary">Submit Report</button>
-                </form>
-            </div>
-
-            <div id="need-result" class="card" style="margin-top: 2rem; display: none;">
-                <h3>Report Processed</h3>
-                <div id="need-result-content"></div>
-            </div>
-        </section>
-
-        <!-- Volunteer Section -->
-        <section id="volunteer" class="section">
-            <h2>Register Volunteer</h2>
-            
-            <div class="card">
-                <form id="volunteer-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="vol-name">Full Name *</label>
-                            <input type="text" id="vol-name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="vol-phone">Phone Number *</label>
-                            <input type="tel" id="vol-phone" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="vol-location">Location *</label>
-                        <input type="text" id="vol-location" placeholder="Base location or home address" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="vol-skills">Skills (comma-separated) *</label>
-                        <input type="text" id="vol-skills" placeholder="e.g., rescue, medical, food, shelter" required>
-                    </div>
-
-                    <div id="volunteer-feedback" class="feedback"></div>
-
-                    <button type="submit" class="btn btn-primary">Register Volunteer</button>
-                </form>
-            </div>
-
-            <div id="volunteer-result" class="card" style="margin-top: 2rem; display: none;">
-                <h3>Registration Complete</h3>
-                <div id="volunteer-result-content"></div>
-            </div>
-        </section>
-
-        <!-- Match Engine Section -->
-        <section id="match" class="section">
-            <h2>Match Engine - Assign Volunteers to Needs</h2>
-            
-            <div class="card">
-                <p class="text-muted">The match engine uses AI to automatically assign available volunteers to open emergency needs based on proximity, skills, and priority.</p>
-                <button class="btn btn-primary" onclick="runMatchEngine()">Run Match Engine</button>
-            </div>
-
-            <div id="match-feedback" class="feedback"></div>
-
-            <div id="match-results" style="margin-top: 2rem; display: none;">
-                <h3>Assignment Results</h3>
-                <div class="card">
-                    <p><strong>Total Assignments Made: </strong><span id="match-count">0</span></p>
-                    <ul class="list" id="match-list"></ul>
-                </div>
-            </div>
-
-            <div id="match-loading" style="margin-top: 2rem; display: none;">
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <span>Running match engine...</span>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2026 SETU AI Emergency Response System | Deep Integration v1.0</p>
-    </footer>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="manifest" href="manifest.json">
 
     <script>
-        // Navigation
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const sectionId = e.target.getAttribute('data-section');
-                
-                // Update active tab
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-
-                // Update active section
-                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-                document.getElementById(sectionId).classList.add('active');
-
-                // Refresh dashboard when opened
-                if (sectionId === 'dashboard') {
-                    refreshDashboard();
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        base: '#FDFCFB',
+                        surface: '#FFFFFF',
+                        muted: '#F4F4F5',
+                        ink: {
+                            900: '#18181B',
+                            700: '#3F3F46',
+                            500: '#71717A',
+                            300: '#D4D4D8'
+                        },
+                        accent: {
+                            DEFAULT: '#64748B',
+                            light: '#F8FAFC',
+                            hover: '#475569'
+                        }
+                    }
                 }
-            });
-        });
-
-        // Feedback helper
-        function showFeedback(elementId, message, type = 'info') {
-            const feedback = document.getElementById(elementId);
-            feedback.textContent = message;
-            feedback.className = `feedback show ${type}`;
-            setTimeout(() => feedback.classList.remove('show'), 5000);
-        }
-
-        // Dashboard
-        async function refreshDashboard() {
-            try {
-                const data = await api.getDashboardStats();
-                
-                document.getElementById('total-needs').textContent = data.total_needs || 0;
-                document.getElementById('total-volunteers').textContent = data.total_volunteers || 0;
-                document.getElementById('critical-cases').textContent = data.critical_priority_cases || 0;
-                document.getElementById('high-cases').textContent = data.high_priority_cases || 0;
-
-                // Display recent need
-                const recentNeed = data.recent_need;
-                const recentCard = document.getElementById('recent-need-card');
-                
-                if (recentNeed) {
-                    recentCard.innerHTML = `
-                        <div>
-                            <strong>Description:</strong> ${recentNeed.description || 'N/A'}
-                        </div>
-                        <div class="mt-2">
-                            <strong>Category:</strong> ${recentNeed.category || 'N/A'} | 
-                            <strong>Severity:</strong> ${recentNeed.severity || 'N/A'}
-                        </div>
-                        <div class="mt-2">
-                            <strong>Status:</strong> ${recentNeed.status || 'N/A'} | 
-                            <strong>Trust Score:</strong> ${recentNeed.trust_score || 'N/A'}
-                        </div>
-                    `;
-                } else {
-                    recentCard.innerHTML = '<p class="text-muted">No recent reports yet.</p>';
-                }
-            } catch (error) {
-                console.error('Dashboard load failed:', error);
             }
         }
-
-        // Report Need Form
-        document.getElementById('need-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const payload = {
-                reporter_name: document.getElementById('need-name').value,
-                reporter_phone: document.getElementById('need-phone').value,
-                location_text: document.getElementById('need-location').value,
-                disaster_type: document.getElementById('need-disaster').value,
-                help_needed: document.getElementById('need-help').value,
-                description: document.getElementById('need-description').value,
-            };
-
-            try {
-                const result = await api.submitNeed(payload);
-
-                if (result.error) {
-                    showFeedback('need-feedback', `Error: ${result.error}`, 'error');
-                    return;
-                }
-
-                // Show result
-                showFeedback('need-feedback', `Report submitted successfully! Priority: ${result.priority || 'Pending'}`, 'success');
-
-                const resultDiv = document.getElementById('need-result');
-                const content = document.getElementById('need-result-content');
-
-                content.innerHTML = `
-                    <div class="card">
-                        <p><strong>Category:</strong> ${result.category || 'N/A'}</p>
-                        <p><strong>Severity:</strong> ${result.severity || 'N/A'}</p>
-                        <p><strong>Trust Score:</strong> ${result.trust_score || 0}/100</p>
-                        <p><strong>Dispatch Action:</strong> <span class="badge-status ${result.dispatch_action === 'auto_dispatch' ? 'assigned' : 'pending'}">${result.dispatch_action || 'N/A'}</span></p>
-                        <p><strong>Priority:</strong> ${result.priority || 'N/A'}</p>
-                        <div style="margin-top: 1rem;">
-                            <strong>Trust Reasons:</strong>
-                            <ul style="margin-left: 1rem; margin-top: 0.5rem;">
-                                ${(result.trust_reasons || []).map(r => `<li>${r}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                `;
-
-                resultDiv.style.display = 'block';
-                e.target.reset();
-            } catch (error) {
-                showFeedback('need-feedback', `Error: ${error.message}`, 'error');
-            }
-        });
-
-        // Volunteer Form
-        document.getElementById('volunteer-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const payload = {
-                name: document.getElementById('vol-name').value,
-                phone: document.getElementById('vol-phone').value,
-                location: document.getElementById('vol-location').value,
-                skills: document.getElementById('vol-skills').value
-                    .split(',')
-                    .map(s => s.trim().toLowerCase())
-                    .filter(s => s),
-            };
-
-            try {
-                const result = await api.registerVolunteer(payload);
-
-                if (result.error) {
-                    showFeedback('volunteer-feedback', `Error: ${result.error}`, 'error');
-                    return;
-                }
-
-                showFeedback('volunteer-feedback', `Registered! Total volunteers: ${result.total_volunteers || 0}`, 'success');
-
-                const resultDiv = document.getElementById('volunteer-result');
-                const content = document.getElementById('volunteer-result-content');
-
-                content.innerHTML = `
-                    <p class="success-message"><strong>Volunteer successfully registered and added to the system.</strong></p>
-                    <p class="mt-2"><strong>Total Active Volunteers:</strong> ${result.total_volunteers || 0}</p>
-                `;
-
-                resultDiv.style.display = 'block';
-                e.target.reset();
-            } catch (error) {
-                showFeedback('volunteer-feedback', `Error: ${error.message}`, 'error');
-            }
-        });
-
-        // Match Engine
-        async function runMatchEngine() {
-            const btn = event.target;
-            const loading = document.getElementById('match-loading');
-            const results = document.getElementById('match-results');
-
-            btn.disabled = true;
-            btn.textContent = 'Running...';
-            loading.style.display = 'block';
-            results.style.display = 'none';
-
-            try {
-                const result = await api.runMatchEngine();
-
-                document.getElementById('match-count').textContent = result.total_matches_made || 0;
-
-                const matchList = document.getElementById('match-list');
-                if (result.matches && result.matches.length > 0) {
-                    matchList.innerHTML = result.matches
-                        .map(m => `
-                            <li class="list-item">
-                                <div>
-                                    <div class="list-item-title">Need #${m.need_id}</div>
-                                    <div class="list-item-meta">${m.assigned_volunteer}${m.distance_km ? ` (${m.distance_km} km away)` : ''}</div>
-                                </div>
-                                <span class="badge-status ${m.status}">${m.status}</span>
-                            </li>
-                        `)
-                        .join('');
-                } else {
-                    matchList.innerHTML = '<li class="list-item"><p class="text-muted">No matches generated.</p></li>';
-                }
-
-                results.style.display = 'block';
-                showFeedback('match-feedback', `Match complete: ${result.total_matches_made || 0} assignments evaluated`, 'success');
-            } catch (error) {
-                showFeedback('match-feedback', `Error: ${error.message}`, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Run Match Engine';
-                loading.style.display = 'none';
-            }
-        }
-
-        // Initial dashboard load
-        window.addEventListener('load', () => {
-            refreshDashboard();
-            // Auto-refresh every 30 seconds
-            setInterval(refreshDashboard, 30000);
-        });
     </script>
+</head>
+
+<body class="bg-base text-ink-900 font-sans antialiased flex justify-center min-h-screen">
+
+    <main class="w-full max-w-5xl px-6 py-12 flex flex-col gap-16">
+
+        <!-- HEADER -->
+        <header class="flex justify-between items-center fade-in-up">
+            <div class="flex items-center gap-4">
+                <div class="w-3 h-3 bg-ink-900 rounded-full"></div>
+                <span class="text-xl font-semibold tracking-tight">Setu</span>
+            </div>
+
+            <nav class="flex items-center gap-8 text-sm font-medium text-ink-500">
+                <a href="index.html" class="text-ink-900">Overview</a>
+                <a href="reports.html">Reports</a>
+                <a href="ngo-register.html">NGO Register</a>
+                <a href="ngo-dashboard.html">NGO Dashboard</a>
+
+                <!-- 🔥 NEW MAP BUTTON -->
+                <a href="map.html" class="hover:text-ink-900 text-accent font-semibold">Tactical Map</a>
+
+                <button class="w-10 h-10 rounded-full bg-surface border border-muted flex items-center justify-center">
+                    <i data-feather="user" class="w-4 h-4"></i>
+                </button>
+            </nav>
+        </header>
+
+        <!-- HERO -->
+        <section class="fade-in-up">
+            <h1 class="text-5xl md:text-6xl font-medium tracking-tight max-w-2xl leading-[1.1]">
+                Coordinate relief <span class="text-ink-300 hover:text-ink-700">effortlessly.</span>
+            </h1>
+            <p class="text-lg text-ink-500 max-w-xl mt-4">
+                Process incoming distress signals, match volunteers, and deploy help instantly.
+            </p>
+        </section>
+
+        <!-- ACTION CARDS -->
+        <section class="grid grid-cols-1 md:grid-cols-12 gap-6 fade-in-up">
+
+            <!-- NEED -->
+            <button onclick="openFormModal('need')"
+                class="interactive-card col-span-7 bg-surface p-10 rounded-[2rem] border border-muted shadow-soft">
+                <h3 class="text-2xl font-semibold">Process New Need</h3>
+                <p class="text-sm text-ink-500 mt-2">Capture emergency requests</p>
+            </button>
+
+            <!-- VOLUNTEER -->
+            <button onclick="openFormModal('volunteer')"
+                class="interactive-card col-span-5 bg-ink-900 p-10 rounded-[2rem] text-white">
+                <h3 class="text-2xl font-semibold">Register Unit</h3>
+                <p class="text-sm opacity-70 mt-2">Add volunteers</p>
+            </button>
+
+        </section>
+
+        <!-- MATCH ENGINE -->
+        <section class="border-t border-muted pt-10 fade-in-up">
+            <button id="runMatchBtn" class="text-accent font-medium flex items-center">
+                Trigger AI Matcher
+                <i data-feather="chevron-right" class="w-4 h-4 ml-1"></i>
+            </button>
+        </section>
+
+    </main>
+
+    <!-- JS -->
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        feather.replace();
+
+        // ✅ PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js');
+        }
+    </script>
+
 </body>
+
 </html>
