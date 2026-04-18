@@ -45,8 +45,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
 
         # 🌍 LOCATION
         # ✅ FIXED: Using data.location based on models.py
-        coords = get_coordinates(data.location) or {"lat": 0, "lng": 0}
-
+        coords = get_coordinates(data.location_text) or {"lat": 0, "lng": 0}
         # 🛡️ VERIFICATION
         corroboration_count = check_corroboration(
             coords["lat"], coords["lng"], category
@@ -74,7 +73,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             "description": data.description,
             "category": category,
             "severity": severity,
-            "location_text": data.location, # Passed to DB for logging
+            "location_text": data.location_text, # Passed to DB for logging
             "confidence": confidence,
             "flag": flag,
             "lat": coords["lat"],
