@@ -1,5 +1,8 @@
 from fastapi import FastAPI, Request, BackgroundTasks  # ✅ FIX 1: Added BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import requests
 import os
 
@@ -18,6 +21,10 @@ from database.volunteers_db import save_volunteer
 from database.geocoding import get_coordinates
 
 app = FastAPI()
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,7 +52,8 @@ def health():
 
 # 🔗 NEED WEBHOOK (FIXED)
 @app.post("/webhook")
-def webhook(payload: dict, background_tasks: BackgroundTasks):  # ✅ Removed 'async', changed Request to dict
+@limiter.limit("5/minute")
+def webhook(request: Request, payload: dict, background_tasks: BackgroundTasks):  # ✅ Removed 'async', changed Request to dict
     try:
         # ✅ No more 'await request.json()' needed! FastAPI parses it automatically.
         mapped_data = {
@@ -73,7 +81,8 @@ def webhook(payload: dict, background_tasks: BackgroundTasks):  # ✅ Removed 'a
 
 # 🔗 VOLUNTEER WEBHOOK (FIXED)
 @app.post("/volunteer_webhook")
-def volunteer_webhook(payload: dict):  # ✅ Removed 'async'
+@limiter.limit("5/minute")
+def volunteer_webhook(request: Request, payload: dict):  # ✅ Removed 'async'
     try:
         coords = get_coordinates(payload.get("location", "")) or {"lat": 0, "lng": 0}
 

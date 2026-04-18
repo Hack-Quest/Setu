@@ -6,6 +6,10 @@ from database.volunteers_db import get_available_volunteers
 router = APIRouter(prefix="/dashboard")
 
 
+@router.get("/reports")
+def dashboard_reports():
+    return get_open_needs()
+
 @router.get("")
 def dashboard():
 

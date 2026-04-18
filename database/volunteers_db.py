@@ -1,15 +1,18 @@
 from database.firestore_client import db
 from datetime import datetime, timezone
-import hashlib
+import bcrypt
 import hmac
 
 def hash_password(password: str) -> str:
-    """Hash password using SHA-256"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password using bcrypt"""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def verify_password(password: str, hash_value: str) -> bool:
     """Verify password against hash"""
-    return hashlib.sha256(password.encode()).hexdigest() == hash_value
+    try:
+        return bcrypt.checkpw(password.encode('utf-8'), hash_value.encode('utf-8'))
+    except Exception:
+        return False
 
 def register_volunteer_auth(email: str, password: str, name: str, phone: str, location: str, skills: list) -> dict:
     """Register a new volunteer with email and password authentication"""

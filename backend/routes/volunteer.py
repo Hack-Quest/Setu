@@ -1,20 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from backend.auth import verify_token                    # ✅ Centralised auth
-from database.volunteers_db import save_volunteer, get_available_volunteers
+from database.volunteers_db import save_volunteer, get_available_volunteers, hash_password
 from backend.models import VolunteerInput
 from database.geocoding import get_coordinates
 
-# ✅ Native bcrypt — no passlib dependency needed
-import bcrypt
-
 router = APIRouter()
-
-
-def get_password_hash(password: str) -> str:
-    """Hash a plaintext password with bcrypt. Returns a utf-8 string for Firestore."""
-    salt = bcrypt.gensalt()
-    hashed_bytes = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return hashed_bytes.decode("utf-8")
 
 
 @router.post("/volunteer")
@@ -24,7 +14,7 @@ def create_volunteer(data: VolunteerInput, token: str = Depends(verify_token)): 
 
         # 🔒 SECURITY: Hash the password; never store plaintext
         raw_password = volunteer_dict.pop("password")
-        volunteer_dict["password_hash"] = get_password_hash(raw_password)
+        volunteer_dict["password_hash"] = hash_password(raw_password)
 
         # 🔒 SECURITY: Strip privileged tiered fields — only an authenticated NGO may set these.
         # A volunteer registering themselves must not be able to self-promote their tier.
