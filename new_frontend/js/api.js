@@ -56,5 +56,40 @@ class ApiService {
     static async runMatch() {
         return this.request('/match');
     }
+
+    /**
+     * Fetches NGO profile + global tactical stats in parallel.
+     * Returns a merged object shaped to match the NGO dashboard UI.
+     */
+    static async getNGODashboard(ngoId) {
+        const [ngoResult, statsResult] = await Promise.all([
+            this.request(`/ngo/${ngoId}`),
+            this.request('/dashboard')
+        ]);
+
+        if (!ngoResult.ok || !statsResult.ok) {
+            return { ok: false, error: ngoResult.error || statsResult.error };
+        }
+
+        const ngoData = ngoResult.data;
+        const statsData = statsResult.data;
+
+        return {
+            ok: true,
+            data: {
+                // NGO profile fields
+                name:        ngoData.name,
+                location:    ngoData.location_text || ngoData.location,
+                verified:    ngoData.verified,
+                // Mapped tactical stats (backend → UI name)
+                active_assignments: statsData.unmatched_cases,
+                managed_volunteers: statsData.total_volunteers,
+                // Pass-through extras the dashboard may display
+                total_needs:        statsData.total_needs,
+                critical_cases:     statsData.critical_cases,
+                flagged_cases:      statsData.flagged_cases,
+            }
+        };
+    }
 }
 window.ApiService = ApiService;

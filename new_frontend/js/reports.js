@@ -2,11 +2,13 @@
 
 async function fetchReports() {
     const { ok, data } = await ApiService.getReports();
-    if(ok) {
-        return data; // expecting { reports: [...] }
+    if (ok) {
+        // Backend returns a raw array — normalise into { reports: [...] }
+        const reports = Array.isArray(data) ? data : (data.reports || []);
+        return { reports };
     } else {
-        console.error('API Error');
-        return { reports: [] }; // Fallback
+        console.error('API Error fetching reports:', ok);
+        return { reports: [] }; // Fallback to empty list
     }
 }
 
@@ -65,10 +67,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 <div class="flex flex-col md:items-end gap-1 min-w-[200px]">
                     <span class="text-[10px] font-semibold text-ink-500 uppercase tracking-widest">Location</span>
-                    <span class="text-sm font-medium text-ink-900">${report.lat ? `${report.lat.toFixed(4)}, ${report.lng.toFixed(4)}` : "Location Unknown"}</span>
+                    <span class="text-sm font-medium text-ink-900">${report.location_text || (report.lat ? `${report.lat.toFixed(4)}, ${report.lng.toFixed(4)}` : "Location Unknown")}</span>
                     <div class="flex items-center gap-2 mt-2">
                          <span class="text-[10px] text-ink-500">Trust Score:</span>
-                         <span class="text-sm font-semibold text-ink-900">${report.trust_score || "N/A"}%</span>
+                         <span class="text-sm font-semibold text-ink-900">${report.trust_score !== undefined ? report.trust_score + '%' : "N/A"}</span>
                     </div>
                 </div>
                 
