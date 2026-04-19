@@ -11,6 +11,11 @@ def build_prompt(description: str) -> str:
         - "consistency": an integer from 0 to 10 rating how believable and internally consistent this report is.
           (0 = clearly fake/nonsensical, 5 = plausible but vague, 10 = very detailed and credible)
 
+        Language Rules:
+        - The report may be in English, Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, or any other Indian regional language.
+        - The report might also be written using Latin/Roman script (e.g., Hinglish, Tanglish).
+        - Please analyze, translate internally, and understand the core intent before evaluating.
+
         Severity guide:
         - "critical" → immediate life threat (trapped, dying, no water for days)
         - "high"     → urgent but not immediately life-threatening (food shortage, injury)
@@ -21,8 +26,9 @@ def build_prompt(description: str) -> str:
         - Penalise vague, contradictory, very short, or implausible descriptions.
         - Reward specific details: named location, number of people, timeline, type of disaster.
 
-        Rules:
+        Output Rules:
         - Return ONLY the JSON. No explanation. No markdown. No extra text.
+        - ALWAYS output English keys and values as specified, regardless of the input language.
         - If unsure about category, use "other"
         - If unsure about severity, use "medium"
         - If unsure about consistency, use 5

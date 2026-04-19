@@ -11,6 +11,16 @@ router = APIRouter(prefix="/need")  # ✅ IMPORTANT
 
 needs_storage = []
 
+async def broadcast_high_trust_report(report_data: dict):
+    try:
+        from backend.main import manager
+        await manager.broadcast_json(report_data)
+        print("📡 Broadcasted high-trust report via WebSocket JS", flush=True)
+    except ImportError as e:
+        print(f"⚠️ Could not import websocket manager: {e}", flush=True)
+    except Exception as e:
+        print(f"⚠️ WS Broadcast Error: {e}", flush=True)
+
 def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
     """Core logic separated so it can be called internally (webhook) or via API."""
     try:
@@ -94,6 +104,10 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         # 🚨 EMAIL TRIGGER
         if final_data["dispatch_action"] == "auto_dispatch" and trust_score > 60:
             background_tasks.add_task(send_alert, final_data)
+
+        # 🌐 WEBSOCKET BROADCAST
+        if trust_score > 70:
+            background_tasks.add_task(broadcast_high_trust_report, final_data)
 
         print("✅ Final Data:", final_data)
 

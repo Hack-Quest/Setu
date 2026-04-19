@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request, BackgroundTasks
+from typing import List, Dict
+from fastapi import (
+    FastAPI, Request, BackgroundTasks, WebSocket, WebSocketDisconnect
+)
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-import requests
-import os
 
 # Routers
 from backend.routes.need import router as need_router, create_need
@@ -16,9 +17,34 @@ from backend.routes.dashboard import router as dashboard_router
 from backend.routes.assignment import router as assignment_router
 from backend.routes.ngo import router as ngo_router
 
-# Volunteer helpers
+# Helpers
 from database.volunteers_db import save_volunteer
 from database.geocoding import get_coordinates
+from database.ngos_db import get_ngo
+
+
+# 🔌 WebSocket Manager
+class WebSocketManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def broadcast_json(self, data: dict):
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(data)
+            except Exception as e:
+                print(f"WebSocket Error: {e}", flush=True)
+
+
+manager = WebSocketManager()
 
 app = FastAPI()
 
@@ -27,14 +53,28 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# 🔥 CORS FIX (IMPORTANT)
+# 🔥 CORS (fixed properly)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # 🔥 allow all for demo
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+        "*"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 🔌 WebSocket endpoint
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
 
 # 🏠 Home
 @app.get("/")
@@ -49,7 +89,11 @@ def health():
 # 🔗 NEED WEBHOOK
 @app.post("/webhook")
 @limiter.limit("5/minute")
-def webhook(request: Request, payload: dict, background_tasks: BackgroundTasks):
+async def webhook(
+    request: Request,
+    payload: Dict,
+    background_tasks: BackgroundTasks
+):
     try:
         mapped_data = {
             "reporter_name": payload.get("name", "Unknown"),
@@ -62,15 +106,15 @@ def webhook(request: Request, payload: dict, background_tasks: BackgroundTasks):
 
         need_input = NeedInput(**mapped_data)
 
-        print("🚀 [SYSTEM] Routing to Core AI Engine...", flush=True)
+        print("🚀 Routing to AI Engine...", flush=True)
 
-        result = create_need(
+        result = await create_need(
             data=need_input,
             background_tasks=background_tasks,
             token="webhook_override"
         )
 
-        return {"message": "Webhook processed successfully", "data": result}
+        return {"message": "Webhook processed", "data": result}
 
     except Exception as e:
         print("❌ Webhook Error:", e, flush=True)
@@ -79,7 +123,7 @@ def webhook(request: Request, payload: dict, background_tasks: BackgroundTasks):
 # 🔗 VOLUNTEER WEBHOOK
 @app.post("/volunteer_webhook")
 @limiter.limit("5/minute")
-def volunteer_webhook(request: Request, payload: dict):
+async def volunteer_webhook(request: Request, payload: Dict):
     try:
         coords = get_coordinates(payload.get("location", "")) or {"lat": 0, "lng": 0}
 
@@ -98,19 +142,24 @@ def volunteer_webhook(request: Request, payload: dict):
 
         # NGO verification
         if mapped_volunteer.get("ngo_id"):
-            from database.ngos_db import get_ngo
             ngo = get_ngo(mapped_volunteer["ngo_id"])
-            if ngo and ngo.get("verified") is True:
+            if ngo and ngo.get("verified"):
                 mapped_volunteer["ngo_verified"] = True
 
         print("📥 Incoming Volunteer:", mapped_volunteer, flush=True)
 
         doc_id = save_volunteer(mapped_volunteer)
 
-        return {"message": "Volunteer registered successfully", "id": doc_id}
+        # 🔥 Broadcast update via WebSocket
+        await manager.broadcast_json({
+            "type": "NEW_VOLUNTEER",
+            "data": mapped_volunteer
+        })
+
+        return {"message": "Volunteer registered", "id": doc_id}
 
     except Exception as e:
-        print("❌ Volunteer Webhook Error:", e, flush=True)
+        print("❌ Volunteer Error:", e, flush=True)
         return {"error": str(e)}
 
 # 📦 Routers
