@@ -7,7 +7,9 @@ router = APIRouter(prefix="/dashboard")
 
 
 @router.get("/reports")
-def dashboard_reports():
+def get_reports_endpoint():
+    from database.needs_db import get_open_needs
+    # Return directly as a list
     return get_open_needs()
 
 @router.get("")

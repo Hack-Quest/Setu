@@ -44,6 +44,8 @@
             }
         }
     </script>
+    <script async
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBjn6bIOP1FtwRJpTv7RvsjubLDlwGx7Z0&callback=initMap"></script>
 </head>
 
 <body
@@ -87,6 +89,9 @@
         <!-- Reports Container -->
         <section class="fade-in-up flex-1 flex flex-col" style="animation-delay: 0.3s;">
 
+            <!-- Map Container -->
+            <div id="map" class="w-full h-80 bg-surface rounded-2xl border border-muted shadow-soft mb-8"></div>
+
             <!-- Loading Indicator -->
             <div id="loader" class="flex items-center gap-3 text-ink-500 py-10">
                 <i data-feather="loader" class="w-5 h-5 animate-spin"></i>
@@ -117,8 +122,22 @@
     </main>
 
     <script>
-        // Initialize icons
-        feather.replace();
+        // Inside reports.html <script>
+        let reportsMap;
+
+        function initMap() {
+            // Correctly assign to the window object so reports.js can see it
+            window.reportsMap = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 28.6139, lng: 77.2090 }, // Your operational center
+                zoom: 10,
+                disableDefaultUI: true,
+                styles: [
+                    { "featureType": "all", "elementType": "labels.text.fill", "stylers": [{ "color": "#7c93a3" }] },
+                    { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#f3f7f9" }] },
+                    { "featureType": "landscape", "elementType": "geometry", "stylers": [{ "color": "#f5f5f5" }] }
+                ]
+            });
+        }
     </script>
     <script src="js/reports.js"></script>
 </body>

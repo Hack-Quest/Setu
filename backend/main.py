@@ -30,7 +30,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # 🔥 CORS FIX (IMPORTANT)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # 🔥 allow all for demo
+    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500", "*"],   # 🔥 allow all for demo + specific origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

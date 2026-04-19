@@ -4,7 +4,7 @@ from database.volunteers_db import register_volunteer_auth, login_volunteer
 
 router = APIRouter()
 
-@router.post("/volunteer-register")
+@router.post("/register")
 def register_volunteer(data: VolunteerRegisterInput):
     """Register a new volunteer with email and password"""
     try:
@@ -27,7 +27,7 @@ def register_volunteer(data: VolunteerRegisterInput):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/volunteer-login")
+@router.post("/login")
 def login_volunteer_endpoint(data: VolunteerLoginInput):
     """Login volunteer with email and password"""
     try:
