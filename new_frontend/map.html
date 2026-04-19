@@ -2,24 +2,16 @@
 <html>
 
 <head>
-    <title>Setu Tactical Map</title>
+    <title>Setu Tactical Map (Google)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
     <style>
         body {
             margin: 0;
-            font-family: sans-serif;
         }
 
         #map {
             height: 100vh;
-        }
-
-        .leaflet-popup-content {
-            font-size: 14px;
         }
     </style>
 </head>
@@ -28,98 +20,167 @@
 
     <div id="map"></div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
     <script>
         const API = "http://127.0.0.1:8000/dashboard/reports";
 
-        // 🌍 Initialize map
-        const map = L.map('map').setView([20.5937, 78.9629], 5);
+        let map;
+        let markers = [];
+        let lines = [];
 
-        // 🗺️ Base layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-        // 📦 Layer group
-        let markersLayer = L.layerGroup().addTo(map);
-
-        // 🎨 Severity colors
+        // 🎨 color logic
         function getColor(severity) {
             severity = (severity || '').toLowerCase();
-            if (severity === 'critical') return 'red';
-            if (severity === 'high') return 'orange';
-            if (severity === 'medium') return 'yellow';
-            return 'green';
+            if (severity === 'critical') return "red";
+            if (severity === 'high') return "orange";
+            if (severity === 'medium') return "yellow";
+            return "green";
         }
 
-        // 🔄 Load data
+        // 🗺️ init map
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 20.5937, lng: 78.9629 },
+                zoom: 5,
+            });
+
+            loadNeeds();
+            setInterval(loadNeeds, 5000);
+        }
+
+        // 🧹 clear everything
+        function clearAll() {
+            markers.forEach(m => m.setMap(null));
+            markers = [];
+
+            lines.forEach(l => l.setMap(null));
+            lines = [];
+        }
+
+        // 🔄 fetch + render
         async function loadNeeds() {
             try {
-                const res = await fetch(API, {
-                    headers: { Authorization: 'Bearer hackathon-secret' }
-                });
+                const res = await fetch(API);
+                const raw = await res.json();
+                const reports = raw.reports || raw;
 
-                const data = await res.json();
+                clearAll();
 
-                console.log("FULL API RESPONSE:", data); // 🔥 DEBUG
+                reports.forEach(r => {
 
-                // clear old markers
-                markersLayer.clearLayers();
+                    if (r.lat === null || r.lng === null) return;
 
-                (data.reports || []).forEach(r => {
-
-                    console.log("REPORT:", r); // 🔥 DEBUG EACH ENTRY
-
-                    // ✅ FIXED CONDITION
-                    if (r.lat === null || r.lng === null || r.lat === undefined || r.lng === undefined) {
-                        console.log("❌ Skipping invalid coords:", r);
-                        return;
-                    }
-
-                    // 🧠 Force number (sometimes string comes)
                     const lat = parseFloat(r.lat);
                     const lng = parseFloat(r.lng);
 
-                    if (isNaN(lat) || isNaN(lng)) {
-                        console.log("❌ Invalid number coords:", r);
-                        return;
-                    }
+                    if (isNaN(lat) || isNaN(lng)) return;
 
-                    const marker = L.circleMarker([lat, lng], {
-                        radius: 0,
-                        color: getColor(r.severity),
-                        fillOpacity: 0.8
+                    const isCritical = r.severity?.toLowerCase() === "critical";
+
+                    // 🔴 NEED MARKER
+                    const marker = new google.maps.Marker({
+                        position: { lat, lng },
+                        map: map,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: isCritical ? 12 : 8,
+                            fillColor: getColor(r.severity),
+                            fillOpacity: isCritical ? 1 : 0.8,
+                            strokeWeight: 2
+                        },
+                        label: {
+                            text: r.severity?.toUpperCase() || "",
+                            color: "white",
+                            fontSize: "10px"
+                        }
                     });
 
-                    marker.bindPopup(`
-                <b>${r.disaster_type || 'Need'}</b><br>
-                ${r.description || ''}<br>
-                <b>Severity:</b> ${r.severity}<br>
-                <b>Priority:</b> ${r.priority || 'N/A'}<br>
-                <b>Lat:</b> ${lat}<br>
-                <b>Lng:</b> ${lng}<br>
-                <b>Time:</b> ${new Date().toLocaleTimeString()}
-            `);
+                    // 📦 POPUP
+                    const info = new google.maps.InfoWindow({
+                        content: `
+                    <div style="font-family:sans-serif">
+                        <b>${r.disaster_type || 'Need'}</b><br>
+                        ${r.description || ''}<br><br>
+                        <b>Severity:</b> ${r.severity}<br>
+                        <b>Help:</b> ${r.help_needed || 'N/A'}
+                    </div>
+                `
+                    });
 
-                    marker.addTo(markersLayer);
+                    marker.addListener("click", () => {
+                        info.open(map, marker);
+                    });
 
-                    // ✨ animation
-                    setTimeout(() => {
-                        marker.setStyle({ radius: 8 });
-                    }, 150);
+                    // 🔥 Pulse animation for CRITICAL
+                    if (isCritical) {
+                        let grow = true;
+                        setInterval(() => {
+                            const scale = grow ? 14 : 8;
+                            marker.setIcon({
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: scale,
+                                fillColor: "red",
+                                fillOpacity: 1,
+                                strokeWeight: 2
+                            });
+                            grow = !grow;
+                        }, 600);
+                    }
+
+                    markers.push(marker);
+
+                    // 🔵 REAL OR DEMO VOLUNTEER + LINE
+
+                    let vLat, vLng;
+
+                    if (r.volunteer_lat && r.volunteer_lng) {
+                        // ✅ real data
+                        vLat = parseFloat(r.volunteer_lat);
+                        vLng = parseFloat(r.volunteer_lng);
+                    } else {
+                        // 🔥 DEMO fallback (always show line)
+                        vLat = lat + 0.2;
+                        vLng = lng + 0.2;
+                    }
+
+                    // 🔵 volunteer marker
+                    const volunteerMarker = new google.maps.Marker({
+                        position: { lat: vLat, lng: vLng },
+                        map: map,
+                        icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                    });
+
+                    markers.push(volunteerMarker);
+
+                    // 🔗 connection line
+                    const line = new google.maps.Polyline({
+                        path: [
+                            { lat: lat, lng: lng },
+                            { lat: vLat, lng: vLng }
+                        ],
+                        geodesic: true,
+                        strokeColor: "#007bff",
+                        strokeOpacity: 0.8,
+                        strokeWeight: 3
+                    });
+
+                    line.setMap(map);
+                    lines.push(line);
+
+                    // 🎯 auto focus
+                    map.panTo({ lat, lng });
+
                 });
 
             } catch (err) {
-                console.error("❌ Map load error:", err);
+                console.error("Map error:", err);
             }
         }
-
-        // 🚀 initial
-        loadNeeds();
-
-        // 🔥 auto refresh
-        setInterval(loadNeeds, 5000);
     </script>
+
+    <!-- 🔥 PUT YOUR API KEY -->
+    <script async
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBjn6bIOP1FtwRJpTv7RvsjubLDlwGx7Z0&callback=initMap">
+        </script>
 
 </body>
 
