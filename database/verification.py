@@ -1,18 +1,152 @@
 import os
-import requests
+from datetime import datetime, timedelta, timezone
+
 import dotenv
-from datetime import datetime, timezone, timedelta
+import requests
+
 dotenv.load_dotenv()
 
-def calculate_trust_score(data_dict: dict, ai_consistency: int, corroborating_reports_count: int) -> dict:
+HIGH_STAKES_CATEGORIES = {"rescue"}
+HIGH_STAKES_DISASTER_KEYWORDS = {
+    "flood",
+    "earthquake",
+    "collapse",
+    "building collapse",
+    "landslide",
+    "tsunami",
+    "cyclone",
+    "drowning",
+    "fire",
+}
+
+
+def _normalize_text(value: str | None) -> str:
+    return str(value or "").strip().lower()
+
+
+def _is_valid_coordinates(lat, lng) -> bool:
+    try:
+        lat_f = float(lat)
+        lng_f = float(lng)
+    except (TypeError, ValueError):
+        return False
+
+    if not (-90 <= lat_f <= 90 and -180 <= lng_f <= 180):
+        return False
+
+    # 0,0 is used by fallback code when geocoding fails.
+    if lat_f == 0.0 and lng_f == 0.0:
+        return False
+
+    return True
+
+
+def _build_common_only_score(base_score: int) -> int:
+    # Keeps pass-through reports reviewable without inflating them to auto-dispatch.
+    return min(max(35 + int(base_score * 1.5), 0), 100)
+
+
+def run_common_validation(data_dict: dict) -> dict:
+    """
+    Common checks that run for every report before trust scoring:
+    - reporter phone format
+    - geocoded location coordinates
+
+    Returns:
+        {
+            "passed": bool,
+            "base_score": int,          # 0..20 (10 per successful common check)
+            "score": int,               # pass-through score derived from common checks
+            "status": str,              # "Verified" | "Pending Verification"
+            "reasons": list[str]
+        }
+    """
+    reasons = []
+    base_score = 0
+
+    phone = str(data_dict.get("reporter_phone", "")).strip().replace(" ", "").replace("-", "")
+    phone_ok = phone.isdigit() and len(phone) == 10
+    if phone_ok:
+        base_score += 10
+        reasons.append("+10: Common check passed — valid 10-digit phone number")
+    else:
+        reasons.append("+0: Common check failed — phone number missing or invalid")
+
+    lat = data_dict.get("lat")
+    lng = data_dict.get("lng")
+    coords_ok = _is_valid_coordinates(lat, lng)
+    if coords_ok:
+        base_score += 10
+        reasons.append("+10: Common check passed — valid geocoded coordinates")
+    else:
+        reasons.append("+0: Common check failed — location could not be geocoded")
+
+    passed = phone_ok and coords_ok
+    return {
+        "passed": passed,
+        "base_score": base_score,
+        "score": _build_common_only_score(base_score),
+        "status": "Verified" if passed else "Pending Verification",
+        "reasons": reasons,
+    }
+
+
+def is_high_stakes_disaster(ai_category: str | None, disaster_type: str | None) -> bool:
+    category = _normalize_text(ai_category)
+    disaster = _normalize_text(disaster_type)
+    return (
+        category in HIGH_STAKES_CATEGORIES
+        or any(keyword in disaster for keyword in HIGH_STAKES_DISASTER_KEYWORDS)
+    )
+
+
+def build_common_only_trust_result(
+    common_validation: dict,
+    ai_category: str | None = None,
+    disaster_type: str | None = None,
+) -> dict:
+    """Builds a trust result when complex layers are intentionally skipped."""
+    base_score = min(max(int(common_validation.get("base_score", 0)), 0), 20)
+    score = _build_common_only_score(base_score)
+    reasons = list(common_validation.get("reasons", []))
+    reasons.append(
+        (
+            "+0: Complex trust layers skipped for non high-stakes report "
+            f"(category='{_normalize_text(ai_category) or 'unknown'}', disaster='{_normalize_text(disaster_type) or 'unknown'}')"
+        )
+    )
+
+    if common_validation.get("passed"):
+        dispatch_action = "human_review"
+    else:
+        dispatch_action = "pending_verification"
+
+    return {
+        "score": score,
+        "dispatch_action": dispatch_action,
+        "reasons": reasons,
+    }
+
+
+def calculate_trust_score(
+    data_dict: dict,
+    ai_consistency: int,
+    corroborating_reports_count: int,
+    ai_category: str | None = None,
+    base_score: int = 0,
+) -> dict:
     """
     Multi-layered trust scoring engine. Grades an incoming disaster report 0-100.
 
     Layers:
-        Layer 1 (Automated checks):  up to 20 pts
+        Common checks run separately via run_common_validation (up to 20 pts baseline).
         Layer 2 (AI consistency):    up to 30 pts
-        Layer 3 (Live Weather API):  up to 20 pts
-        Layer 4 (Corroboration):     up to 40 pts (but overall cap is 100)
+        Layer 3 (External APIs):     up to 20 pts
+        Layer 4 (Corroboration):     up to 40 pts (overall cap is 100)
+
+    Category-based routing:
+        - Complex trust layers are for high-stakes disasters only.
+        - Non high-stakes reports receive a common-validation pass-through result.
 
     Returns:
         {
@@ -22,29 +156,23 @@ def calculate_trust_score(data_dict: dict, ai_consistency: int, corroborating_re
         }
     """
     try:
-        score = 0
-        reasons = []
+        base_score = min(max(int(base_score), 0), 20)
+        score = base_score
+        reasons = [f"+{base_score}: Common validation baseline (phone + geocoding)"]
 
-        # ------------------------------------------------------------------ #
-        # LAYER 1 — Automated sanity checks (max 20 pts)
-        # ------------------------------------------------------------------ #
+        disaster_type = str(data_dict.get("disaster_type", "")).lower().strip()
+        if not is_high_stakes_disaster(ai_category, disaster_type):
+            reasons.append("+0: Complex trust layers bypassed for non high-stakes report")
+            pass_through_score = _build_common_only_score(base_score)
+            return {
+                "score": pass_through_score,
+                "dispatch_action": "human_review" if pass_through_score >= 50 else "flagged",
+                "reasons": reasons,
+            }
 
-        # +10 if geocoding produced valid coordinates
         lat = data_dict.get("lat")
         lng = data_dict.get("lng")
-        if lat is not None and lng is not None:
-            score += 10
-            reasons.append("+10: Valid location coordinates found")
-        else:
-            reasons.append("+0: Location could not be geocoded")
-
-        # +10 if reporter's phone is exactly 10 digits
         phone = str(data_dict.get("reporter_phone", "")).strip().replace(" ", "").replace("-", "")
-        if phone.isdigit() and len(phone) == 10:
-            score += 10
-            reasons.append("+10: Valid 10-digit phone number")
-        else:
-            reasons.append("+0: Phone number missing or invalid")
 
         # -20 SPAM CHECK: duplicate phone within the last 1 hour with 'Video Connected' status
         try:
@@ -80,11 +208,9 @@ def calculate_trust_score(data_dict: dict, ai_consistency: int, corroborating_re
         reasons.append(f"+{consistency_points}: AI consistency score ({ai_consistency}/10)")
 
         # ------------------------------------------------------------------ #
-        # LAYER 3 — Live Weather API Correlation (max 20 pts)
-        # Hits OpenWeatherMap to verify conditions at the exact lat/lng
+        # LAYER 3 — External Weather/Disaster API Correlation (max 20 pts)
+        # Triggered only for high-stakes disasters.
         # ------------------------------------------------------------------ #
-        disaster_type = str(data_dict.get("disaster_type", "")).lower().strip()
-        
         # What users report vs what OpenWeatherMap reports
         WATER_DISASTERS = {"flood", "rain", "cyclone", "storm"}
         OWM_WATER_WEATHER = {"rain", "thunderstorm", "drizzle"} 
@@ -98,10 +224,10 @@ def calculate_trust_score(data_dict: dict, ai_consistency: int, corroborating_re
                     timeout=5
                 )
                 resp.raise_for_status() # Catch HTTP errors
-                
+
                 # OWM returns weather[0].main (e.g., 'Rain', 'Clear', 'Clouds')
                 weather_condition = resp.json()["weather"][0]["main"].lower()
-                
+
                 # Check for correlation
                 if disaster_type in WATER_DISASTERS and weather_condition in OWM_WATER_WEATHER:
                     score += 20
@@ -110,7 +236,7 @@ def calculate_trust_score(data_dict: dict, ai_consistency: int, corroborating_re
                     reasons.append(f"+0: Live weather API ({weather_condition}) did not correlate with '{disaster_type}'")
             else:
                 reasons.append("+0: Weather check skipped (Missing coordinates or OWM_API_KEY)")
-                
+
         except Exception as weather_err:
             reasons.append(f"+0: Weather API check failed ({weather_err})")
 

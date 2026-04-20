@@ -4,7 +4,12 @@ from backend.auth import verify_token
 from ai_processing.gemini_processor import process_need_text
 from database.geocoding import get_coordinates
 from database.needs_db import save_need, check_corroboration
-from database.verification import calculate_trust_score
+from database.verification import (
+    build_common_only_trust_result,
+    calculate_trust_score,
+    is_high_stakes_disaster,
+    run_common_validation,
+)
 from notifications.gmail_alert import send_alert
 
 router = APIRouter(prefix="/need")  # ✅ IMPORTANT
@@ -53,28 +58,65 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         if category == "other":
             category = data.help_needed
 
-        flag = "suspicious" if confidence == "low" else "verified"
-
         # 🌍 LOCATION
-        # ✅ FIXED: Using data.location based on models.py
-        coords = get_coordinates(data.location_text) or {"lat": 0, "lng": 0}
-        # 🛡️ VERIFICATION
-        corroboration_count = check_corroboration(
-            coords["lat"], coords["lng"], category
-        )
+        coords_raw = get_coordinates(data.location_text) or {}
+        lat = coords_raw.get("lat")
+        lng = coords_raw.get("lng")
+        coords = {
+            "lat": lat if lat is not None else 0,
+            "lng": lng if lng is not None else 0,
+        }
 
-        trust_result = calculate_trust_score(
-            (data.model_dump() if hasattr(data, "model_dump") else data.dict()) | coords,
-            ai_consistency,
-            corroboration_count,
-        )
+        payload = data.model_dump() if hasattr(data, "model_dump") else data.dict()
+        verification_payload = payload | {
+            "lat": lat,
+            "lng": lng,
+            "category": category,
+            "disaster_type": data.disaster_type,
+        }
+
+        # ✅ Common validation must run for every report.
+        common_validation = run_common_validation(verification_payload)
+        high_stakes = is_high_stakes_disaster(category, data.disaster_type)
+
+        flag = "suspicious" if confidence == "low" else "verified"
+        status = "open"
+        corroboration_count = 0
+
+        if not common_validation.get("passed"):
+            status = "Pending Verification"
+            flag = "pending_verification"
+            trust_result = build_common_only_trust_result(
+                common_validation,
+                category,
+                data.disaster_type,
+            )
+            trust_result["dispatch_action"] = "pending_verification"
+        elif high_stakes:
+            if lat is not None and lng is not None:
+                corroboration_count = check_corroboration(lat, lng, category)
+
+            trust_result = calculate_trust_score(
+                verification_payload,
+                ai_consistency,
+                corroboration_count,
+                category,
+                common_validation.get("base_score", 0),
+            )
+        else:
+            trust_result = build_common_only_trust_result(
+                common_validation,
+                category,
+                data.disaster_type,
+            )
 
         trust_score = trust_result["score"]
 
         # 🟢 PRIORITY LOGIC
-        if trust_score > 70:
+        severity_key = str(severity).strip().lower()
+        if severity_key in {"critical", "very high"}:
             priority = "HIGH"
-        elif trust_score > 40:
+        elif severity_key in {"high", "medium"}:
             priority = "MEDIUM"
         else:
             priority = "LOW"
@@ -94,7 +136,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             "lng": coords["lng"],
             "disaster_type": data.disaster_type,
             "help_needed": data.help_needed,
-            "status": "open",
+            "status": status,
             "trust_score": trust_score,
             "trust_reasons": trust_result.get("reasons", []),
             "dispatch_action": trust_result.get("dispatch_action", "manual"),
