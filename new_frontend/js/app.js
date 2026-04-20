@@ -244,3 +244,65 @@ function renderMatches(matches) {
     
     feather.replace();
 }
+
+// 🌐 Real-Time WebSocket Updates & Multilingual Push
+const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+let currentLang = 'en';
+
+const uiLang = document.getElementById('uiLang');
+if (uiLang) {
+    uiLang.addEventListener('change', (e) => {
+        currentLang = e.target.value;
+    });
+}
+
+ws.onmessage = function(event) {
+    let data;
+    try {
+        data = JSON.parse(event.data);
+    } catch(err) {
+        return;
+    }
+    
+    if (data.type === "NEW_VOLUNTEER") {
+        showGlobalToast(`👋 New Unit: ${data.data.name} mapped.`, 'info');
+    } else if (data.priority === "HIGH" || (data.trust_score && data.trust_score > 70)) {
+        const summary = currentLang === 'en' ? (data.summary_en || `🚨 HIGH TRUST: ${data.category}`) : (data.summary_local || `🚨 HIGH TRUST: ${data.category}`);
+        showGlobalToast(summary, 'alert');
+        
+        if ('speechSynthesis' in window) {
+            const msg = new SpeechSynthesisUtterance(summary);
+            msg.lang = currentLang === 'en' ? 'en-US' : 'hi-IN';
+            window.speechSynthesis.speak(msg);
+        }
+        
+        loadDashboard(); // Refresh stats
+    }
+};
+
+function showGlobalToast(message, type) {
+    let toastContainer = document.getElementById('global-toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'global-toast-container';
+        toastContainer.className = 'fixed top-4 right-4 z-[99] flex flex-col gap-2 pointer-events-none';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const el = document.createElement('div');
+    const isAlert = type === 'alert';
+    el.className = `p-4 rounded-xl shadow-float text-sm font-medium text-white transition-all transform translate-x-10 opacity-0 ${isAlert ? 'bg-orange-600' : 'bg-ink-900'} flex items-center gap-2 pointer-events-auto max-w-xs`;
+    el.innerHTML = `<i data-feather="${isAlert ? 'alert-circle' : 'activity'}" class="w-4 h-4 shrink-0"></i> <span>${message}</span>`;
+    toastContainer.appendChild(el);
+    feather.replace();
+    
+    setTimeout(() => {
+        el.classList.remove('translate-x-10', 'opacity-0');
+    }, 10);
+    
+    setTimeout(() => {
+        el.classList.add('translate-x-10', 'opacity-0');
+        setTimeout(() => el.remove(), 300);
+    }, 6000);
+}
+

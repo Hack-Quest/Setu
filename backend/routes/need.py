@@ -39,6 +39,8 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         category = ai_result.get("category", "general")
         severity = ai_result.get("severity", "low")
         ai_consistency = int(ai_result.get("consistency", 5))
+        summary_en = ai_result.get("summary_en", "Emergency reported.")
+        summary_local = ai_result.get("summary_local", "Aapaatkaaleen sthiti (Emergency reported).")
 
         if ai_consistency <= 3:
             confidence = "low"
@@ -83,6 +85,8 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             "description": data.description,
             "category": category,
             "severity": severity,
+            "summary_en": summary_en,
+            "summary_local": summary_local,
             "location_text": data.location_text, # Passed to DB for logging
             "confidence": confidence,
             "flag": flag,

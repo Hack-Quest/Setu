@@ -44,9 +44,11 @@ def _parse_and_validate(raw: str) -> dict:
         consistency = 5
 
     return {
-        "category": result["category"],
-        "severity": result["severity"],
+        "category": result.get("category", "other"),
+        "severity": result.get("severity", "medium"),
         "consistency": consistency,
+        "summary_en": result.get("summary_en", "Emergency reported."),
+        "summary_local": result.get("summary_local", "Aapaatkaaleen sthiti (Emergency reported).")
     }
 
 

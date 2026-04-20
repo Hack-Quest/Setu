@@ -53,9 +53,14 @@ def check_corroboration(lat: float, lng: float, category: str) -> int:
         from datetime import timedelta
 
         two_hours_ago = datetime.now(timezone.utc) - timedelta(hours=2)
+        two_hours_ago_iso = two_hours_ago.isoformat()
 
-        # Single-field query — avoids requiring a Firestore composite index
-        docs = db.collection("needs_reports").where("category", "==", category).stream()
+        # Composite query using category equality and timestamp inequality
+        # Requires composite index in firestore.indexes.json!
+        docs = db.collection("needs_reports") \
+                 .where("category", "==", category) \
+                 .where("timestamp", ">=", two_hours_ago_iso) \
+                 .stream()
 
         count = 0
         for doc in docs:

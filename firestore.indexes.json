@@ -1,0 +1,25 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "needs_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "ASCENDING" },
+        { "fieldPath": "lat", "order": "ASCENDING" },
+        { "fieldPath": "lng", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "needs_reports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "category", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" },
+        { "fieldPath": "lat", "order": "ASCENDING" },
+        { "fieldPath": "lng", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

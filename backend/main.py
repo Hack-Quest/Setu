@@ -37,11 +37,16 @@ class WebSocketManager:
             self.active_connections.remove(websocket)
 
     async def broadcast_json(self, data: dict):
+        stale_connections = []
         for connection in self.active_connections:
             try:
                 await connection.send_json(data)
             except Exception as e:
                 print(f"WebSocket Error: {e}", flush=True)
+                stale_connections.append(connection)
+        
+        for stale in stale_connections:
+            self.disconnect(stale)
 
 
 manager = WebSocketManager()
@@ -56,15 +61,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # 🔥 CORS (fixed properly)
 app.add_middleware(
     CORSMiddleware,
-<<<<<<< HEAD
-    allow_origins=[
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "*"
-    ],
-=======
     allow_origins=["http://127.0.0.1:5500", "http://localhost:5500", "*"],   # 🔥 allow all for demo + specific origins
->>>>>>> 8cd860ad389895f377bb9343abb105514e3619e8
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
