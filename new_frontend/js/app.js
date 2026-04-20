@@ -119,9 +119,18 @@ volunteerForm.addEventListener('submit', async (e) => {
     const formData = new FormData(volunteerForm);
     const data = Object.fromEntries(formData.entries());
     
-    // Convert skills string to array
-    if(data.skills) {
-        data.skills = data.skills.split(',').map(s => s.trim());
+    const selectedSkills = formData.getAll('skills').filter(Boolean);
+    if (selectedSkills.length > 0) {
+        data.skills = selectedSkills;
+    } else if (typeof data.skills === 'string' && data.skills.trim()) {
+        data.skills = data.skills.split(',').map((skill) => skill.trim()).filter(Boolean);
+    } else {
+        data.skills = [];
+    }
+
+    if (typeof data.email !== 'string' || typeof data.password !== 'string') {
+        showToast('Email and password are required for volunteer registration.');
+        return;
     }
     
     const submitBtn = volunteerForm.querySelector('button[type="submit"]');

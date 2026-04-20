@@ -2,8 +2,14 @@
 <html>
 
 <head>
-    <title>Setu Tactical Map (Google)</title>
+    <title>Setu Tactical Map</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+    />
 
     <style>
         body {
@@ -13,19 +19,46 @@
         #map {
             height: 100vh;
         }
+
+        #status {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 20;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.9);
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            display: none;
+            max-width: 520px;
+        }
     </style>
 </head>
 
 <body>
 
     <div id="map"></div>
+    <div id="status"></div>
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""
+    ></script>
 
     <script>
         const API = "http://127.0.0.1:8000/dashboard/reports";
 
         let map;
-        let markers = [];
-        let lines = [];
+        let overlays = [];
+
+        function showStatus(message) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.style.display = 'block';
+        }
 
         // 🎨 color logic
         function getColor(severity) {
@@ -38,10 +71,15 @@
 
         // 🗺️ init map
         function initMap() {
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 20.5937, lng: 78.9629 },
+            map = L.map('map', {
+                center: [20.5937, 78.9629],
                 zoom: 5,
             });
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
 
             loadNeeds();
             setInterval(loadNeeds, 5000);
@@ -49,11 +87,8 @@
 
         // 🧹 clear everything
         function clearAll() {
-            markers.forEach(m => m.setMap(null));
-            markers = [];
-
-            lines.forEach(l => l.setMap(null));
-            lines = [];
+            overlays.forEach(item => map.removeLayer(item));
+            overlays = [];
         }
 
         // 🔄 fetch + render
@@ -64,6 +99,7 @@
                 const reports = raw.reports || raw;
 
                 clearAll();
+                const bounds = [];
 
                 reports.forEach(r => {
 
@@ -77,56 +113,36 @@
                     const isCritical = r.severity?.toLowerCase() === "critical";
 
                     // 🔴 NEED MARKER
-                    const marker = new google.maps.Marker({
-                        position: { lat, lng },
-                        map: map,
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            scale: isCritical ? 12 : 8,
-                            fillColor: getColor(r.severity),
-                            fillOpacity: isCritical ? 1 : 0.8,
-                            strokeWeight: 2
-                        },
-                        label: {
-                            text: r.severity?.toUpperCase() || "",
-                            color: "white",
-                            fontSize: "10px"
-                        }
+                    const marker = L.circleMarker([lat, lng], {
+                        radius: isCritical ? 12 : 8,
+                        color: getColor(r.severity),
+                        fillColor: getColor(r.severity),
+                        fillOpacity: isCritical ? 1 : 0.8,
+                        weight: 2
                     });
+                    marker.addTo(map);
 
-                    // 📦 POPUP
-                    const info = new google.maps.InfoWindow({
-                        content: `
+                    marker.bindPopup(`
                     <div style="font-family:sans-serif">
                         <b>${r.disaster_type || 'Need'}</b><br>
                         ${r.description || ''}<br><br>
                         <b>Severity:</b> ${r.severity}<br>
                         <b>Help:</b> ${r.help_needed || 'N/A'}
                     </div>
-                `
-                    });
-
-                    marker.addListener("click", () => {
-                        info.open(map, marker);
-                    });
+                `);
 
                     // 🔥 Pulse animation for CRITICAL
                     if (isCritical) {
                         let grow = true;
                         setInterval(() => {
-                            const scale = grow ? 14 : 8;
-                            marker.setIcon({
-                                path: google.maps.SymbolPath.CIRCLE,
-                                scale: scale,
-                                fillColor: "red",
-                                fillOpacity: 1,
-                                strokeWeight: 2
-                            });
+                            const radius = grow ? 14 : 8;
+                            marker.setStyle({ radius, fillColor: 'red', color: 'red', fillOpacity: 1 });
                             grow = !grow;
                         }, 600);
                     }
 
-                    markers.push(marker);
+                    overlays.push(marker);
+                    bounds.push([lat, lng]);
 
                     // 🔵 REAL OR DEMO VOLUNTEER + LINE
 
@@ -143,44 +159,44 @@
                     }
 
                     // 🔵 volunteer marker
-                    const volunteerMarker = new google.maps.Marker({
-                        position: { lat: vLat, lng: vLng },
-                        map: map,
-                        icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                    const volunteerMarker = L.circleMarker([vLat, vLng], {
+                        radius: 7,
+                        color: '#007bff',
+                        fillColor: '#007bff',
+                        fillOpacity: 0.9,
+                        weight: 1
                     });
+                    volunteerMarker.addTo(map);
 
-                    markers.push(volunteerMarker);
+                    overlays.push(volunteerMarker);
+                    bounds.push([vLat, vLng]);
 
                     // 🔗 connection line
-                    const line = new google.maps.Polyline({
-                        path: [
-                            { lat: lat, lng: lng },
-                            { lat: vLat, lng: vLng }
-                        ],
-                        geodesic: true,
-                        strokeColor: "#007bff",
-                        strokeOpacity: 0.8,
-                        strokeWeight: 3
+                    const line = L.polyline([
+                        [lat, lng],
+                        [vLat, vLng]
+                    ], {
+                        color: '#007bff',
+                        opacity: 0.8,
+                        weight: 3
                     });
-
-                    line.setMap(map);
-                    lines.push(line);
-
-                    // 🎯 auto focus
-                    map.panTo({ lat, lng });
+                    line.addTo(map);
+                    overlays.push(line);
 
                 });
 
+                if (bounds.length > 0) {
+                    map.fitBounds(bounds, { padding: [40, 40] });
+                }
+
             } catch (err) {
                 console.error("Map error:", err);
+                showStatus(`Map error: ${err.message || err}`);
             }
         }
-    </script>
 
-    <!-- 🔥 PUT YOUR API KEY -->
-    <script async
-        src="https://maps.googleapis.com/maps/api/js?key=GOOGLE_MAPS_KEY&callback=initMap">
-        </script>
+        initMap();
+    </script>
 
 </body>
 

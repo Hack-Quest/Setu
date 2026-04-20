@@ -5,6 +5,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const reportsList = document.getElementById('reportsList');
     const emptyState = document.getElementById('emptyState');
 
+    if (window.reportsLayer && typeof window.reportsLayer.clearLayers === 'function') {
+        window.reportsLayer.clearLayers();
+    }
+
+    const markerBounds = [];
+
     const result = await ApiService.getReports(); 
 
     if (loader) loader.classList.add('hidden'); 
@@ -63,20 +69,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             reportsList.appendChild(el);
 
             // 🔥 Add Marker to the Integrated Map
-            if (window.reportsMap && report.lat && report.lng) {
-                new google.maps.Marker({
-                    position: { lat: parseFloat(report.lat), lng: parseFloat(report.lng) },
-                    map: window.reportsMap,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        scale: severity === 'critical' ? 10 : 7,
+            if (window.reportsMap && window.reportsLayer && report.lat && report.lng) {
+                const lat = parseFloat(report.lat);
+                const lng = parseFloat(report.lng);
+
+                if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+                    const marker = L.circleMarker([lat, lng], {
+                        radius: severity === 'critical' ? 10 : 7,
+                        color: severity === 'critical' ? 'red' : 'orange',
                         fillColor: severity === 'critical' ? 'red' : 'orange',
                         fillOpacity: 1,
-                        strokeWeight: 1
-                    }
-                });
+                        weight: 1
+                    });
+
+                    marker.bindPopup(`
+                        <div style="font-family:sans-serif;line-height:1.4;">
+                            <b>${report.disaster_type || "Emergency Signal"}</b><br>
+                            ${report.description || "N/A"}<br>
+                            <b>Severity:</b> ${severity.toUpperCase()}<br>
+                            <b>Location:</b> ${report.location_text || "Unknown"}
+                        </div>
+                    `);
+
+                    marker.addTo(window.reportsLayer);
+                    markerBounds.push([lat, lng]);
+                }
             }
         });
+
+        if (markerBounds.length > 0) {
+            window.reportsMap.fitBounds(markerBounds, { padding: [28, 28] });
+        }
 
         if (typeof feather !== 'undefined') feather.replace();
     } else {

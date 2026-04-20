@@ -44,8 +44,9 @@ class VolunteerLoginInput(BaseModel):
 class NGOInput(BaseModel):
     name: str
     reg_number: str
-    location: str
+    location: str = Field(default="", validation_alias=AliasChoices("location", "coverage_area"))
     lat: float = 0.0
     lng: float = 0.0
-    radius: float          # operational radius in kilometres
+    radius: float = 50.0   # operational radius in kilometres
     verified: bool = False
+    coverage_area: Optional[str] = None

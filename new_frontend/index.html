@@ -100,6 +100,155 @@
         </footer>
     </main>
 
+    <div id="formModal" class="hidden fixed inset-0 z-50 flex items-end justify-center">
+        <div id="modalBackdrop" class="absolute inset-0 bg-ink-900/50 opacity-0 transition-opacity duration-300"></div>
+        <div id="modalContent"
+            class="relative z-10 w-full max-w-3xl rounded-t-[2rem] bg-surface shadow-float border border-muted translate-y-[100%] transition-transform duration-500 ease-out max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between px-6 md:px-8 py-5 border-b border-muted">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.2em] text-ink-500 font-semibold">Command Console</p>
+                    <h2 id="modalTitle" class="text-2xl font-semibold tracking-tight text-ink-900">Process New Need</h2>
+                </div>
+                <button type="button" onclick="closeFormModal()"
+                    class="w-10 h-10 rounded-full bg-muted text-ink-700 flex items-center justify-center hover:bg-accent-light transition-colors"
+                    aria-label="Close modal">
+                    <i data-feather="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] p-6 md:p-8">
+                <form id="needForm" class="space-y-4">
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="space-y-2">
+                            <label for="reporter_name" class="text-sm font-medium text-ink-900">Reporter Name</label>
+                            <input id="reporter_name" name="reporter_name" type="text" required
+                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
+                                placeholder="Name of the reporter" />
+                        </div>
+                        <div class="space-y-2">
+                            <label for="reporter_phone" class="text-sm font-medium text-ink-900">Reporter Phone</label>
+                            <input id="reporter_phone" name="reporter_phone" type="tel" required
+                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
+                                placeholder="10-digit phone" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="location_text" class="text-sm font-medium text-ink-900">Location</label>
+                        <input id="location_text" name="location_text" type="text" required
+                            class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
+                            placeholder="Exact location or landmark" />
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="space-y-2">
+                            <label for="disaster_type" class="text-sm font-medium text-ink-900">Disaster Type</label>
+                            <input id="disaster_type" name="disaster_type" type="text" required
+                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
+                                placeholder="Flood, fire, earthquake" />
+                        </div>
+                        <div class="space-y-2">
+                            <label for="help_needed" class="text-sm font-medium text-ink-900">Help Needed</label>
+                            <input id="help_needed" name="help_needed" type="text" required
+                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
+                                placeholder="Food, rescue, medical" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="description" class="text-sm font-medium text-ink-900">Description</label>
+                        <textarea id="description" name="description" rows="5" required
+                            class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
+                            placeholder="Add operational detail for triage"></textarea>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full rounded-2xl bg-ink-900 px-5 py-3.5 font-semibold text-white hover:bg-ink-700 transition-colors">
+                        Submit Need
+                    </button>
+                </form>
+
+                <form id="volunteerForm" class="space-y-4 hidden">
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="space-y-2">
+                            <label for="v_name" class="text-sm font-medium text-ink-900">Full Name</label>
+                            <input id="v_name" name="name" type="text" required
+                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
+                                placeholder="Your name" />
+                        </div>
+                        <div class="space-y-2">
+                            <label for="v_phone" class="text-sm font-medium text-ink-900">Phone</label>
+                            <input id="v_phone" name="phone" type="tel" required
+                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
+                                placeholder="Phone number" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="v_location" class="text-sm font-medium text-ink-900">Location</label>
+                        <input id="v_location" name="location" type="text" required
+                            class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
+                            placeholder="City or base location" />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-medium text-ink-900">Skills</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="flex items-center gap-2 rounded-2xl border border-muted bg-base px-4 py-3">
+                                <input type="checkbox" name="skills" value="Medical">
+                                <span>Medical</span>
+                            </label>
+                            <label class="flex items-center gap-2 rounded-2xl border border-muted bg-base px-4 py-3">
+                                <input type="checkbox" name="skills" value="Logistics">
+                                <span>Logistics</span>
+                            </label>
+                            <label class="flex items-center gap-2 rounded-2xl border border-muted bg-base px-4 py-3">
+                                <input type="checkbox" name="skills" value="Rescue">
+                                <span>Rescue</span>
+                            </label>
+                            <label class="flex items-center gap-2 rounded-2xl border border-muted bg-base px-4 py-3">
+                                <input type="checkbox" name="skills" value="Communications">
+                                <span>Communications</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="space-y-2">
+                            <label for="v_email" class="text-sm font-medium text-ink-900">Email</label>
+                            <input id="v_email" name="email" type="email" required
+                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
+                                placeholder="you@example.org" />
+                        </div>
+                        <div class="space-y-2">
+                            <label for="v_password" class="text-sm font-medium text-ink-900">Password</label>
+                            <input id="v_password" name="password" type="password" required minlength="8"
+                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
+                                placeholder="Minimum 8 characters" />
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full rounded-2xl bg-accent px-5 py-3.5 font-semibold text-white hover:bg-accent-hover transition-colors">
+                        Register Unit
+                    </button>
+                </form>
+
+                <div id="needResult"
+                    class="hidden rounded-[1.5rem] border border-muted bg-base p-5 text-sm text-ink-700 lg:self-start">
+                    <p class="font-semibold text-ink-900 mb-2">Latest processing result</p>
+                    <p>The backend response will appear here after you submit a need.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"
+        class="fixed bottom-8 left-1/2 z-50 flex -translate-x-1/2 translate-y-8 items-center gap-2 rounded-full bg-ink-900 px-5 py-3 text-sm font-medium text-white opacity-0 shadow-float transition-all duration-300 pointer-events-none">
+        <i data-feather="check-circle" class="w-4 h-4 text-white/70"></i>
+        <span id="toastMsg">Action complete.</span>
+    </div>
+
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
     <script>

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from backend.models import VolunteerRegisterInput, VolunteerLoginInput
 from database.volunteers_db import register_volunteer_auth, login_volunteer
+from backend.auth import SECRET_TOKEN
 
 router = APIRouter()
 
@@ -22,7 +23,8 @@ def register_volunteer(data: VolunteerRegisterInput):
         
         return {
             "message": "Volunteer registered successfully",
-            "volunteer_id": result["volunteer_id"]
+            "volunteer_id": result["volunteer_id"],
+            "token": SECRET_TOKEN
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -40,7 +42,8 @@ def login_volunteer_endpoint(data: VolunteerLoginInput):
             "message": "Login successful",
             "volunteer_id": result["volunteer_id"],
             "name": result["name"],
-            "email": result["email"]
+            "email": result["email"],
+            "token": SECRET_TOKEN
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -160,9 +160,25 @@
         const volunteerSummary = document.getElementById('volunteerSummary');
         const assignmentsGrid = document.getElementById('assignmentsGrid');
         const volunteersGrid = document.getElementById('volunteersGrid');
+        const loadingMessage = 'Loading the latest NGO mock data...';
 
         function getNgoId() {
-            return params.get('ngo_id') || localStorage.getItem('setu_active_ngo_id') || 'ngo-hope-horizon';
+            return params.get('ngo_id') || localStorage.getItem('setu_active_ngo_id') || '';
+        }
+
+        function showEmptyState(message) {
+            loadingState.textContent = message;
+            loadingState.classList.remove('hidden');
+            ngoName.textContent = 'No NGO selected';
+            regNumber.textContent = '';
+            coverageText.textContent = 'Register an NGO first, then reopen this page from the registration flow.';
+            assignmentCount.textContent = '0';
+            volunteerCount.textContent = '0';
+            verifiedCount.textContent = '0';
+            assignmentSummary.textContent = '0 assignments';
+            volunteerSummary.textContent = '0 volunteers';
+            assignmentsGrid.innerHTML = '<div class="rounded-[1.5rem] border border-dashed border-muted bg-white/70 p-6 text-sm text-ink-500">No NGO has been linked yet.</div>';
+            volunteersGrid.innerHTML = '<div class="rounded-[1.5rem] border border-dashed border-muted bg-white/70 p-6 text-sm text-ink-500">No managed volunteers available.</div>';
         }
 
         function assignmentCard(assignment) {
@@ -230,11 +246,16 @@
 
         async function loadDashboard() {
             const ngoId = getNgoId();
+            if (!ngoId) {
+                showEmptyState('No NGO is selected. Register an NGO to load this dashboard.');
+                return;
+            }
+
             const data = await api.getNGODashboard(ngoId);
 
             ngoName.textContent = data.ngo.name;
             regNumber.textContent = data.ngo.reg_number;
-            coverageText.textContent = `${data.ngo.coverage_area}. The mocked dashboard keeps assignments and volunteers tied to this organization so the UI can be reviewed without backend wiring.`;
+            coverageText.textContent = `${data.ngo.coverage_area || data.ngo.location || 'Coverage details unavailable'}. The mocked dashboard keeps assignments and volunteers tied to this organization so the UI can be reviewed without backend wiring.`;
 
             if (data.ngo.verified) {
                 verificationBadge.textContent = 'Verified NGO';
@@ -263,7 +284,7 @@
         }
 
         loadDashboard().catch((error) => {
-            loadingState.textContent = error.message || 'Unable to load NGO dashboard.';
+            showEmptyState(error.message || 'Unable to load NGO dashboard.');
         });
     </script>
 </body>

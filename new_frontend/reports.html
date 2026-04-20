@@ -12,6 +12,12 @@
         rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+    />
     <link rel="stylesheet" href="css/styles.css">
     <script>
         tailwind.config = {
@@ -44,9 +50,6 @@
             }
         }
     </script>
-    <script async
-        src="https://maps.googleapis.com/maps/api/js?key=GOOGLE_MAPS_KEY&callback=initMap">
-        </script>
 </head>
 
 <body
@@ -122,24 +125,27 @@
 
     </main>
 
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""
+    ></script>
     <script>
-        // Inside reports.html <script>
-        let reportsMap;
+        // Expose a map instance and layer group for reports.js.
+        window.reportsMap = L.map('map', {
+            center: [28.6139, 77.2090],
+            zoom: 10,
+            zoomControl: true,
+        });
 
-        function initMap() {
-            // Correctly assign to the window object so reports.js can see it
-            window.reportsMap = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 28.6139, lng: 77.2090 }, // Your operational center
-                zoom: 10,
-                disableDefaultUI: true,
-                styles: [
-                    { "featureType": "all", "elementType": "labels.text.fill", "stylers": [{ "color": "#7c93a3" }] },
-                    { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#f3f7f9" }] },
-                    { "featureType": "landscape", "elementType": "geometry", "stylers": [{ "color": "#f5f5f5" }] }
-                ]
-            });
-        }
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(window.reportsMap);
+
+        window.reportsLayer = L.layerGroup().addTo(window.reportsMap);
     </script>
+    <script src="js/api.js"></script>
     <script src="js/reports.js"></script>
 </body>
 

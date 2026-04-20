@@ -36,31 +36,17 @@ class ApiService {
     static async register(data) { return this.request('/auth/register', { method: 'POST', body: JSON.stringify(data) }); }
     static async getDashboard() { return this.request('/dashboard'); }
     static async getReports() { return this.request('/dashboard/reports'); }
+    static async registerNGO(data) { return this.request('/ngo/register', { method: 'POST', body: JSON.stringify(data) }); }
 
     /**
      * Parallel fetch for NGO profile + global stats.
      */
     static async getNGODashboard(ngoId) {
-        const [ngoRes, statsRes] = await Promise.all([
-            this.request(`/ngo/${ngoId}`),
-            this.request('/dashboard')
-        ]);
-
-        if (!ngoRes.ok || !statsRes.ok) {
-            return { ok: false, error: ngoRes.error || statsRes.error };
+        const response = await this.request(`/ngo/${ngoId}/dashboard`);
+        if (!response.ok) {
+            throw new Error(response.error || 'Unable to load NGO dashboard');
         }
-
-        return {
-            ok: true,
-            data: {
-                ngo: ngoRes.data,
-                stats: {
-                    active_assignments: statsRes.data.unmatched_cases,
-                    managed_volunteers: statsRes.data.total_volunteers,
-                    verified_professionals: statsRes.data.total_volunteers
-                }
-            }
-        };
+        return response.data;
     }
 
     static async postNeed(data) {
@@ -74,3 +60,4 @@ class ApiService {
     static async runMatch() { return this.request('/match'); }
 }
 window.ApiService = ApiService;
+window.api = ApiService;

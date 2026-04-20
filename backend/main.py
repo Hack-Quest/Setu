@@ -112,12 +112,15 @@ def health():
 
 @app.get("/config/public")
 def public_config():
-    google_maps_api_key = os.getenv("GOOGLE_MAPS_API_KEY", "").strip()
+    google_maps_api_key = (
+        os.getenv("GOOGLE_MAPS_KEY", "").strip()
+        or os.getenv("GOOGLE_MAPS_API_KEY", "").strip()
+    )
 
     if not google_maps_api_key:
         return JSONResponse(
             status_code=503,
-            content={"error": "GOOGLE_MAPS_API_KEY is not configured on server"}
+            content={"error": "Google Maps API key is not configured (set GOOGLE_MAPS_KEY or GOOGLE_MAPS_API_KEY)"}
         )
 
     return {"google_maps_api_key": google_maps_api_key}

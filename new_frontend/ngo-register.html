@@ -196,10 +196,13 @@
         ngoRegisterForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
+            const coverageArea = document.getElementById('coverage_area').value.trim();
             const payload = {
                 name: document.getElementById('name').value.trim(),
                 reg_number: document.getElementById('reg_number').value.trim(),
-                coverage_area: document.getElementById('coverage_area').value.trim(),
+                coverage_area: coverageArea,
+                location: coverageArea,
+                radius: 50,
                 verified: false
             };
 
@@ -212,12 +215,18 @@
             btnText.textContent = 'Creating profile...';
 
             try {
-                const response = await api.registerNGO(payload);
-                localStorage.setItem('active_ngo_name', response.ngo.name);
-                showMessage(`NGO profile created for ${response.ngo.name}. Opening dashboard...`, 'success');
+                const response = await ApiService.registerNGO(payload);
+
+                if (!response.ok) {
+                    throw new Error(response.error || 'Unable to create NGO profile.');
+                }
+
+                localStorage.setItem('setu_active_ngo_id', response.data.id);
+                localStorage.setItem('active_ngo_name', payload.name);
+                showMessage(`NGO profile created for ${payload.name}. Opening dashboard...`, 'success');
 
                 setTimeout(() => {
-                    window.location.href = `ngo-dashboard.html?ngo_id=${encodeURIComponent(response.ngo.id)}`;
+                    window.location.href = `ngo-dashboard.html?ngo_id=${encodeURIComponent(response.data.id)}`;
                 }, 900);
             } catch (error) {
                 showMessage(error.message || 'Unable to create NGO profile.', 'error');

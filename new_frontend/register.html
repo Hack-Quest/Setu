@@ -226,6 +226,7 @@
         <span id="toastMsg">Action complete.</span>
     </div>
 
+    <script src="js/api.js"></script>
     <script>
         feather.replace();
 
@@ -262,30 +263,23 @@
             btnText.textContent = 'Creating account...';
 
             try {
-                const response = await fetch('http://127.0.0.1:8000/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password,
-                        name: name,
-                        phone: phone,
-                        location: location,
-                        skills: skills
-                    })
+                const response = await ApiService.register({
+                    email,
+                    password,
+                    name,
+                    phone,
+                    location,
+                    skills
                 });
 
                 if (!response.ok) {
-                    const data = await response.json();
-                    showError(data.detail || 'Registration failed. Please try again.');
+                    showError(response.error || 'Registration failed. Please try again.');
                     submitBtn.disabled = false;
                     btnText.textContent = 'Create Account';
                     return;
                 }
 
-                const data = await response.json();
+                const data = response.data;
 
                 // Store auth info
                 localStorage.setItem('auth_token', data.token || 'hackathon-secret');
