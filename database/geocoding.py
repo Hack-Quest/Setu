@@ -61,7 +61,7 @@ def get_coordinates(address: str) -> dict:
 
 
     # If both APIs fail, return None so the database knows it's a bad address
-    return {"lat": None, "lng": None}
+    return None
 
 
 # --- TEST BLOCK ---

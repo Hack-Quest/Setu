@@ -32,8 +32,8 @@ class ApiService {
         }
     }
 
-    static async login(data) { return this.request('/login', { method: 'POST', body: JSON.stringify(data) }); }
-    static async register(data) { return this.request('/register', { method: 'POST', body: JSON.stringify(data) }); }
+    static async login(data) { return this.request('/auth/login', { method: 'POST', body: JSON.stringify(data) }); }
+    static async register(data) { return this.request('/auth/register', { method: 'POST', body: JSON.stringify(data) }); }
     static async getDashboard() { return this.request('/dashboard'); }
     static async getReports() { return this.request('/dashboard/reports'); }
 

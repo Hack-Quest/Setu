@@ -201,7 +201,7 @@ async def volunteer_webhook(request: Request, payload: Dict):
 # 📦 Routers
 app.include_router(need_router)
 app.include_router(volunteer_router)
-app.include_router(volunteer_auth_router)
+app.include_router(volunteer_auth_router, prefix="/auth")
 app.include_router(match_router)
 app.include_router(dashboard_router)
 app.include_router(assignment_router)

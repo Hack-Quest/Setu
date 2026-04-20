@@ -44,7 +44,8 @@ class VolunteerLoginInput(BaseModel):
 class NGOInput(BaseModel):
     name: str
     reg_number: str
-    lat: float
-    lng: float
+    location: str
+    lat: float = 0.0
+    lng: float = 0.0
     radius: float          # operational radius in kilometres
     verified: bool = False
