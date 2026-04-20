@@ -1,11 +1,14 @@
 from typing import List, Dict
+import os
 from fastapi import (
     FastAPI, Request, BackgroundTasks, WebSocket, WebSocketDisconnect
 )
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from dotenv import load_dotenv
 
 # Routers
 from backend.routes.need import router as need_router, create_need
@@ -21,6 +24,8 @@ from backend.routes.ngo import router as ngo_router
 from database.volunteers_db import save_volunteer
 from database.geocoding import get_coordinates
 from database.ngos_db import get_ngo
+
+load_dotenv(dotenv_path="config/.env")
 
 
 # 🔌 WebSocket Manager
@@ -58,10 +63,27 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# 🔥 CORS (fixed properly)
+DEFAULT_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+]
+
+raw_allowed_origins = os.getenv("CORS_ALLOW_ORIGINS", "")
+if raw_allowed_origins.strip():
+    allowed_origins = [
+        origin.strip()
+        for origin in raw_allowed_origins.split(",")
+        if origin.strip()
+    ]
+else:
+    allowed_origins = DEFAULT_ALLOWED_ORIGINS
+
+# 🔥 CORS (hardened defaults)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500", "*"],   # 🔥 allow all for demo + specific origins
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -86,6 +108,19 @@ def home():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/config/public")
+def public_config():
+    google_maps_api_key = os.getenv("GOOGLE_MAPS_API_KEY", "").strip()
+
+    if not google_maps_api_key:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "GOOGLE_MAPS_API_KEY is not configured on server"}
+        )
+
+    return {"google_maps_api_key": google_maps_api_key}
 
 # 🔗 NEED WEBHOOK
 @app.post("/webhook")
