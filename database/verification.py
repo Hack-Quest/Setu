@@ -52,7 +52,7 @@ def calculate_trust_score(data_dict: dict, ai_consistency: int, corroborating_re
             one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
             if phone.isdigit() and len(phone) == 10:
                 duplicate_docs = (
-                    db.collection("needs")
+                    db.collection("needs_reports")
                     .where("reporter_phone", "==", phone)
                     .where("timestamp", ">=", one_hour_ago)
                     .stream()

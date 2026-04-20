@@ -102,7 +102,8 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         }
 
         # 💾 SAVE
-        save_need(final_data)
+        doc_id = save_need(final_data)
+        final_data["id"] = doc_id
         needs_storage.append(final_data)
 
         # 🚨 EMAIL TRIGGER
