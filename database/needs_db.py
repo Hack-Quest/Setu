@@ -1,5 +1,7 @@
 from database.firestore_client import db
 from datetime import datetime, timezone
+from google.cloud.firestore_v1.base_query import FieldFilter
+
 
 def save_need(data: dict) -> str:
     """Stores need into Firestore"""
@@ -7,32 +9,38 @@ def save_need(data: dict) -> str:
     # 1. System level tracking
     data["status"] = "open"
     data["timestamp"] = datetime.now(timezone.utc).isoformat()
-    
+
     # 2. Push to the 'needs_reports' collection in Firestore
     update_time, doc_ref = db.collection("needs_reports").add(data)
 
     print(f"✅ Successfully saved need with ID: {doc_ref.id}")
     return doc_ref.id
 
+
 def update_need_status(doc_id: str, new_status: str):
     """
     Updates the status of a need (e.g., from 'open' to 'assigned' or 'resolved').
     """
-    db.collection("needs_reports").document(doc_id).update({
-        "status": new_status,
-        "updated_at": datetime.now(timezone.utc).isoformat()
-    })
+    db.collection("needs_reports").document(doc_id).update(
+        {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}
+    )
     print(f"🔄 Need {doc_id} status updated to {new_status}")
-    
+
+
 def get_open_needs() -> list:
     """
     Fetches all currently unassigned/open needs for the volunteers to see.
     """
     # Query Firestore for only the "open" reports
-    docs = db.collection("needs_reports").where("status", "==", "open").stream()
-    
+    docs = (
+        db.collection("needs_reports")
+        .where(filter=FieldFilter("status", "==", "open"))
+        .stream()
+    )
+
     # Package the results nicely into a Python list
     return [{**doc.to_dict(), "id": doc.id} for doc in docs]
+
 
 def get_need_by_id(doc_id: str) -> dict:
     """Fetches a single need by its exact Firestore document ID."""
@@ -40,6 +48,7 @@ def get_need_by_id(doc_id: str) -> dict:
     if doc.exists:
         return {**doc.to_dict(), "id": doc.id}
     return None
+
 
 def check_corroboration(lat: float, lng: float, category: str) -> int:
     """
@@ -57,10 +66,12 @@ def check_corroboration(lat: float, lng: float, category: str) -> int:
 
         # Composite query using category equality and timestamp inequality
         # Requires composite index in firestore.indexes.json!
-        docs = db.collection("needs_reports") \
-                 .where("category", "==", category) \
-                 .where("timestamp", ">=", two_hours_ago_iso) \
-                 .stream()
+        docs = (
+            db.collection("needs_reports")
+            .where(filter=FieldFilter("category", "==", category))
+            .where(filter=FieldFilter("timestamp", ">=", two_hours_ago_iso))
+            .stream()
+        )
 
         count = 0
         for doc in docs:
@@ -82,7 +93,12 @@ def check_corroboration(lat: float, lng: float, category: str) -> int:
             # Mock distance check: within ~0.05 degrees (~5km bounding box)
             doc_lat = d.get("lat")
             doc_lng = d.get("lng")
-            if doc_lat is not None and doc_lng is not None and lat is not None and lng is not None:
+            if (
+                doc_lat is not None
+                and doc_lng is not None
+                and lat is not None
+                and lng is not None
+            ):
                 if abs(doc_lat - lat) <= 0.05 and abs(doc_lng - lng) <= 0.05:
                     count += 1
             else:
@@ -93,4 +109,4 @@ def check_corroboration(lat: float, lng: float, category: str) -> int:
 
     except Exception as e:
         print(f"[Corroboration] Query failed: {e}. Defaulting to 0.")
-        return 0
+        return 0

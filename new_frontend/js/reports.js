@@ -59,9 +59,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const verificationLabel = report.common_verification?.passed === false
                     ? 'Common Verification: Pending'
                     : 'Common Verification: Passed';
+                const priorityLevelRaw = report.priority_level || report.priority || 'low';
+                const priorityText = String(priorityLevelRaw).toUpperCase();
                 const trustOrVerificationHtml = showTrustScore
-                    ? `Trust Score: <b>${report.trust_score || 0}%</b>`
-                    : verificationLabel;
+                    ? `Trust Score: <b>${report.trust_score || 0}/100</b> | Priority: <b>${priorityText}</b>`
+                    : `${verificationLabel} | Priority: <b>${priorityText}</b>`;
 
                 el.innerHTML = `
                 <div class="flex flex-col gap-2 flex-1">

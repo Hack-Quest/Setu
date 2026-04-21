@@ -5,8 +5,10 @@ from backend.auth import verify_token
 from database.geocoding import get_coordinates
 from database.firestore_client import db
 from database.needs_db import get_need_by_id
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 router = APIRouter(prefix="/ngo", tags=["NGO"])
+
 
 @router.post("/register")
 def register_ngo(data: NGOInput, token: str = Depends(verify_token)):
@@ -23,6 +25,7 @@ def register_ngo(data: NGOInput, token: str = Depends(verify_token)):
         print("❌ NGO Registration Error:", e, flush=True)
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/{ngo_id}")
 def get_ngo_details(ngo_id: str):
     """Retrieve details of an NGO"""
@@ -38,12 +41,20 @@ def get_ngo_dashboard(ngo_id: str):
     if not ngo:
         raise HTTPException(status_code=404, detail="NGO not found")
 
-    volunteer_docs = list(db.collection("volunteers").where("ngo_id", "==", ngo_id).stream())
+    volunteer_docs = list(
+        db.collection("volunteers")
+        .where(filter=FieldFilter("ngo_id", "==", ngo_id))
+        .stream()
+    )
     managed_volunteers = []
     for doc in volunteer_docs:
         volunteer = {"id": doc.id, **doc.to_dict()}
-        volunteer.setdefault("role", "+".join(volunteer.get("skills", [])) or "Volunteer")
-        volunteer.setdefault("status", "On Call" if volunteer.get("available", True) else "Deployed")
+        volunteer.setdefault(
+            "role", "+".join(volunteer.get("skills", [])) or "Volunteer"
+        )
+        volunteer.setdefault(
+            "status", "On Call" if volunteer.get("available", True) else "Deployed"
+        )
         volunteer.setdefault("zone", volunteer.get("location", "Assigned region"))
         volunteer.setdefault("skills", volunteer.get("skills", []))
         managed_volunteers.append(volunteer)
@@ -63,17 +74,27 @@ def get_ngo_dashboard(ngo_id: str):
             if volunteer_snap.exists:
                 volunteer = {"id": volunteer_snap.id, **volunteer_snap.to_dict()}
 
-        active_assignments.append({
-            "id": assignment["id"],
-            "title": need.get("summary_en") or need.get("description") or f"Need {assignment.get('need_id')}",
-            "location": need.get("location_text") or need.get("category") or "Unknown",
-            "lead": volunteer.get("name") if volunteer else "Unassigned",
-            "priority": need.get("priority", "Low"),
-            "status": need.get("status", "open"),
-            "eta": "TBD",
-        })
+        active_assignments.append(
+            {
+                "id": assignment["id"],
+                "title": need.get("summary_en")
+                or need.get("description")
+                or f"Need {assignment.get('need_id')}",
+                "location": need.get("location_text")
+                or need.get("category")
+                or "Unknown",
+                "lead": volunteer.get("name") if volunteer else "Unassigned",
+                "priority": need.get("priority", "Low"),
+                "status": need.get("status", "open"),
+                "eta": "TBD",
+            }
+        )
 
-    verified_professionals = sum(1 for volunteer in managed_volunteers if volunteer.get("ngo_verified") or volunteer.get("ngo_id"))
+    verified_professionals = sum(
+        1
+        for volunteer in managed_volunteers
+        if volunteer.get("ngo_verified") or volunteer.get("ngo_id")
+    )
 
     return {
         "ngo": ngo,

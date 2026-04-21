@@ -16,15 +16,18 @@ router = APIRouter(prefix="/need")  # ✅ IMPORTANT
 
 needs_storage = []
 
+
 async def broadcast_high_trust_report(report_data: dict):
     try:
         from backend.main import manager
+
         await manager.broadcast_json(report_data)
         print("📡 Broadcasted high-trust report via WebSocket JS", flush=True)
     except ImportError as e:
         print(f"⚠️ Could not import websocket manager: {e}", flush=True)
     except Exception as e:
         print(f"⚠️ WS Broadcast Error: {e}", flush=True)
+
 
 def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
     """Core logic separated so it can be called internally (webhook) or via API."""
@@ -43,9 +46,14 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
 
         category = ai_result.get("category", "general")
         severity = ai_result.get("severity", "low")
+        severity_key = str(severity).strip().lower().replace("_", " ").replace("-", " ")
+        if severity_key not in {"low", "medium", "high", "very high", "critical"}:
+            severity_key = "low"
         ai_consistency = int(ai_result.get("consistency", 5))
         summary_en = ai_result.get("summary_en", "Emergency reported.")
-        summary_local = ai_result.get("summary_local", "Aapaatkaaleen sthiti (Emergency reported).")
+        summary_local = ai_result.get(
+            "summary_local", "Aapaatkaaleen sthiti (Emergency reported)."
+        )
 
         if ai_consistency <= 3:
             confidence = "low"
@@ -78,6 +86,11 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         # ✅ Common validation must run for every report.
         common_validation = run_common_validation(verification_payload)
         high_stakes = is_high_stakes_disaster(category, data.disaster_type)
+        life_threatening = severity_key in {"critical", "very high"}
+        trust_applicable = common_validation.get("passed") and (
+            high_stakes or life_threatening
+        )
+        verification_mode = "full_trust" if trust_applicable else "common_only"
 
         flag = "suspicious" if confidence == "low" else "verified"
         status = "open"
@@ -92,7 +105,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
                 data.disaster_type,
             )
             trust_result["dispatch_action"] = "pending_verification"
-        elif high_stakes:
+        elif trust_applicable:
             if lat is not None and lng is not None:
                 corroboration_count = check_corroboration(lat, lng, category)
 
@@ -113,7 +126,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         trust_score = trust_result["score"]
 
         # 🟢 PRIORITY LOGIC
-        severity_key = str(severity).strip().lower()
+        priority_level = severity_key
         if severity_key in {"critical", "very high"}:
             priority = "HIGH"
         elif severity_key in {"high", "medium"}:
@@ -129,7 +142,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             "severity": severity,
             "summary_en": summary_en,
             "summary_local": summary_local,
-            "location_text": data.location_text, # Passed to DB for logging
+            "location_text": data.location_text,  # Passed to DB for logging
             "confidence": confidence,
             "flag": flag,
             "lat": coords["lat"],
@@ -140,6 +153,14 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             "trust_score": trust_score,
             "trust_reasons": trust_result.get("reasons", []),
             "dispatch_action": trust_result.get("dispatch_action", "manual"),
+            "trust_score_visible": trust_applicable,
+            "verification_mode": verification_mode,
+            "priority_level": priority_level,
+            "common_verification": {
+                "passed": common_validation.get("passed", False),
+                "phone_valid": common_validation.get("phone_ok", False),
+                "location_valid": common_validation.get("coords_ok", False),
+            },
             "priority": priority,
         }
 
@@ -162,17 +183,14 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
 
     except Exception as e:
         print("❌ Error:", e)
-        return {
-            "error": str(e),
-            "message": "Fallback response used"
-        }
+        return {"error": str(e), "message": "Fallback response used"}
 
 
 @router.post("")
 def create_need(
     data: NeedInput,
     background_tasks: BackgroundTasks,
-    token: str = Depends(verify_token)
+    token: str = Depends(verify_token),
 ):
     """API endpoint wrapper."""
     return process_and_save_need(data, background_tasks)

@@ -1,23 +1,49 @@
-const CACHE_NAME = "setu-cache-v1";
+const CACHE_NAME = "setu-cache-v3";
+const IS_LOCAL_DEV = self.location.hostname === "127.0.0.1" || self.location.hostname === "localhost";
 
 const urlsToCache = [
     "/",
     "/index.html",
     "/css/styles.css",
-    "/js/app.js",
-    "/js/api.js"
+    "/js/app.js?v=20260421b",
+    "/js/api.js?v=20260421b"
 ];
 
-self.addEventListener("install", event => {
+self.addEventListener("install", (event) => {
+    if (IS_LOCAL_DEV) {
+        self.skipWaiting();
+        return;
+    }
+
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urlsToCache))
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
     );
+    self.skipWaiting();
 });
 
-self.addEventListener("fetch", event => {
+self.addEventListener("activate", (event) => {
+    event.waitUntil((async () => {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+
+        if (IS_LOCAL_DEV) {
+            await self.registration.unregister();
+            const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+            await Promise.all(clients.map((client) => client.navigate(client.url)));
+            return;
+        }
+
+        await self.clients.claim();
+    })());
+});
+
+self.addEventListener("fetch", (event) => {
+    if (IS_LOCAL_DEV) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
+
     event.respondWith(
-        caches.match(event.request)
-            .then(response => response || fetch(event.request))
+        caches.match(event.request).then((response) => response || fetch(event.request))
     );
 });

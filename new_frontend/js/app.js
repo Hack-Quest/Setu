@@ -86,6 +86,8 @@ needForm.addEventListener('submit', async (e) => {
         const score = response.data.trust_score || 0;
         const action = response.data.dispatch_action || 'N/A';
         const mode = response.data.verification_mode || 'common_only';
+        const priorityLevelRaw = response.data.priority_level || response.data.priority || 'low';
+        const priorityLevel = String(priorityLevelRaw).toUpperCase();
         const showTrustScore = response.data.trust_score_visible === true || mode === 'full_trust';
         const commonVerification = response.data.common_verification || {};
         const commonPassed = commonVerification.passed === true;
@@ -101,6 +103,7 @@ needForm.addEventListener('submit', async (e) => {
                 needResult.innerHTML = `
                     <div class="flex items-center gap-2"><i data-feather="check-circle" class="w-4 h-4"></i> Report verified with common checks</div>
                     <div class="flex items-center gap-2"><i data-feather="shield" class="w-4 h-4"></i> Status: success</div>
+                    <div class="flex items-center gap-2"><i data-feather="flag" class="w-4 h-4"></i> Priority: ${priorityLevel}</div>
                 `;
             } else {
                 const issues = [];
@@ -116,18 +119,19 @@ needForm.addEventListener('submit', async (e) => {
                     <div class="flex items-center gap-2 font-semibold"><i data-feather="alert-triangle" class="w-4 h-4 text-orange-500"></i> Common verification failed</div>
                     <div class="flex items-center gap-2"><i data-feather="shield-off" class="w-4 h-4"></i> ${issues.join(' | ') || 'Please check phone number and location.'}</div>
                     <div class="flex items-center gap-2"><i data-feather="clock" class="w-4 h-4"></i> Action: pending_verification</div>
+                    <div class="flex items-center gap-2"><i data-feather="flag" class="w-4 h-4"></i> Priority: ${priorityLevel}</div>
                 `;
             }
         } else if (isHighTrust) {
             needResult.classList.add('bg-emerald-50', 'text-emerald-900', 'border-emerald-200');
             needResult.innerHTML = `
-                <div class="flex items-center gap-2"><i data-feather="check-circle" class="w-4 h-4"></i> Trust Score: ${score}/100</div>
+                <div class="flex items-center gap-2"><i data-feather="check-circle" class="w-4 h-4"></i> Trust Score: ${score}/100 | Priority: ${priorityLevel}</div>
                 <div class="flex items-center gap-2"><i data-feather="zap" class="w-4 h-4"></i> Action: ${action}</div>
             `;
         } else {
             needResult.classList.add('bg-rose-50', 'text-rose-700', 'border-rose-200');
             needResult.innerHTML = `
-                <div class="flex items-center gap-2 font-semibold"><i data-feather="alert-triangle" class="w-4 h-4 text-orange-500"></i> Trust Score: ${score}/100 (Unverified)</div>
+                <div class="flex items-center gap-2 font-semibold"><i data-feather="alert-triangle" class="w-4 h-4 text-orange-500"></i> Trust Score: ${score}/100 (Unverified) | Priority: ${priorityLevel}</div>
                 <div class="flex items-center gap-2"><i data-feather="shield" class="w-4 h-4"></i> Action: ${action}</div>
             `;
         }
