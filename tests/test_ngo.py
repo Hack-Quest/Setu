@@ -81,7 +81,7 @@ def run_test():
     resp = requests.post(f"{BASE_URL}/webhook", json=need_payload)
     resp.raise_for_status()
     need_response = resp.json()
-    need_id = need_response["data"]["need_id"]
+    need_id = need_response["data"]["id"]
     print(f"Need reported. ID: {need_id}")
 
     # Wait for the AI processing to run in the background
