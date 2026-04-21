@@ -12,7 +12,7 @@ def print_step(text):
 def main():
     # 1. Register and Verify NGO (The Tier 1 Anchor)
     print_step("NGO SETUP")
-    ngo_res = requests.post(f"{BASE_URL}/ngo/register", json={
+    ngo_res = requests.post(f"{BASE_URL}/ngo/register", headers=HEADERS, json={
         "name": "Delhi Trauma Center", 
         "reg_number": f"REG-{int(time.time())}", 
         "lat": 28.61, "lng": 77.20, "radius": 50.0
