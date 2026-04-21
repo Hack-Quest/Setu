@@ -55,6 +55,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 el.className = `bg-surface p-6 rounded-[1.5rem] shadow-soft border border-muted/50 hover:shadow-float transition-all flex flex-col md:flex-row justify-between gap-6 fade-in-up`;
                 el.style.animationDelay = `${(index * 0.05)}s`;
 
+                const showTrustScore = report.trust_score_visible === true || report.verification_mode === 'full_trust';
+                const verificationLabel = report.common_verification?.passed === false
+                    ? 'Common Verification: Pending'
+                    : 'Common Verification: Passed';
+                const trustOrVerificationHtml = showTrustScore
+                    ? `Trust Score: <b>${report.trust_score || 0}%</b>`
+                    : verificationLabel;
+
                 el.innerHTML = `
                 <div class="flex flex-col gap-2 flex-1">
                     <span class="px-2.5 py-1 w-max rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 ${badgeStyle}">
@@ -67,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="flex flex-col md:items-end gap-1">
                     <span class="text-[10px] font-semibold text-ink-500 uppercase">Location</span>
                     <span class="text-sm font-medium text-ink-900">${report.location_text || "Unknown"}</span>
-                    <span class="text-xs text-ink-500 mt-2">Trust Score: <b>${report.trust_score || 0}%</b></span>
+                    <span class="text-xs text-ink-500 mt-2">${trustOrVerificationHtml}</span>
                 </div>
             `;
 
