@@ -19,6 +19,8 @@ def register_ngo(data: NGOInput, token: str = Depends(verify_token)):
         if coords:
             ngo_dict["lat"] = coords.get("lat", ngo_dict.get("lat", 0.0))
             ngo_dict["lng"] = coords.get("lng", ngo_dict.get("lng", 0.0))
+            
+        ngo_dict.pop("verified", None)
         doc_id = save_ngo(ngo_dict)
         return {"message": "NGO registered successfully", "id": doc_id}
     except Exception as e:
