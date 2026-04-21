@@ -1,13 +1,12 @@
 import requests
 import time
 import sys
-import json
 import os
 
 # Configuration
 BASE_URL = "http://127.0.0.1:8000"
 
-# ANSI Colors for a beautiful terminal
+# ANSI Colors for a cinematic terminal UI
 class Colors:
     HEADER = '\033[95m'
     BLUE = '\033[94m'
@@ -18,8 +17,8 @@ class Colors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
 
-def slow_print(text, delay=0.03):
-    """Prints text character by character for a cinematic effect."""
+def slow_print(text, delay=0.02):
+    """Prints text character by character for a hacker/cinematic effect."""
     for char in text:
         sys.stdout.write(char)
         sys.stdout.flush()
@@ -31,17 +30,17 @@ def clear_screen():
 
 def show_banner():
     clear_screen()
-    print(Colors.CYAN + Colors.BOLD + "=" * 60)
+    print(Colors.CYAN + Colors.BOLD + "=" * 65)
     print(" 🌍 SETU AI - AUTONOMOUS DISPATCH COMMAND CENTER")
-    print("=" * 60 + Colors.ENDC)
-    print(" Status: " + Colors.GREEN + "ONLINE & CONNECTED" + Colors.ENDC)
+    print("=" * 65 + Colors.ENDC)
+    print(" Status: " + Colors.GREEN + "ONLINE & SECURE" + Colors.ENDC)
     print(" Target: " + Colors.WARNING + BASE_URL + Colors.ENDC + "\n")
 
 def check_health():
     try:
         requests.get(f"{BASE_URL}/health", timeout=2)
         return True
-    except requests.exceptions.ConnectionError:
+    except requests.exceptions.RequestException:
         return False
 
 def submit_sos():
@@ -60,31 +59,41 @@ def submit_sos():
         "description": description
     }
 
-    print(Colors.WARNING + "\n[SYSTEM] Transmitting to Setu AI Brain..." + Colors.ENDC)
-    time.sleep(1)
+    print(Colors.WARNING + "\n[SYSTEM] Transmitting to Setu AI Verification Engine..." + Colors.ENDC)
+    time.sleep(0.5)
+    slow_print(Colors.BLUE + ">> Cross-referencing weather APIs & running NLP analysis..." + Colors.ENDC, 0.01)
     
     try:
+        # ✅ Strict 10-second timeout prevents freezing
         response = requests.post(f"{BASE_URL}/webhook", json=payload, timeout=10)
-        data = response.json()
         
         if response.status_code == 200:
-            slow_print(Colors.GREEN + "✅ Webhook Accepted! Processing AI Trust Score..." + Colors.ENDC)
-            # Fetching the parsed data from the backend response
+            data = response.json()
+            slow_print(Colors.GREEN + "✅ Analysis Complete! Target Triage Locked." + Colors.ENDC)
+            
+            # Safely extract the AI nested data
             parsed = data.get("data", {})
-            print(f"\n{Colors.BOLD}--- AI ANALYSIS REPORT ---{Colors.ENDC}")
-            print(f"Severity:     {Colors.FAIL}{parsed.get('severity', 'N/A').upper()}{Colors.ENDC}")
-            print(f"Category:     {Colors.CYAN}{parsed.get('category', 'N/A').upper()}{Colors.ENDC}")
+            if not isinstance(parsed, dict):
+                parsed = {}
+
+            print(f"\n{Colors.BOLD}--- TACTICAL AI REPORT ---{Colors.ENDC}")
+            print(f"Severity:     {Colors.FAIL}{str(parsed.get('severity', 'N/A')).upper()}{Colors.ENDC}")
+            print(f"Category:     {Colors.CYAN}{str(parsed.get('category', 'N/A')).upper()}{Colors.ENDC}")
             print(f"Trust Score:  {Colors.WARNING}{parsed.get('trust_score', 'N/A')}/100{Colors.ENDC}")
-            print(f"Action:       {Colors.BOLD}{parsed.get('dispatch_action', 'N/A').replace('_', ' ').upper()}{Colors.ENDC}")
+            print(f"Confidence:   {Colors.GREEN}{str(parsed.get('confidence', 'N/A')).upper()}{Colors.ENDC}")
+            print(f"Action:       {Colors.BOLD}{str(parsed.get('dispatch_action', 'N/A')).replace('_', ' ').upper()}{Colors.ENDC}")
         else:
-            print(Colors.FAIL + f"❌ Error: {data}" + Colors.ENDC)
-    except Exception as e:
+            print(Colors.FAIL + f"❌ Server Error: {response.text}" + Colors.ENDC)
+            
+    except requests.exceptions.Timeout:
+        print(Colors.FAIL + "❌ Connection Error: Read timed out (AI Engine took longer than 10s)." + Colors.ENDC)
+    except requests.exceptions.RequestException as e:
         print(Colors.FAIL + f"❌ Connection Error: {e}" + Colors.ENDC)
     
     input("\nPress Enter to return to Command Center...")
 
 def register_volunteer():
-    print(Colors.BLUE + "\n--- [ VOLUNTEER REGISTRATION ] ---" + Colors.ENDC)
+    print(Colors.BLUE + "\n--- [ VOLUNTEER FIELD REGISTRATION ] ---" + Colors.ENDC)
     name = input("Volunteer Name: ")
     phone = input("Phone Number: ")
     address = input("Home Base / Current Location: ")
@@ -97,45 +106,54 @@ def register_volunteer():
         "skills": skills
     }
 
-    print(Colors.WARNING + "\n[SYSTEM] Geocoding location and saving profile..." + Colors.ENDC)
-    time.sleep(1)
-
+    print(Colors.WARNING + "\n[SYSTEM] Geocoding coordinates and hashing credentials..." + Colors.ENDC)
+    
     try:
-        response = requests.post(f"{BASE_URL}/volunteer_webhook", json=payload)
+        # ✅ Strict timeout applied
+        response = requests.post(f"{BASE_URL}/volunteer_webhook", json=payload, timeout=10)
+        
         if response.status_code == 200:
-            slow_print(Colors.GREEN + f"✅ Volunteer Registered! ID: {response.json().get('id')}" + Colors.ENDC)
+            data = response.json()
+            slow_print(Colors.GREEN + f"✅ Volunteer Secured! Assigned DB ID: {data.get('id')}" + Colors.ENDC)
         else:
-            print(Colors.FAIL + f"❌ Error: {response.json()}" + Colors.ENDC)
-    except Exception as e:
+            print(Colors.FAIL + f"❌ Server Error: {response.text}" + Colors.ENDC)
+            
+    except requests.exceptions.Timeout:
+        print(Colors.FAIL + "❌ Connection Error: Read timed out." + Colors.ENDC)
+    except requests.exceptions.RequestException as e:
         print(Colors.FAIL + f"❌ Connection Error: {e}" + Colors.ENDC)
 
     input("\nPress Enter to return to Command Center...")
 
 def view_dashboard():
     print(Colors.CYAN + "\n--- [ LIVE TACTICAL DASHBOARD ] ---" + Colors.ENDC)
-    print("Fetching live telemetry from Firestore...")
-    time.sleep(0.5)
+    slow_print("Fetching live telemetry from Firestore...", 0.01)
 
     try:
-        response = requests.get(f"{BASE_URL}/dashboard")
+        # ✅ Strict timeout applied
+        response = requests.get(f"{BASE_URL}/dashboard", timeout=10)
+        
         if response.status_code == 200:
             data = response.json()
             print(f"\n{Colors.BOLD}OVERVIEW:{Colors.ENDC}")
-            print(f"Total Open Needs:      {data.get('total_needs')}")
-            print(f"Available Volunteers:  {data.get('total_volunteers')}")
+            print(f"Total Open Needs:      {data.get('total_needs', 0)}")
+            print(f"Available Volunteers:  {data.get('total_volunteers', 0)}")
             
             print(f"\n{Colors.BOLD}PRIORITY QUEUE:{Colors.ENDC}")
-            print(f"{Colors.FAIL}[!] Critical: {data.get('critical_cases')}{Colors.ENDC}")
-            print(f"{Colors.WARNING}[-] High:     {data.get('high_priority_cases')}{Colors.ENDC}")
-            print(f"{Colors.GREEN}[v] Medium:   {data.get('medium_priority_cases')}{Colors.ENDC}")
+            print(f"{Colors.FAIL}[!] Critical: {data.get('critical_cases', 0)}{Colors.ENDC}")
+            print(f"{Colors.WARNING}[-] High:     {data.get('high_priority_cases', 0)}{Colors.ENDC}")
+            print(f"{Colors.GREEN}[v] Medium:   {data.get('medium_priority_cases', 0)}{Colors.ENDC}")
             
             print(f"\n{Colors.BOLD}SYSTEM QUEUES:{Colors.ENDC}")
-            print(f"Unmatched Cases:       {data.get('unmatched_cases')}")
-            print(f"Flagged for Review:    {data.get('flagged_cases')}")
+            print(f"Unmatched Cases:       {data.get('unmatched_cases', 0)}")
+            print(f"Flagged for Review:    {data.get('flagged_cases', 0)}")
             
         else:
-            print(Colors.FAIL + "❌ Failed to fetch dashboard data." + Colors.ENDC)
-    except Exception as e:
+            print(Colors.FAIL + f"❌ Failed to fetch dashboard data: {response.text}" + Colors.ENDC)
+            
+    except requests.exceptions.Timeout:
+        print(Colors.FAIL + "❌ Connection Error: Dashboard fetch timed out." + Colors.ENDC)
+    except requests.exceptions.RequestException as e:
         print(Colors.FAIL + f"❌ Connection Error: {e}" + Colors.ENDC)
 
     input("\nPress Enter to return to Command Center...")
@@ -165,9 +183,11 @@ def main_menu():
 
 if __name__ == "__main__":
     # Ensure backend is running before launching CLI
+    print(Colors.WARNING + "Pinging Backend Server..." + Colors.ENDC)
     if not check_health():
-        print(Colors.FAIL + f"🚨 CRITICAL ERROR: Could not connect to backend at {BASE_URL}" + Colors.ENDC)
-        print("Please ensure your FastAPI server is running: 'uvicorn main:app --reload'")
+        print(Colors.FAIL + f"\n🚨 CRITICAL ERROR: Could not connect to backend at {BASE_URL}" + Colors.ENDC)
+        print("Please ensure your FastAPI server is running in another terminal:")
+        print("Command: uvicorn backend.main:app --reload") # Updated to match your run command
         sys.exit(1)
     
     main_menu()
