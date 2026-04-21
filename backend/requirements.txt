@@ -6,3 +6,4 @@ requests
 slowapi
 bcrypt
 firebase-admin
+googlemaps

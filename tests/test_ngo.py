@@ -89,7 +89,7 @@ def run_test():
     time.sleep(5)
 
     # Overwrite the Need's coordinate to be precise
-    db.collection("needs").document(need_id).update({"lat": 28.6130, "lng": 77.2090})
+    db.collection("needs_reports").document(need_id).update({"lat": 28.6130, "lng": 77.2090})
 
     print("\n--- 6. Running Match Engine manually to ensure assignment ---")
     headers = {"Authorization": "Bearer hackathon-secret"}
