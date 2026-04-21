@@ -24,3 +24,4 @@ ngrok
 # Ngrok configuration/logs (if any)
 .ngrok2/
 ngrok.log
+
