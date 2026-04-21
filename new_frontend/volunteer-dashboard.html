@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer Dashboard</title>
+
+    <link rel="stylesheet" href="css/styles.css">
+
+    <style>
+        .container {
+            padding: 40px;
+        }
+
+        .card {
+            background: #393E46;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tier {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .tier1 {
+            background: green;
+            color: white;
+        }
+
+        .tier2 {
+            background: orange;
+            color: black;
+        }
+
+        .btn {
+            margin-top: 10px;
+            padding: 10px;
+            background: #948979;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h2>SETU</h2>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="reports.html">Reports</a>
+            <a href="map.html">Map</a>
+        </nav>
+    </header>
+
+    <div class="container">
+
+        <h1>Volunteer Dashboard</h1>
+
+        <!-- 👤 PROFILE -->
+        <div class="card">
+            <h2 id="name">Loading...</h2>
+
+            <p id="skills">Skills: -</p>
+
+            <span id="tier" class="tier">Tier</span>
+
+            <p id="ngo">NGO: None</p>
+        </div>
+
+        <!-- 🔄 STATUS -->
+        <div class="card">
+            <h3>Status</h3>
+            <p class="status" id="status">Available</p>
+
+            <button class="btn" onclick="toggleStatus()">Toggle Status</button>
+        </div>
+
+        <!-- 📍 ASSIGNMENT -->
+        <div class="card">
+            <h3>Current Assignment</h3>
+
+            <div id="assignment">
+                No active assignment
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+
+        // 🔥 DEMO DATA (replace later with API)
+        let volunteer = {
+            name: "Rahul",
+            skills: ["first aid", "rescue"],
+            ngo: "Helping Hands",
+            tier: "Tier 1 (NGO-Verified)",
+            status: "Available"
+        };
+
+        let assignment = {
+            disaster_type: "Flood",
+            description: "People stuck in water",
+            severity: "High",
+            location: "Delhi"
+        };
+
+        // 🎯 LOAD PROFILE
+        function loadProfile() {
+            document.getElementById("name").innerText = volunteer.name;
+            document.getElementById("skills").innerText = "Skills: " + volunteer.skills.join(", ");
+            document.getElementById("ngo").innerText = "NGO: " + (volunteer.ngo || "None");
+
+            const tierEl = document.getElementById("tier");
+
+            if (volunteer.tier.includes("Tier 1")) {
+                tierEl.className = "tier tier1";
+            } else {
+                tierEl.className = "tier tier2";
+            }
+
+            tierEl.innerText = volunteer.tier;
+
+            document.getElementById("status").innerText = volunteer.status;
+        }
+
+        // 🔄 STATUS TOGGLE
+        function toggleStatus() {
+            volunteer.status = volunteer.status === "Available" ? "Busy" : "Available";
+            document.getElementById("status").innerText = volunteer.status;
+        }
+
+        // 📦 LOAD ASSIGNMENT
+        function loadAssignment() {
+            const container = document.getElementById("assignment");
+
+            if (!assignment) {
+                container.innerText = "No active assignment";
+                return;
+            }
+
+            container.innerHTML = `
+        <p><b>${assignment.disaster_type}</b></p>
+        <p>${assignment.description}</p>
+        <p>Severity: ${assignment.severity}</p>
+        <p>Location: ${assignment.location}</p>
+        <button class="btn" onclick="markComplete()">Mark Completed</button>
+    `;
+        }
+
+        // ✅ MARK COMPLETE
+        function markComplete() {
+            alert("Task marked as completed");
+            assignment = null;
+            loadAssignment();
+        }
+
+        // 🚀 INIT
+        loadProfile();
+        loadAssignment();
+
+    </script>
+
+</body>
+
+</html>

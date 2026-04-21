@@ -4,266 +4,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Setu • Operations</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    <title>SETU - Disaster Response</title>
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap"
         rel="stylesheet">
-    <script src="https://unpkg.com/feather-icons"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- CSS -->
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="manifest" href="manifest.json">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-                    colors: {
-                        base: '#FDFCFB', surface: '#FFFFFF', muted: '#F4F4F5',
-                        ink: { 900: '#18181B', 700: '#3F3F46', 500: '#71717A', 300: '#D4D4D8' },
-                        accent: { DEFAULT: '#64748B', light: '#F8FAFC', hover: '#475569' }
-                    },
-                    boxShadow: { 'soft': '0 4px 40px rgba(0, 0, 0, 0.03)', 'float': '0 20px 40px -10px rgba(0, 0, 0, 0.05)' }
-                }
-            }
-        }
-    </script>
 </head>
 
-<body class="bg-base text-ink-900 font-sans antialiased flex justify-center min-h-screen">
-    <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-        <div class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-50/40 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] bg-stone-100/50 rounded-full blur-[100px]"></div>
-    </div>
+<body>
 
-    <main class="w-full max-w-5xl px-6 py-12 flex flex-col gap-16 relative">
-        <header class="flex justify-between items-center w-full fade-in-up">
-            <div class="flex items-center gap-4">
-                <div class="w-3 h-3 bg-ink-900 rounded-full"></div>
-                <span class="text-xl font-semibold tracking-tight text-ink-900">Setu</span>
-            </div>
-            <nav class="flex items-center gap-8 text-sm font-medium text-ink-500">
-                <a href="index.html" class="text-ink-900">Overview</a>
-                <a href="reports.html">Reports</a>
-                <a href="ngo-register.html">NGO Register</a>
-                <a href="ngo-dashboard.html">NGO Dashboard</a>
-                <a href="map.html" class="text-accent font-semibold hover:text-ink-900">Tactical Map</a>
-                <select id="uiLang" class="bg-surface text-ink-700 font-semibold text-sm outline-none px-3 py-1.5 rounded-full border border-muted shadow-soft cursor-pointer hover:bg-muted transition-colors">
-                    <option value="en">ENG</option>
-                    <option value="local">LOCAL</option>
-                </select>
-                <button
-                    class="w-10 h-10 rounded-full bg-surface shadow-soft border border-muted flex items-center justify-center hover:bg-muted transition-colors">
-                    <i data-feather="user" class="w-4 h-4 text-ink-700"></i>
-                </button>
-            </nav>
-        </header>
+    <!-- 🔝 HEADER -->
+    <header>
+        <h2>SETU</h2>
+        <nav>
+            <a href="reports.html">Reports</a>
+            <a href="map.html">Map</a>
+            <a href="ngo-dashboard.html">NGO</a>
+            <a href="login.html">Login</a>
+        </nav>
+    </header>
 
-        <section class="flex flex-col gap-6 fade-in-up">
-            <h1 class="text-5xl md:text-6xl font-medium tracking-tight text-ink-900 max-w-2xl leading-[1.1]">
-                Coordinate relief <span class="text-ink-300 hover:text-ink-700">effortlessly.</span>
-            </h1>
-            <p class="text-lg text-ink-500 max-w-xl font-light">Unified interface to process signals and deploy units.
-            </p>
-        </section>
+    <!-- 🔥 HERO -->
+    <section class="hero">
+        <h1>Smarter Decisions.<br>Stronger Response.</h1>
+        <p>
+            AI-powered system that analyzes emergency reports,
+            prioritizes critical cases, and connects volunteers in real time.
+        </p>
+    </section>
 
-        <section class="grid grid-cols-1 md:grid-cols-12 gap-6 fade-in-up">
-            <button onclick="openFormModal('need')"
-                class="interactive-card col-span-7 bg-surface p-10 rounded-[2rem] border border-muted shadow-soft text-left">
-                <h3 class="text-2xl font-semibold mb-2">Process New Need</h3>
-                <p class="text-ink-500 text-sm">Capture details from ground zero.</p>
-            </button>
-            <button onclick="openFormModal('volunteer')"
-                class="interactive-card col-span-5 bg-ink-900 p-10 rounded-[2rem] text-left text-white">
-                <h3 class="text-2xl font-semibold mb-2">Register Unit</h3>
-                <p class="text-white/60 text-sm">Onboard response volunteers.</p>
-            </button>
-        </section>
+    <!-- 🎯 ACTION CARDS -->
+    <section class="cards">
 
-        <section class="border-t border-muted pt-12 grid grid-cols-1 md:grid-cols-3 gap-12 fade-in-up">
-            <div>
-                <span class="text-xs font-bold uppercase text-ink-500">Reports</span>
-                <p id="statNeeds" class="text-4xl font-light text-ink-900">0</p>
-            </div>
-            <div>
-                <span class="text-xs font-bold uppercase text-ink-500">Volunteers</span>
-                <p id="statUnits" class="text-4xl font-light text-ink-900">0</p>
-            </div>
-            <button id="runMatchBtn" class="text-accent font-medium flex items-center group">
-                <span id="btnText">Trigger AI Matcher</span>
-                <i data-feather="chevron-right" class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform"></i>
-            </button>
-        </section>
-
-        <footer class="border-t border-muted py-8 flex justify-between items-center fade-in-up">
-            <span class="text-xs font-medium text-ink-300 uppercase tracking-widest">Setu OS 1.0</span>
-        </footer>
-    </main>
-
-    <div id="formModal" class="hidden fixed inset-0 z-50 flex items-end justify-center">
-        <div id="modalBackdrop" class="absolute inset-0 bg-ink-900/50 opacity-0 transition-opacity duration-300"></div>
-        <div id="modalContent"
-            class="relative z-10 w-full max-w-3xl rounded-t-[2rem] bg-surface shadow-float border border-muted translate-y-[100%] transition-transform duration-500 ease-out max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between px-6 md:px-8 py-5 border-b border-muted">
-                <div>
-                    <p class="text-xs uppercase tracking-[0.2em] text-ink-500 font-semibold">Command Console</p>
-                    <h2 id="modalTitle" class="text-2xl font-semibold tracking-tight text-ink-900">Process New Need</h2>
-                </div>
-                <button type="button" onclick="closeFormModal()"
-                    class="w-10 h-10 rounded-full bg-muted text-ink-700 flex items-center justify-center hover:bg-accent-light transition-colors"
-                    aria-label="Close modal">
-                    <i data-feather="x" class="w-4 h-4"></i>
-                </button>
-            </div>
-
-            <div class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] p-6 md:p-8">
-                <form id="needForm" class="space-y-4">
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="space-y-2">
-                            <label for="reporter_name" class="text-sm font-medium text-ink-900">Reporter Name</label>
-                            <input id="reporter_name" name="reporter_name" type="text" required
-                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
-                                placeholder="Name of the reporter" />
-                        </div>
-                        <div class="space-y-2">
-                            <label for="reporter_phone" class="text-sm font-medium text-ink-900">Reporter Phone</label>
-                            <input id="reporter_phone" name="reporter_phone" type="tel" required
-                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
-                                placeholder="10-digit phone" />
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="location_text" class="text-sm font-medium text-ink-900">Location</label>
-                        <input id="location_text" name="location_text" type="text" required
-                            class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
-                            placeholder="Exact location or landmark" />
-                    </div>
-
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="space-y-2">
-                            <label for="disaster_type" class="text-sm font-medium text-ink-900">Disaster Type</label>
-                            <input id="disaster_type" name="disaster_type" type="text" required
-                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
-                                placeholder="Flood, fire, earthquake" />
-                        </div>
-                        <div class="space-y-2">
-                            <label for="help_needed" class="text-sm font-medium text-ink-900">Help Needed</label>
-                            <input id="help_needed" name="help_needed" type="text" required
-                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
-                                placeholder="Food, rescue, medical" />
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="description" class="text-sm font-medium text-ink-900">Description</label>
-                        <textarea id="description" name="description" rows="5" required
-                            class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
-                            placeholder="Add operational detail for triage"></textarea>
-                    </div>
-
-                    <button type="submit"
-                        class="w-full rounded-2xl bg-ink-900 px-5 py-3.5 font-semibold text-white hover:bg-ink-700 transition-colors">
-                        Submit Need
-                    </button>
-                </form>
-
-                <form id="volunteerForm" class="space-y-4 hidden">
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="space-y-2">
-                            <label for="v_name" class="text-sm font-medium text-ink-900">Full Name</label>
-                            <input id="v_name" name="name" type="text" required
-                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
-                                placeholder="Your name" />
-                        </div>
-                        <div class="space-y-2">
-                            <label for="v_phone" class="text-sm font-medium text-ink-900">Phone</label>
-                            <input id="v_phone" name="phone" type="tel" required
-                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
-                                placeholder="Phone number" />
-                        </div>
-                    </div>
-
-                    <div class="space-y-2">
-                        <label for="v_location" class="text-sm font-medium text-ink-900">Location</label>
-                        <input id="v_location" name="location" type="text" required
-                            class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
-                            placeholder="City or base location" />
-                    </div>
-
-                    <div class="space-y-2">
-                        <label class="text-sm font-medium text-ink-900">Skills</label>
-                        <div class="grid grid-cols-2 gap-3">
-                            <label class="flex items-center gap-2 rounded-2xl border border-muted bg-base px-4 py-3">
-                                <input type="checkbox" name="skills" value="Medical">
-                                <span>Medical</span>
-                            </label>
-                            <label class="flex items-center gap-2 rounded-2xl border border-muted bg-base px-4 py-3">
-                                <input type="checkbox" name="skills" value="Logistics">
-                                <span>Logistics</span>
-                            </label>
-                            <label class="flex items-center gap-2 rounded-2xl border border-muted bg-base px-4 py-3">
-                                <input type="checkbox" name="skills" value="Rescue">
-                                <span>Rescue</span>
-                            </label>
-                            <label class="flex items-center gap-2 rounded-2xl border border-muted bg-base px-4 py-3">
-                                <input type="checkbox" name="skills" value="Communications">
-                                <span>Communications</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="grid gap-4 md:grid-cols-2">
-                        <div class="space-y-2">
-                            <label for="v_email" class="text-sm font-medium text-ink-900">Email</label>
-                            <input id="v_email" name="email" type="email" required
-                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
-                                placeholder="you@example.org" />
-                        </div>
-                        <div class="space-y-2">
-                            <label for="v_password" class="text-sm font-medium text-ink-900">Password</label>
-                            <input id="v_password" name="password" type="password" required minlength="8"
-                                class="w-full rounded-2xl border border-muted bg-base px-4 py-3 text-ink-900 outline-none focus:border-accent"
-                                placeholder="Minimum 8 characters" />
-                        </div>
-                    </div>
-
-                    <button type="submit"
-                        class="w-full rounded-2xl bg-accent px-5 py-3.5 font-semibold text-white hover:bg-accent-hover transition-colors">
-                        Register Unit
-                    </button>
-                </form>
-
-                <div id="needResult"
-                    class="hidden rounded-[1.5rem] border border-muted bg-base p-5 text-sm text-ink-700 lg:self-start">
-                    <p class="font-semibold text-ink-900 mb-2">Latest processing result</p>
-                    <p>The backend response will appear here after you submit a need.</p>
-                </div>
-            </div>
+        <!-- 🚨 NEED -->
+        <div class="card" onclick="window.open('https://forms.gle/YOUR_NEED_FORM', '_blank')">
+            <h3>🚨 Report Emergency</h3>
+            <p>Submit urgent needs and get help fast</p>
         </div>
-    </div>
 
-    <div id="toast"
-        class="fixed bottom-8 left-1/2 z-50 flex -translate-x-1/2 translate-y-8 items-center gap-2 rounded-full bg-ink-900 px-5 py-3 text-sm font-medium text-white opacity-0 shadow-float transition-all duration-300 pointer-events-none">
-        <i data-feather="check-circle" class="w-4 h-4 text-white/70"></i>
-        <span id="toastMsg">Action complete.</span>
-    </div>
+        <!-- 🤝 VOLUNTEER -->
+        <div class="card" onclick="window.open('https://forms.gle/YOUR_VOLUNTEER_FORM', '_blank')">
+            <h3>🤝 Join as Volunteer</h3>
+            <p>Help communities with your skills</p>
+        </div>
 
-    <script src="js/api.js?v=20260421b"></script>
-    <script src="js/app.js?v=20260421b"></script>
+        <!-- 🏢 NGO -->
+        <div class="card" onclick="window.open('https://forms.gle/YOUR_NGO_FORM', '_blank')">
+            <h3>🏢 Register NGO</h3>
+            <p>Coordinate teams and manage resources</p>
+        </div>
+
+    </section>
+
+    <!-- 📊 STATS -->
+    <section class="stats">
+        <div>
+            <h2 id="emergencyCount">--</h2>
+            <p>Active Emergencies</p>
+        </div>
+        <div>
+            <h2 id="volunteerCount">--</h2>
+            <p>Volunteers</p>
+        </div>
+        <div>
+            <h2 id="ngoCount">--</h2>
+            <p>NGOs</p>
+        </div>
+    </section>
+
+    <!-- 🗺️ MAP PREVIEW -->
+    <section class="map-section">
+        <h2>Live Tactical Overview</h2>
+
+        <!-- Map preview -->
+        <iframe src="map.html"></iframe>
+
+        <button class="btn" onclick="location.href='ngo-dashboard.html'">
+            View Full Dashboard →
+        </button>
+    </section>
+
+    <!-- 🔚 FOOTER -->
+    <footer>
+        SETU © 2026 — AI Disaster Response System
+    </footer>
+
+    <!-- 🔥 OPTIONAL: Fetch stats (if API ready) -->
     <script>
-        feather.replace();
-        const isLocalDev = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
-        if ('serviceWorker' in navigator) {
-            if (isLocalDev) {
-                navigator.serviceWorker.getRegistrations().then((registrations) => {
-                    registrations.forEach((registration) => registration.unregister());
-                });
-            } else {
-                navigator.serviceWorker.register('/service-worker.js');
+        async function loadStats() {
+            try {
+                const res = await fetch("http://127.0.0.1:8000/dashboard/reports");
+                const data = await res.json();
+                const reports = data.reports || data;
+
+                document.getElementById("emergencyCount").innerText = reports.length;
+
+                // Dummy counts (replace later with real APIs)
+                document.getElementById("volunteerCount").innerText = "120";
+                document.getElementById("ngoCount").innerText = "12";
+
+            } catch (err) {
+                console.log("Stats load error:", err);
             }
         }
+
+        loadStats();
     </script>
+
 </body>
 
 </html>

@@ -1,60 +1,163 @@
-/* Soft Minimalist CSS Overrides */
-
+/* 🌍 GLOBAL */
 body {
-    background-color: #FDFCFB;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: linear-gradient(135deg, #222831, #2b3038);
+    color: #DFD0B8;
 }
 
-/* Typography Refinements */
-h1, h2, h3 {
-    letter-spacing: -0.02em;
+/* 🔝 HEADER */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    background: #222831;
 }
 
-/* Initial States for Staggered Fade */
-.fade-in-up {
-    opacity: 0;
-    transform: translateY(12px);
-    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+header h2 {
+    letter-spacing: 1px;
 }
 
-@keyframes fadeInUp {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+nav a {
+    margin-left: 25px;
+    text-decoration: none;
+    color: #DFD0B8;
+    transition: 0.3s;
 }
 
-/* Elegant Component Focus */
-.interactive-card {
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+nav a:hover {
+    color: #948979;
 }
 
-.interactive-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
+/* 🔥 HERO */
+.hero {
+    padding: 80px 40px 40px 40px;
+    max-width: 800px;
 }
 
-.interactive-card:active {
-    transform: translateY(0px) scale(0.99);
-    transition: all 0.1s ease;
+.hero h1 {
+    font-size: 52px;
+    line-height: 1.2;
+    margin-bottom: 20px;
 }
 
-/* Scrollbar styling for a cleaner look */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+.hero p {
+    color: #948979;
+    font-size: 18px;
+    max-width: 600px;
 }
 
-::-webkit-scrollbar-track {
-    background: transparent; 
+/* 🎯 CARDS */
+.cards {
+    display: flex;
+    gap: 25px;
+    padding: 40px;
 }
 
-::-webkit-scrollbar-thumb {
-    background: #E4E4E7; 
+.card {
+    flex: 1;
+    background: linear-gradient(145deg, #393E46, #2f343b);
+    padding: 25px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.card h3 {
+    margin-bottom: 10px;
+}
+
+.card p {
+    color: #948979;
+}
+
+.card:hover {
+    transform: translateY(-8px) scale(1.02);
+    background: #948979;
+    color: #222831;
+    box-shadow: 0 15px 30px rgba(148, 137, 121, 0.4);
+}
+
+/* 📊 STATS */
+.stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 40px;
+    margin: 40px;
+    border-radius: 14px;
+    background: linear-gradient(145deg, #393E46, #2f343b);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.stats div {
+    text-align: center;
+}
+
+.stats h2 {
+    font-size: 36px;
+    margin-bottom: 5px;
+}
+
+.stats p {
+    color: #948979;
+}
+
+/* 🗺️ MAP SECTION */
+.map-section {
+    margin: 40px;
+}
+
+.map-section h2 {
+    margin-bottom: 15px;
+}
+
+iframe {
+    width: 100%;
+    height: 420px;
+    border-radius: 14px;
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* 🔘 BUTTON */
+.btn {
+    margin-top: 20px;
+    padding: 12px 24px;
+    background: #948979;
+    color: #222831;
+    border: none;
     border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: #D4D4D8; 
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(148, 137, 121, 0.5);
+}
+
+/* 🔚 FOOTER */
+footer {
+    text-align: center;
+    padding: 30px;
+    color: #948979;
+}
+
+/* 📱 RESPONSIVE */
+@media (max-width: 900px) {
+    .cards {
+        flex-direction: column;
+    }
+
+    .stats {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .hero h1 {
+        font-size: 36px;
+    }
 }
