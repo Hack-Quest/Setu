@@ -11,7 +11,7 @@ from slowapi.errors import RateLimitExceeded
 from dotenv import load_dotenv
 
 # Routers
-from backend.routes.need import router as need_router, create_need
+from backend.routes.need import router as need_router, process_and_save_need
 from backend.models import NeedInput
 from backend.routes.volunteer import router as volunteer_router
 from backend.routes.volunteer_auth import router as volunteer_auth_router
@@ -147,11 +147,7 @@ async def webhook(
 
         print("🚀 Routing to AI Engine...", flush=True)
 
-        result = await create_need(
-            data=need_input,
-            background_tasks=background_tasks,
-            token="webhook_override"
-        )
+        result = process_and_save_need(need_input, background_tasks)
 
         return {"message": "Webhook processed", "data": result}
 
