@@ -36,11 +36,8 @@ async function login() {
             return;
         }
 
-        // ✅ Save token and volunteer id
-        localStorage.setItem("token", data.token);
-        if (data.volunteer_id) {
-            localStorage.setItem("volunteer_id", data.volunteer_id);
-        }
+        // ✅ Save token
+        localStorage.setItem("auth_token", data.token);
 
         console.log("Login response:", data);
 

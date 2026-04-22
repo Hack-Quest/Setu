@@ -17,7 +17,24 @@ def get_volunteer_assignments(
     volunteer_id: str,
     token: str = Depends(verify_token)
 ):
-    return get_assignments_by_volunteer_id(volunteer_id)
+    from database.needs_db import get_need_by_id
+    assignments = get_assignments_by_volunteer_id(volunteer_id)
+    
+    # Join with need details
+    result = []
+    for a in assignments:
+        need_data = get_need_by_id(a["need_id"])
+        if need_data:
+            # Merge assignment metadata and need data
+            merged = {**need_data, **a}
+            # Remove duplicated id fields if necessary or keep assignment id as assignment_id
+            merged["assignment_id"] = a["id"]
+            merged["id"] = need_data["id"] 
+            result.append(merged)
+        else:
+            result.append(a)
+            
+    return result
 
 
 @router.patch("/{assignment_id}/resolve")
