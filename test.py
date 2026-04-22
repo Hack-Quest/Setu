@@ -1,127 +1,252 @@
+import unittest
 import requests
 import time
-import sys
-import os
-import json
+import uuid
 
-# Configuration from your existing environment
 BASE_URL = "http://127.0.0.1:8000"
-HEADERS = {"Authorization": "Bearer hackathon-secret"}
 
-class Colors:
-    GREEN = '\033[92m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
+# Global state to pass data between sequential tests
+class GlobalState:
+    ngo_id = None
+    volunteer_auth_token = None
+    volunteer_id = None
+    general_need_id = None
+    sensitive_need_id = None
 
-def run_step(name):
-    print(f"\n{Colors.BOLD}🚀 [STEP] {name}...{Colors.ENDC}")
 
-def verify_response(resp, stage_name):
-    if resp.status_code == 200:
-        print(f"{Colors.GREEN}✅ {stage_name} Successful{Colors.ENDC}")
-        return resp.json()
-    else:
-        print(f"{Colors.FAIL}❌ {stage_name} Failed: {resp.status_code}{Colors.ENDC}")
-        print(resp.text)
-        sys.exit(1)
-
-def main():
-    print(f"{Colors.BOLD}=== SETU UNIVERSAL SYSTEM INTEGRATION TEST ==={Colors.ENDC}")
+class TestSetuIntegration(unittest.TestCase):
     
+    @classmethod
+    def setUpClass(cls):
+        print(f"\n{'-'*50}")
+        print(">>> Starting Setu Universal Integration Tests")
+        print(f"{'-'*50}")
+        # Unique identifier to avoid collisions on repeated runs
+        cls.run_id = str(uuid.uuid4())[:8]
+
     # --- 1. HEALTH CHECK ---
-    run_step("System Health Check")
-    health = requests.get(f"{BASE_URL}/health")
-    verify_response(health, "Health Check")
+    def test_01_health_check(self):
+        """[NORMAL] Verify backend health endpoint"""
+        resp = requests.get(f"{BASE_URL}/health")
+        self.assertEqual(resp.status_code, 200, "Backend is not reachable")
+        self.assertEqual(resp.json().get("status"), "ok")
+
 
     # --- 2. NGO ONBOARDING ---
-    run_step("Registering & Verifying Tier 1 NGO")
-    ngo_payload = {
-        "name": "Global MedRescue",
-        "reg_number": f"REG-{int(time.time())}",
-        "lat": 28.6139,
-        "lng": 77.2090,
-        "radius": 50.0
-    }
-    ngo_data = requests.post(f"{BASE_URL}/ngo/register", json=ngo_payload)
-    ngo_res = verify_response(ngo_data, "NGO Registration")
-    ngo_id = ngo_res["id"]
-    
-    # We use verify_ngo from your ngos_db internally or via an admin route
-    # For this test, we assume the backend handles initial NGO state.
-    print(f"NGO ID: {ngo_id} (Awaiting Manual Admin Verification for Tier 1 Priority)")
+    def test_02_ngo_registration(self):
+        """[NORMAL] Register a new NGO"""
+        payload = {
+            "name": f"Global MedRescue Test-{self.run_id}",
+            "reg_number": f"REG-{self.run_id}",
+            "location": "New Delhi",
+            "lat": 28.6139,
+            "lng": 77.2090,
+            "radius": 50.0
+        }
+        headers = {"Authorization": "Bearer hackathon-secret"}
+        resp = requests.post(f"{BASE_URL}/ngo/register", json=payload, headers=headers)
+        self.assertEqual(resp.status_code, 200, f"Failed NGO registration: {resp.text}")
+        
+        data = resp.json()
+        self.assertIn("id", data)
+        GlobalState.ngo_id = data["id"]
 
-    # --- 3. TIERED VOLUNTEER REGISTRATION ---
-    run_step("Registering Tiered Volunteers")
-    # Tier 1: NGO-Linked
-    t1_payload = {
-        "volunteer_name": "Dr. Sarah (Tier 1)",
-        "phone": "9998887771",
-        "skills": "Medical",
-        "location": "New Delhi",
-        "ngo_id": ngo_id
-    }
-    t1_resp = requests.post(f"{BASE_URL}/volunteer_webhook", json=t1_payload)
-    verify_response(t1_resp, "Tier 1 Registration")
 
-    # Tier 2: Community-Led
-    t2_payload = {
-        "volunteer_name": "Local Helper (Tier 2)",
-        "phone": "9998887772",
-        "skills": "Medical",
-        "location": "Noida"
-    }
-    t2_resp = requests.post(f"{BASE_URL}/volunteer_webhook", json=t2_payload)
-    verify_response(t2_resp, "Tier 2 Registration")
+    # --- 3. AUTHENTICATION & VOLUNTEERS ---
+    def test_03_volunteer_auth_registration(self):
+        """[NORMAL] Register a volunteer via standard auth"""
+        payload = {
+            "name": "Test Auth Volunteer",
+            "email": f"auth_{self.run_id}@test.com",
+            "password": "securepassword",
+            "phone": f"100{self.run_id[:7]}",
+            "location": "Delhi",
+            "skills": ["Medical", "Rescue"],
+            "role": "volunteer"
+        }
+        resp = requests.post(f"{BASE_URL}/auth/register", json=payload)
+        self.assertIn(resp.status_code, [200, 201], f"Auth register failed: {resp.text}")
+        self.assertIn("volunteer_id", resp.json())
+        
+    def test_04_volunteer_auth_duplicate_email(self):
+        """[EDGE] Attempt to register volunteer with duplicate email"""
+        payload = {
+            "name": "Duplicate Tester",
+            "email": f"auth_{self.run_id}@test.com", # Same email as test 03
+            "password": "securepassword",
+            "phone": "0987654321",
+            "location": "Delhi",
+            "skills": ["Food"],
+            "role": "volunteer"
+        }
+        resp = requests.post(f"{BASE_URL}/auth/register", json=payload)
+        self.assertEqual(resp.status_code, 400, f"Duplicate test failed: {resp.text}")
+        self.assertIn("Email already registered", resp.text)
+
+    def test_05_volunteer_auth_login_fail(self):
+        """[EDGE] Login with wrong password"""
+        payload = {
+            "email": f"auth_{self.run_id}@test.com",
+            "password": "wrongpassword"
+        }
+        resp = requests.post(f"{BASE_URL}/auth/login", json=payload)
+        self.assertEqual(resp.status_code, 401)
+        self.assertIn("Invalid email or password", resp.text)
+
+    def test_06_volunteer_auth_login_success(self):
+        """[NORMAL] Login with correct credentials"""
+        payload = {
+            "email": f"auth_{self.run_id}@test.com",
+            "password": "securepassword"
+        }
+        resp = requests.post(f"{BASE_URL}/auth/login", json=payload)
+        self.assertEqual(resp.status_code, 200)
+        
+        data = resp.json()
+        self.assertIn("token", data)
+        self.assertIn("volunteer_id", data)
+        GlobalState.volunteer_auth_token = data["token"]
+        GlobalState.volunteer_id = data.get("volunteer_id")
+
+    def test_07_volunteer_webhook_tier1(self):
+        """[NORMAL] Register a Tier 1 (NGO-linked) volunteer via webhook"""
+        self.assertIsNotNone(GlobalState.ngo_id, "NGO ID missing, dependent test failed")
+        payload = {
+            "volunteer_name": f"Dr. Sarah (Tier 1) {self.run_id}",
+            "phone": f"9998{self.run_id[:6]}",
+            "skills": "Medical, Rescue",
+            "location": "New Delhi",
+            "ngo_id": GlobalState.ngo_id
+        }
+        resp = requests.post(f"{BASE_URL}/volunteer_webhook", json=payload)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("id", resp.json())
+
+    def test_08_volunteer_webhook_tier2(self):
+        """[NORMAL] Register a Tier 2 (Community) volunteer via webhook"""
+        payload = {
+            "volunteer_name": f"Local Helper (Tier 2) {self.run_id}",
+            "phone": f"9997{self.run_id[:6]}",
+            "skills": "Medical", # Has medical, but is NOT tier 1
+            "location": "Noida",
+            "ngo_id": None
+        }
+        resp = requests.post(f"{BASE_URL}/volunteer_webhook", json=payload)
+        self.assertEqual(resp.status_code, 200)
+
 
     # --- 4. SOS INTAKE & AI PROCESSING ---
-    run_step("Transmitting Medical SOS Signal")
-    sos_payload = {
-        "name": "Emergency Reporter",
-        "phone": "9876543210",
-        "address": "Connaught Place, New Delhi",
-        "disaster_type": "accident",
-        "help_needed": "Medical",
-        "description": "Severe road accident, multiple casualties near CP. High urgency medical help required."
-    }
-    sos_data = requests.post(f"{BASE_URL}/webhook", json=sos_payload)
-    sos_res = verify_response(sos_data, "SOS Intake")
-    data_part = sos_res.get("data", {})
-    need_id = data_part.get("id") or data_part.get("need_id")
+    def test_09_sos_intake_validation_fail(self):
+        """[EDGE] Submit an SOS with too short description"""
+        payload = {
+            "description": "short"
+        }
+        resp = requests.post(f"{BASE_URL}/webhook", json=payload)
+        # Backend returns 200 with an "error" key inside the data dictionary
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("error", resp.json().get("data", {}))
 
-    if not need_id:
-        print(f"❌ Failed to find ID. Full Response: {sos_res}")
-        sys.exit(1)
-    
-    print(f"Report Verified. Trust Score: {sos_res['data'].get('trust_score')}/100")
-    print("Waiting 3 seconds for AI Classification and Firestore sync...")
-    time.sleep(3)
+    def test_10_sos_intake_general_need(self):
+        """[NORMAL] Submit a standard non-critical emergency"""
+        payload = {
+            "name": "General Reporter",
+            "phone": "9876543210",
+            "address": "Connaught Place, New Delhi",
+            "disaster_type": "flood",
+            "help_needed": "food",
+            "description": f"[{self.run_id}] Need food and water supplies for 5 families stranded in heavy rain. It's not life threatening yet."
+        }
+        resp = requests.post(f"{BASE_URL}/webhook", json=payload)
+        if resp.status_code == 429:
+            print("  [WARN] Rate limited by AI API, skipping test_10")
+            return
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json().get("data", {})
+        
+        self.assertNotIn("error", data, f"AI Processing failed: {data.get('error')}")
+        self.assertIn("id", data)
+        GlobalState.general_need_id = data["id"]
+        
+        # Allow background processes to finish (e.g. Geocoding / AI saving)
+        time.sleep(2)
 
-    # --- 5. MATCH ENGINE EXECUTION ---
-    run_step("Triggering Autonomous Dispatch Engine")
-    match_data = requests.get(f"{BASE_URL}/match", headers=HEADERS)
-    match_res = verify_response(match_data, "Match Engine")
-    
-    print(f"Matches Made: {match_res['total_matches_made']}")
-    for m in match_res["matches"]:
-        if m["need_id"] == need_id:
-            print(f"Match Result: {m['status']} -> {m.get('assigned_volunteer')} [{m.get('volunteer_tier')}]")
+    def test_11_sos_intake_sensitive_need(self):
+        """[SPECIAL] Submit a critical, sensitive (medical/rescue) emergency"""
+        payload = {
+            "name": "Emergency Reporter",
+            "phone": "9876543211",
+            "address": "Connaught Place, New Delhi",
+            "disaster_type": "accident",
+            "help_needed": "Medical",
+            "description": f"[{self.run_id}] Severe building collapse! Multiple casualties, bleeding heavily, need immediate rescue and medical help right now!"
+        }
+        resp = requests.post(f"{BASE_URL}/webhook", json=payload)
+        if resp.status_code == 429:
+            print("  [WARN] Rate limited by AI API, skipping test_11")
+            return
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json().get("data", {})
+        
+        self.assertNotIn("error", data, f"AI Processing failed: {data.get('error')}")
+        self.assertIn("id", data)
+        GlobalState.sensitive_need_id = data["id"]
+        
+        # High severity triggers `_auto_match_for_need` in background task
+        time.sleep(3)
 
-    # --- 6. DASHBOARD TELEMETRY ---
-    run_step("Verifying Tactical Dashboard Data")
-    dash_data = requests.get(f"{BASE_URL}/dashboard")
-    dash_res = verify_response(dash_data, "Dashboard Fetch")
-    print(f"Active Needs: {dash_res['total_needs']} | Available Volunteers: {dash_res['total_volunteers']}")
 
-    # --- 7. NOTIFICATION LOGGING ---
-    run_step("Verifying Email Alert Pipeline")
-    # This checks if the gmail_alert.py logic was triggered during SOS intake
-    if sos_res["data"].get("dispatch_action") == "auto_dispatch":
-        print(f"{Colors.GREEN}✅ Alert System Triggered (Check {os.getenv('GMAIL_RECEIVER')}){Colors.ENDC}")
-    else:
-        print("ℹ️ Alert not triggered (Low severity or Trust Score)")
+    # --- 5. MATCHING ENGINE ---
+    def test_12_match_engine(self):
+        """[NORMAL/SPECIAL] Execute Match Engine and verify logic"""
+        # Provide hardcoded fallback secret to bypass Depend(verify_token) for the /match cron-like endpoint
+        headers = {"Authorization": "Bearer hackathon-secret"}
+        resp = requests.get(f"{BASE_URL}/match", headers=headers)
+        self.assertEqual(resp.status_code, 200)
+        
+        data = resp.json()
+        self.assertIn("matches", data)
+        
+        sensitive_match_status = None
+        
+        for m in data["matches"]:
+            if m.get("need_id") == GlobalState.sensitive_need_id:
+                sensitive_match_status = m["status"]
+                # ── SENSITIVE LOGIC ASSERTION ──
+                # If matched, it MUST be a Tier 1 (NGO-Verified) volunteer
+                if sensitive_match_status == "assigned":
+                    self.assertIn("Tier 1", m.get("volunteer_tier", ""))
+                # Otherwise, it must be Manual Escalation or Pending
+                else:
+                    self.assertIn(sensitive_match_status, ["Manual Escalation Required", "pending"])
+                    
+        # Verification that the API endpoint successfully returned valid JSON
+        self.assertIsInstance(data["total_matches_made"], int)
 
-    print(f"\n{Colors.BOLD}{Colors.GREEN}🎉 ALL SYSTEMS NOMINAL: SETU INTEGRATION PASSED{Colors.ENDC}")
 
-if __name__ == "__main__":
-    main()
+    # --- 6. DASHBOARDS ---
+    def test_13_ngo_dashboard(self):
+        """[NORMAL] Fetch NGO tactical dashboard"""
+        if not GlobalState.ngo_id:
+            self.skipTest("NGO ID not created")
+            
+        resp = requests.get(f"{BASE_URL}/ngo/{GlobalState.ngo_id}/dashboard")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("ngo", resp.json())
+        
+    def test_14_global_dashboard(self):
+        """[NORMAL] Fetch global platform dashboard aggregates"""
+        resp = requests.get(f"{BASE_URL}/dashboard")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertIn("total_needs", data)
+        self.assertIn("total_volunteers", data)
+
+    def test_15_dashboard_reports_list(self):
+        """[NORMAL] Fetch detailed report map listing"""
+        resp = requests.get(f"{BASE_URL}/dashboard/reports")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIsInstance(resp.json(), list)
+
+
+if __name__ == '__main__':
+    unittest.main(verbosity=2)

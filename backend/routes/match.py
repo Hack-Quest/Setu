@@ -80,7 +80,11 @@ def find_best_volunteer(need: dict, all_volunteers: list) -> dict | None:
 
     # ── Step 3: score and select ─────────────────────────────────────────
     def composite_score(v):
-        dist = _haversine_km(need_lat, need_lng, v.get("lat", 0.0), v.get("lng", 0.0))
+        v_lat = v.get("lat") or 0.0
+        v_lng = v.get("lng") or 0.0
+        n_lat = need_lat or 0.0
+        n_lng = need_lng or 0.0
+        dist = _haversine_km(n_lat, n_lng, v_lat, v_lng)
         tier_bonus = 50 if v.get("ngo_verified") else 0
         return (weight / (dist + 1)) + tier_bonus
 
@@ -141,11 +145,12 @@ def match_needs(token: str = Depends(verify_token)):
             })
             continue
 
-        dist_km = _haversine_km(
-            need_lat, need_lng,
-            best_vol.get("lat", 0.0),
-            best_vol.get("lng", 0.0)
-        )
+        n_lat = need_lat or 0.0
+        n_lng = need_lng or 0.0
+        v_lat = best_vol.get("lat") or 0.0
+        v_lng = best_vol.get("lng") or 0.0
+
+        dist_km = _haversine_km(n_lat, n_lng, v_lat, v_lng)
 
         if dist_km <= MAX_DISPATCH_KM:
             save_assignment(need_id, best_vol.get("id"))

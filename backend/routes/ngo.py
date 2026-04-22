@@ -72,7 +72,7 @@ def get_ngo_dashboard(ngo_id: str):
         volunteer = None
         volunteer_id = assignment.get("volunteer_id")
         if volunteer_id:
-            volunteer_snap = db.collection("volunteers").document(volunteer_id).get()
+            volunteer_snap = db.collection("volunteers").document(str(volunteer_id)).get()
             if volunteer_snap.exists:
                 volunteer = {"id": volunteer_snap.id, **volunteer_snap.to_dict()}
 

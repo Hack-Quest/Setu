@@ -36,8 +36,10 @@ async function login() {
             return;
         }
 
-        // ✅ Save token
-        localStorage.setItem("auth_token", data.token);
+        // ✅ Save auth details
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("volunteer_id", data.volunteer_id);
+        if (data.name) localStorage.setItem("name", data.name);
 
         console.log("Login response:", data);
 

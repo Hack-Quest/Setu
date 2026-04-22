@@ -44,7 +44,7 @@ def get_open_needs() -> list:
 
 def get_need_by_id(doc_id: str) -> dict:
     """Fetches a single need by its exact Firestore document ID."""
-    doc = db.collection("needs_reports").document(doc_id).get()
+    doc = db.collection("needs_reports").document(str(doc_id)).get()
     if doc.exists:
         return {**doc.to_dict(), "id": doc.id}
     return None

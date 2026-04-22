@@ -26,6 +26,8 @@ def register_volunteer(data: VolunteerRegisterInput):
             "volunteer_id": result["volunteer_id"],
             "token": SECRET_TOKEN
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -45,5 +47,7 @@ def login_volunteer_endpoint(data: VolunteerLoginInput):
             "email": result["email"],
             "token": SECRET_TOKEN
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
