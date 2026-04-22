@@ -154,27 +154,38 @@
                     overlays.push(marker);
                     bounds.push([lat, lng]);
 
-                    // 🔵 volunteer
-                    let vLat = r.volunteer_lat ? parseFloat(r.volunteer_lat) : lat + 0.2;
-                    let vLng = r.volunteer_lng ? parseFloat(r.volunteer_lng) : lng + 0.2;
+                    // 🔵 volunteer + 🔗 line only when real coordinates exist
+                    const hasVolunteerCoords =
+                        r.volunteer_lat !== undefined &&
+                        r.volunteer_lat !== null &&
+                        r.volunteer_lat !== "" &&
+                        r.volunteer_lng !== undefined &&
+                        r.volunteer_lng !== null &&
+                        r.volunteer_lng !== "";
 
-                    const volunteerMarker = L.circleMarker([vLat, vLng], {
-                        radius: 7,
-                        color: '#007bff',
-                        fillColor: '#007bff',
-                        fillOpacity: 0.9
-                    }).addTo(map);
+                    if (hasVolunteerCoords) {
+                        const vLat = parseFloat(r.volunteer_lat);
+                        const vLng = parseFloat(r.volunteer_lng);
 
-                    overlays.push(volunteerMarker);
-                    bounds.push([vLat, vLng]);
+                        if (!isNaN(vLat) && !isNaN(vLng)) {
+                            const volunteerMarker = L.circleMarker([vLat, vLng], {
+                                radius: 7,
+                                color: '#007bff',
+                                fillColor: '#007bff',
+                                fillOpacity: 0.9
+                            }).addTo(map);
 
-                    // 🔗 line
-                    const line = L.polyline([[lat, lng], [vLat, vLng]], {
-                        color: '#007bff',
-                        weight: 3
-                    }).addTo(map);
+                            overlays.push(volunteerMarker);
+                            bounds.push([vLat, vLng]);
 
-                    overlays.push(line);
+                            const line = L.polyline([[lat, lng], [vLat, vLng]], {
+                                color: '#007bff',
+                                weight: 3
+                            }).addTo(map);
+
+                            overlays.push(line);
+                        }
+                    }
                 });
 
                 if (bounds.length > 0) {
