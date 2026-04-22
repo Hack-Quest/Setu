@@ -4,110 +4,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SETU - Disaster Response</title>
+    <title>SETU</title>
 
-    <!-- Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap"
-        rel="stylesheet">
-
-    <!-- CSS -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body>
 
     <!-- 🔝 HEADER -->
-    <header>
-        <h2>SETU</h2>
+    <header class="main-header">
+        <div class="logo">SETU</div>
+
         <nav>
+            <a href="index.html">Home</a>
             <a href="reports.html">Reports</a>
             <a href="map.html">Map</a>
-            <a href="ngo-dashboard.html">NGO</a>
+            <a href="#" onclick="openNeedForm()">Report Need</a>
             <a href="login.html">Login</a>
         </nav>
     </header>
 
-    <!-- 🔥 HERO -->
+    <!-- 🎯 HERO -->
     <section class="hero">
-        <h1>Smarter Decisions.<br>Stronger Response.</h1>
-        <p>
-            AI-powered system that analyzes emergency reports,
-            prioritizes critical cases, and connects volunteers in real time.
-        </p>
+        <h1>Smarter Decisions. Stronger Response.</h1>
     </section>
 
-    <!-- 🎯 ACTION CARDS -->
+    <!-- 🧩 ACTION CARDS -->
     <section class="cards">
-
-        <!-- 🚨 NEED -->
-        <div class="card" onclick="window.open('https://forms.gle/YOUR_NEED_FORM', '_blank')">
-            <h3>🚨 Report Emergency</h3>
-            <p>Submit urgent needs and get help fast</p>
+        <div class="card" onclick="openNeedForm()">
+            🚨 Report Emergency
         </div>
 
-        <!-- 🤝 VOLUNTEER -->
-        <div class="card" onclick="window.open('https://forms.gle/YOUR_VOLUNTEER_FORM', '_blank')">
-            <h3>🤝 Join as Volunteer</h3>
-            <p>Help communities with your skills</p>
+        <div class="card" onclick="openVolunteerForm()">
+            🤝 Join as Volunteer
         </div>
 
-        <!-- 🏢 NGO -->
-        <div class="card" onclick="window.open('https://forms.gle/YOUR_NGO_FORM', '_blank')">
-            <h3>🏢 Register NGO</h3>
-            <p>Coordinate teams and manage resources</p>
+        <div class="card" onclick="openNGOForm()">
+            🏢 Register NGO
         </div>
-
     </section>
 
     <!-- 📊 STATS -->
     <section class="stats">
         <div>
-            <h2 id="emergencyCount">--</h2>
-            <p>Active Emergencies</p>
+            <h2 id="count">--</h2>
+            <p>Emergencies</p>
         </div>
         <div>
-            <h2 id="volunteerCount">--</h2>
+            <h2>120</h2>
             <p>Volunteers</p>
         </div>
         <div>
-            <h2 id="ngoCount">--</h2>
+            <h2>12</h2>
             <p>NGOs</p>
         </div>
     </section>
 
-    <!-- 🗺️ MAP PREVIEW -->
+    <!-- 🗺️ MAP -->
     <section class="map-section">
-        <h2>Live Tactical Overview</h2>
-
-        <!-- Map preview -->
         <iframe src="map.html"></iframe>
-
-        <button class="btn" onclick="location.href='ngo-dashboard.html'">
-            View Full Dashboard →
-        </button>
     </section>
 
-    <!-- 🔚 FOOTER -->
-    <footer>
-        SETU © 2026 — AI Disaster Response System
-    </footer>
+    <!-- ✅ COMMON JS (Google Forms) -->
+    <script src="js/common.js"></script>
 
-    <!-- 🔥 OPTIONAL: Fetch stats (if API ready) -->
+    <!-- 📊 STATS SCRIPT -->
     <script>
+        const API_BASE = "http://127.0.0.1:8000";
+
         async function loadStats() {
             try {
-                const res = await fetch("http://127.0.0.1:8000/dashboard/reports");
+                const res = await fetch(`${API_BASE}/dashboard/reports`, {
+                    headers: { Authorization: "Bearer hackathon-secret" }
+                });
+
                 const data = await res.json();
                 const reports = data.reports || data;
 
-                document.getElementById("emergencyCount").innerText = reports.length;
-
-                // Dummy counts (replace later with real APIs)
-                document.getElementById("volunteerCount").innerText = "120";
-                document.getElementById("ngoCount").innerText = "12";
+                document.getElementById("count").innerText = reports.length;
 
             } catch (err) {
-                console.log("Stats load error:", err);
+                console.error("Error loading stats:", err);
             }
         }
 

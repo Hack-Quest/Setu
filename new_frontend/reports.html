@@ -9,72 +9,29 @@
     <link rel="stylesheet" href="css/styles.css">
 
     <style>
+        /* 👉 TEMP FIX (layout issue solve) */
         .container {
-            padding: 40px;
-        }
-
-        .filters {
-            margin-bottom: 20px;
-        }
-
-        .filters button {
-            margin-right: 10px;
-            padding: 8px 15px;
-            background: #393E46;
-            color: #DFD0B8;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .filters button:hover {
-            background: #948979;
-            color: #222831;
+            max-width: 900px;
+            margin: auto;
         }
 
         .report-card {
-            background: #393E46;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-
-        .severity {
-            font-weight: bold;
-        }
-
-        .critical {
-            color: red;
-        }
-
-        .high {
-            color: orange;
-        }
-
-        .medium {
-            color: yellow;
-        }
-
-        .low {
-            color: lightgreen;
-        }
-
-        .status {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #948979;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
     </style>
 </head>
 
 <body>
 
-    <header>
-        <h2>SETU</h2>
+    <header class="main-header">
+        <div class="logo">SETU</div>
+
         <nav>
             <a href="index.html">Home</a>
+            <a href="reports.html">Reports</a>
             <a href="map.html">Map</a>
-            <a href="ngo-dashboard.html">NGO</a>
+            <a href="#" onclick="openNeedForm()">Report Need</a>
+            <a href="login.html">Login</a>
         </nav>
     </header>
 
@@ -82,7 +39,6 @@
 
         <h1>Live Reports</h1>
 
-        <!-- 🔍 FILTERS -->
         <div class="filters">
             <button onclick="filterReports('all')">All</button>
             <button onclick="filterReports('critical')">Critical</button>
@@ -90,89 +46,11 @@
             <button onclick="filterReports('medium')">Medium</button>
         </div>
 
-        <!-- 📦 REPORT LIST -->
         <div id="reportsList"></div>
 
     </div>
 
-    <script>
-
-        // 🔥 API BASE (VERY IMPORTANT)
-        const API_BASE = "http://127.0.0.1:8000";
-
-        let allReports = [];
-
-        // 🔄 Fetch reports (UPDATED)
-        async function loadReports() {
-            try {
-                const res = await fetch(`${API_BASE}/dashboard/reports`, {
-                    headers: {
-                        Authorization: "Bearer hackathon-secret"
-                    }
-                });
-
-                const data = await res.json();
-                allReports = data.reports || data;
-
-                console.log("Reports:", allReports); // debug
-
-                renderReports(allReports);
-
-            } catch (err) {
-                console.error("Error loading reports:", err);
-            }
-        }
-
-        // 🎨 Render
-        function renderReports(reports) {
-            const container = document.getElementById("reportsList");
-            container.innerHTML = "";
-
-            if (!reports || reports.length === 0) {
-                container.innerHTML = "<p>No reports available</p>";
-                return;
-            }
-
-            reports.forEach(r => {
-
-                const severityClass = (r.severity || "low").toLowerCase();
-
-                const card = document.createElement("div");
-                card.className = "report-card";
-
-                card.innerHTML = `
-            <h3>${r.disaster_type || "Emergency"}</h3>
-            <p>${r.description || "No details available"}</p>
-
-            <p class="severity ${severityClass}">
-                Severity: ${r.severity || "Unknown"}
-            </p>
-
-            <p class="status">
-                Status: ${r.status || "Pending"}
-            </p>
-        `;
-
-                container.appendChild(card);
-            });
-        }
-
-        // 🔍 Filter
-        function filterReports(type) {
-            if (type === "all") {
-                renderReports(allReports);
-            } else {
-                const filtered = allReports.filter(r =>
-                    (r.severity || "").toLowerCase() === type
-                );
-                renderReports(filtered);
-            }
-        }
-
-        // 🚀 Init
-        loadReports();
-
-    </script>
+    <script src="js/reports.js"></script>
 
 </body>
 
