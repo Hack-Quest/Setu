@@ -584,11 +584,11 @@ class TestAssignmentRoute:
     def test_resolve_requires_auth(self, client):
         resp = client.patch("/assignment/a1/resolve",
                             json={"need_id": "n1", "volunteer_id": "v1"})
-        assert resp.status_code == 403
+        assert resp.status_code == 401
 
     def test_resolve_success(self, client):
         snap = _make_doc("a1", {"need_id": "n1", "volunteer_id": "v1", "resolved_at": None})
-        with patch("database.firestore_client.db") as mock_db, \
+        with patch("backend.routes.assignment.db") as mock_db, \
              patch("database.assignments_db.resolve_assignment"):
             mock_db.collection.return_value.document.return_value.get.return_value = snap
             resp = client.patch("/assignment/a1/resolve",
@@ -600,7 +600,7 @@ class TestAssignmentRoute:
 
     def test_resolve_not_found_returns_404(self, client):
         snap = _make_doc("ax", {}, exists=False)
-        with patch("database.firestore_client.db") as mock_db:
+        with patch("backend.routes.assignment.db") as mock_db:
             mock_db.collection.return_value.document.return_value.get.return_value = snap
             resp = client.patch("/assignment/ghost-assign/resolve",
                 headers=AUTH_HEADERS,
@@ -613,13 +613,27 @@ class TestAssignmentRoute:
             "need_id": "n2", "volunteer_id": "v2",
             "resolved_at": "2025-01-01T10:00:00+00:00"
         })
-        with patch("database.firestore_client.db") as mock_db:
+        with patch("backend.routes.assignment.db") as mock_db:
             mock_db.collection.return_value.document.return_value.get.return_value = snap
             resp = client.patch("/assignment/a2/resolve",
                 headers=AUTH_HEADERS,
                 json={"need_id": "n2", "volunteer_id": "v2"}
             )
         assert resp.status_code == 409
+
+    def test_get_volunteer_assignments_success(self, client):
+        expected = [
+            {"id": "a1", "need_id": "n1", "volunteer_id": "v1", "resolved_at": None},
+            {"id": "a2", "need_id": "n2", "volunteer_id": "v1", "resolved_at": None},
+        ]
+        with patch("backend.routes.assignment.get_assignments_by_volunteer_id", return_value=expected):
+            resp = client.get("/assignment/volunteer/v1", headers=AUTH_HEADERS)
+        assert resp.status_code == 200
+        assert resp.json() == expected
+
+    def test_get_volunteer_assignments_requires_auth(self, client):
+        resp = client.get("/assignment/volunteer/v1")
+        assert resp.status_code == 401
 
 
 # ─────────────────────────────────────────────────────────────

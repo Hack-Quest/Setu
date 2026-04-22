@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from backend.auth import verify_token
-from database.assignments_db import resolve_assignment
+from database.assignments_db import resolve_assignment, get_assignments_by_volunteer_id
 from database.firestore_client import db
 
 router = APIRouter(prefix="/assignment")
@@ -10,6 +10,14 @@ router = APIRouter(prefix="/assignment")
 class ResolvePayload(BaseModel):
     need_id: str
     volunteer_id: str
+
+
+@router.get("/volunteer/{volunteer_id}")
+def get_volunteer_assignments(
+    volunteer_id: str,
+    token: str = Depends(verify_token)
+):
+    return get_assignments_by_volunteer_id(volunteer_id)
 
 
 @router.patch("/{assignment_id}/resolve")

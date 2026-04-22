@@ -1,5 +1,6 @@
 from database.firestore_client import db
 from datetime import datetime, timezone
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 from database.needs_db import update_need_status
 from database.volunteers_db import update_volunteer_status
@@ -39,3 +40,16 @@ def resolve_assignment(doc_id: str, need_id: str, volunteer_id: str):
     update_volunteer_status(volunteer_id, True)   
     
     print(f"✅ Assignment {doc_id} resolved! Volunteer is free again.")
+
+
+def get_assignments_by_volunteer_id(volunteer_id: str):
+    """
+    Returns assignment documents for a specific volunteer.
+    Includes Firestore document IDs in each returned record.
+    """
+    docs = (
+        db.collection("assignments")
+        .where(filter=FieldFilter("volunteer_id", "==", volunteer_id))
+        .stream()
+    )
+    return [{"id": doc.id, **doc.to_dict()} for doc in docs]
