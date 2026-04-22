@@ -14,6 +14,7 @@ def save_assignment(need_id: str, volunteer_id: str) -> str:
         "need_id": need_id,
         "volunteer_id": volunteer_id,
         "assigned_at": datetime.now(timezone.utc).isoformat(),
+        "status": "assigned",
         "resolved_at": None
     }
     
@@ -33,6 +34,7 @@ def resolve_assignment(doc_id: str, need_id: str, volunteer_id: str):
     """
     
     db.collection("assignments").document(doc_id).update({
+        "status": "resolved",
         "resolved_at": datetime.now(timezone.utc).isoformat()
     })
     

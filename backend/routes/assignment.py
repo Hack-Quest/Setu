@@ -1,15 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
 from backend.auth import verify_token
 from database.assignments_db import resolve_assignment, get_assignments_by_volunteer_id
 from database.firestore_client import db
 
 router = APIRouter(prefix="/assignment")
-
-
-class ResolvePayload(BaseModel):
-    need_id: str
-    volunteer_id: str
 
 
 @router.get("/volunteer/{volunteer_id}")
@@ -40,7 +34,6 @@ def get_volunteer_assignments(
 @router.patch("/{assignment_id}/resolve")
 def resolve(
     assignment_id: str,
-    payload: ResolvePayload,
     token: str = Depends(verify_token)
 ):
     """
@@ -56,15 +49,23 @@ def resolve(
     doc = snap.to_dict()
 
     # Prevent double-resolve
-    if doc.get("resolved_at") is not None:
+    if doc.get("resolved_at") is not None or doc.get("status") == "resolved":
         raise HTTPException(status_code=409, detail="Assignment already resolved")
 
-    resolve_assignment(assignment_id, payload.need_id, payload.volunteer_id)
+    need_id = doc.get("need_id")
+    volunteer_id = doc.get("volunteer_id")
+    if not need_id or not volunteer_id:
+        raise HTTPException(
+            status_code=422,
+            detail="Assignment missing need_id or volunteer_id"
+        )
+
+    resolve_assignment(assignment_id, need_id, volunteer_id)
 
     return {
         "status": "resolved",
         "assignment_id": assignment_id,
-        "need_id": payload.need_id,
-        "volunteer_id": payload.volunteer_id,
+        "need_id": need_id,
+        "volunteer_id": volunteer_id,
         "message": "Case closed. Volunteer is now available again."
     }

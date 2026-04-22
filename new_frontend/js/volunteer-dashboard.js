@@ -79,16 +79,15 @@ async function loadProfile() {
         </div>
         <p>${a.description || "No description provided."}</p>
         <p style="margin-top: 10px;">Status: <b>${a.status || "assigned"}</b></p>
-        <button onclick="resolveAssignment('${a.need_id}', '${a.assignment_id}')" style="margin-top: 15px; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;">Mark as Resolved</button>
+        <button onclick="resolveAssignment('${a.assignment_id}')" style="margin-top: 15px; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;">Mark as Resolved</button>
     `;
 }
 
-async function resolveAssignment(needId, assignmentId) {
+async function resolveAssignment(assignmentId) {
     if (!confirm("Are you sure you want to mark this assignment as resolved?")) return;
     
     await api(`/assignment/${assignmentId}/resolve`, {
-        method: "PATCH",
-        body: JSON.stringify({ need_id: needId, volunteer_id: volunteerId })
+        method: "PATCH"
     });
     
     alert("Assignment resolved successfully!");

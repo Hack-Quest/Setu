@@ -582,8 +582,7 @@ class TestDashboardRoute:
 class TestAssignmentRoute:
 
     def test_resolve_requires_auth(self, client):
-        resp = client.patch("/assignment/a1/resolve",
-                            json={"need_id": "n1", "volunteer_id": "v1"})
+        resp = client.patch("/assignment/a1/resolve")
         assert resp.status_code == 401
 
     def test_resolve_success(self, client):
@@ -592,8 +591,7 @@ class TestAssignmentRoute:
              patch("database.assignments_db.resolve_assignment"):
             mock_db.collection.return_value.document.return_value.get.return_value = snap
             resp = client.patch("/assignment/a1/resolve",
-                headers=AUTH_HEADERS,
-                json={"need_id": "n1", "volunteer_id": "v1"}
+                headers=AUTH_HEADERS
             )
         assert resp.status_code == 200
         assert resp.json()["status"] == "resolved"
@@ -603,8 +601,7 @@ class TestAssignmentRoute:
         with patch("backend.routes.assignment.db") as mock_db:
             mock_db.collection.return_value.document.return_value.get.return_value = snap
             resp = client.patch("/assignment/ghost-assign/resolve",
-                headers=AUTH_HEADERS,
-                json={"need_id": "n1", "volunteer_id": "v1"}
+                headers=AUTH_HEADERS
             )
         assert resp.status_code == 404
 
@@ -616,8 +613,7 @@ class TestAssignmentRoute:
         with patch("backend.routes.assignment.db") as mock_db:
             mock_db.collection.return_value.document.return_value.get.return_value = snap
             resp = client.patch("/assignment/a2/resolve",
-                headers=AUTH_HEADERS,
-                json={"need_id": "n2", "volunteer_id": "v2"}
+                headers=AUTH_HEADERS
             )
         assert resp.status_code == 409
 
