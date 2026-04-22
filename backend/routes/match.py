@@ -8,20 +8,18 @@ import math
 router = APIRouter(prefix="/match")  # ✅ IMPORTANT
 
 # ---------------------------------------------------------------------------
-# Skill sensitivity map
-# Skills listed here require ONLY NGO-verified (Tier 1) responders.
-# All other skills allow Community (Tier 2) volunteers as a fallback.
+# Severity weights for composite scoring
 # ---------------------------------------------------------------------------
-SKILL_SENSITIVITY: dict[str, dict] = {
-    "Medical":  {"tier1_only": True},
-    "medical":  {"tier1_only": True},
-    "Rescue":   {"tier1_only": True},
-    "rescue":   {"tier1_only": True},
+SEVERITY_WEIGHT = {
+    "critical": 1000,
+    "very high": 500,
+    "high": 200,
+    "medium": 80,
+    "low": 20,
 }
 
-# Within this extra distance margin (km), a Tier 1 volunteer is always
-# preferred over a Tier 2 volunteer for general (non-sensitive) needs.
-TIER1_PREFERENCE_MARGIN_KM = 10.0
+# Skill sensitivity: these categories require NGO-verified (Tier 1) volunteers.
+_SENSITIVE_CATEGORIES = {"medical", "rescue"}
 
 # Maximum dispatch radius (km).
 MAX_DISPATCH_KM = 50.0
@@ -41,82 +39,52 @@ def _haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 
 
 # ---------------------------------------------------------------------------
-# Two-stage volunteer selection
+# Composite-score volunteer selection
 # ---------------------------------------------------------------------------
 def find_best_volunteer(need: dict, all_volunteers: list) -> dict | None:
     """
-    Two-stage dispatch logic:
+    Composite-score dispatch:
 
-    Stage 1 – Filter by skill match, then split into:
-        • Tier 1 (NGO-verified):  vol.get("ngo_verified") is True
-        • Tier 2 (Community):     everyone else
+    score = (severity_weight / (distance_km + 1)) + tier_bonus
 
-    Stage 2 – Select best candidate:
-        • Sensitive need  → Tier 1 pool only; return None if empty.
-        • General need    → Merge pools but promote Tier 1 when the
-                           closest Tier 1 is within TIER1_PREFERENCE_MARGIN_KM
-                           of the closest Tier 2.
-
-    Returns the chosen volunteer dict, or None if no eligible volunteer exists.
+    • Sensitive needs (medical/rescue) → NGO-verified (Tier 1) pool only;
+      returns None (hard block) if no Tier 1 volunteer is available.
+    • All other needs → Tier 1 + Tier 2 pool with a +50 bonus for Tier 1.
+    • Highest score wins.
     """
-    need_lat = need.get("lat", 0.0)
-    need_lng = need.get("lng", 0.0)
-    need_category  = need.get("category", "")
-    need_help      = need.get("help_needed", "")
+    need_lat      = need.get("lat", 0.0)
+    need_lng      = need.get("lng", 0.0)
+    need_category = need.get("category", "").lower()
+    severity      = need.get("severity", "medium").lower()
+    weight        = SEVERITY_WEIGHT.get(severity, 80)
 
-    # ── Step 1: skill filter ─────────────────────────────────────────────
+    # ── Step 1: skill filter (case-insensitive) ──────────────────────────
     skilled = [
         v for v in all_volunteers
-        if (need_category in v.get("skills", [])
-            or need_help    in v.get("skills", []))
+        if need_category in [s.lower() for s in v.get("skills", [])]
     ]
-
     if not skilled:
-        return None
+        skilled = all_volunteers  # fallback: no skill filter
 
     # ── Step 2: tier split ───────────────────────────────────────────────
+    is_sensitive = need_category in _SENSITIVE_CATEGORIES
     tier1 = [v for v in skilled if v.get("ngo_verified") is True]
-    tier2 = [v for v in skilled if v.get("ngo_verified") is not True]
+    tier2 = [v for v in skilled if not v.get("ngo_verified")]
 
-    # Attach distance to each volunteer (avoids repeated calculation)
-    def with_dist(pool):
-        return sorted(
-            [{"vol": v, "dist": _haversine_km(need_lat, need_lng,
-                                               v.get("lat", 0.0),
-                                               v.get("lng", 0.0))}
-             for v in pool],
-            key=lambda x: x["dist"]
-        )
+    if is_sensitive and not tier1:
+        return None  # hard block: no NGO-verified volunteer for sensitive need
 
-    # ── Step 3: sensitivity check ────────────────────────────────────────
-    is_sensitive = (
-        SKILL_SENSITIVITY.get(need_category, {}).get("tier1_only", False)
-        or SKILL_SENSITIVITY.get(need_help,   {}).get("tier1_only", False)
-    )
+    pool = tier1 if is_sensitive else (tier1 + tier2)
+    if not pool:
+        return None
 
-    if is_sensitive:
-        # Sensitive need → Tier 1 ONLY
-        ranked = with_dist(tier1)
-        return ranked[0]["vol"] if ranked else None
+    # ── Step 3: score and select ─────────────────────────────────────────
+    def composite_score(v):
+        dist = _haversine_km(need_lat, need_lng, v.get("lat", 0.0), v.get("lng", 0.0))
+        tier_bonus = 50 if v.get("ngo_verified") else 0
+        return (weight / (dist + 1)) + tier_bonus
 
-    # ── Step 4: general need → merge with Tier 1 priority ────────────────
-    ranked_t1 = with_dist(tier1)
-    ranked_t2 = with_dist(tier2)
-
-    if ranked_t1 and ranked_t2:
-        best_t1_dist = ranked_t1[0]["dist"]
-        best_t2_dist = ranked_t2[0]["dist"]
-        # Prefer Tier 1 if it's within TIER1_PREFERENCE_MARGIN_KM of Tier 2
-        if best_t1_dist <= best_t2_dist + TIER1_PREFERENCE_MARGIN_KM:
-            return ranked_t1[0]["vol"]
-        return ranked_t2[0]["vol"]
-
-    if ranked_t1:
-        return ranked_t1[0]["vol"]
-    if ranked_t2:
-        return ranked_t2[0]["vol"]
-
-    return None
+    return max(pool, key=composite_score)
 
 
 # ---------------------------------------------------------------------------
@@ -127,9 +95,9 @@ def match_needs(token: str = Depends(verify_token)):
     matches = []
     open_needs = get_open_needs()
 
-    # 🚨 TRIAGE: Critical needs get first pick of available volunteers
-    severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-    open_needs.sort(key=lambda n: severity_order.get(n.get("severity", "low"), 3))
+    # 🚨 TRIAGE: Higher severity gets first pick of available volunteers
+    severity_order = {"critical": 0, "very high": 1, "high": 2, "medium": 3, "low": 4}
+    open_needs.sort(key=lambda n: severity_order.get(str(n.get("severity", "low")).lower(), 4))
 
     # Pre-fetch volunteers once; pool is updated in-memory as assignments are made
     all_volunteers = get_available_volunteers()
@@ -151,17 +119,13 @@ def match_needs(token: str = Depends(verify_token)):
         best_vol = find_best_volunteer(need, available_pool)
 
         # ── Sensitive need with no Tier 1 volunteer found ─────────────────
-        need_category = need.get("category", "")
-        need_help     = need.get("help_needed", "")
-        is_sensitive  = (
-            SKILL_SENSITIVITY.get(need_category, {}).get("tier1_only", False)
-            or SKILL_SENSITIVITY.get(need_help,   {}).get("tier1_only", False)
-        )
+        need_category = need.get("category", "").lower()
+        is_sensitive  = need_category in _SENSITIVE_CATEGORIES
 
         if best_vol is None and is_sensitive:
             matches.append({
                 "need_id":            need_id,
-                "category":           need_category or need_help,
+                "category":           need_category,
                 "assigned_volunteer": None,
                 "status":             "Manual Escalation Required",
                 "reason":             "No NGO-verified (Tier 1) responder available for a sensitive need.",

@@ -17,6 +17,25 @@ router = APIRouter(prefix="/need")  # ✅ IMPORTANT
 needs_storage = []
 
 
+def _auto_match_for_need(need_id: str):
+    """Background task: find and assign the best volunteer for high-priority needs."""
+    from database.needs_db import get_need_by_id
+    from database.volunteers_db import get_available_volunteers
+    from database.assignments_db import save_assignment
+    from backend.routes.match import find_best_volunteer, MAX_DISPATCH_KM, _haversine_km
+
+    need = get_need_by_id(need_id)
+    if not need:
+        return
+    volunteers = get_available_volunteers()
+    best = find_best_volunteer(need, volunteers)
+    if best:
+        dist = _haversine_km(need["lat"], need["lng"], best["lat"], best["lng"])
+        if dist <= MAX_DISPATCH_KM:
+            save_assignment(need_id, best["id"])
+            print(f"[Auto-Match] Need {need_id} → Volunteer {best['id']} ({dist:.1f}km)")
+
+
 async def broadcast_high_trust_report(report_data: dict):
     try:
         from backend.main import manager
@@ -168,6 +187,10 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         doc_id = save_need(final_data)
         final_data["id"] = doc_id
         needs_storage.append(final_data)
+
+        # 🚀 AUTO-DISPATCH for high-priority needs
+        if severity_key in ("critical", "very high", "high"):
+            background_tasks.add_task(_auto_match_for_need, doc_id)
 
         # 🚨 EMAIL TRIGGER
         if final_data["dispatch_action"] == "auto_dispatch" and trust_score > 60:

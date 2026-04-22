@@ -6,9 +6,10 @@ function openNeedForm() {
 
 async function login() {
 
-    const email = document.getElementById("phone").value; // ⚠️ using phone field as email
+    const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-    const selectedRole = document.getElementById("role").value;
+    const roleEl = document.getElementById("role");
+    const selectedRole = roleEl ? roleEl.value : "volunteer";
 
     if (!email || !password) {
         alert("Please fill all fields");
@@ -35,8 +36,11 @@ async function login() {
             return;
         }
 
-        // ✅ Save token
+        // ✅ Save token and volunteer id
         localStorage.setItem("token", data.token);
+        if (data.volunteer_id) {
+            localStorage.setItem("volunteer_id", data.volunteer_id);
+        }
 
         console.log("Login response:", data);
 
