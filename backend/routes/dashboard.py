@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 
 from database.needs_db import get_open_needs
-from database.volunteers_db import get_available_volunteers
+from database.volunteers_db import get_available_volunteers, get_all_volunteers
+from database.ngos_db import get_all_ngos
 
 router = APIRouter(prefix="/dashboard")
 
@@ -17,9 +18,12 @@ def dashboard():
 
     needs = get_open_needs()
     vols = get_available_volunteers()
+    all_vols = get_all_volunteers()
+    all_ngos = get_all_ngos()
 
     total_needs = len(needs)
-    total_volunteers = len(vols)
+    total_volunteers = len(all_vols)
+    total_ngos = len(all_ngos)
 
     # 🔥 severity counts (Using safe .get() to prevent KeyErrors)
     critical = sum(1 for n in needs if n.get("severity") == "critical")
@@ -38,6 +42,7 @@ def dashboard():
     return {
         "total_needs": total_needs,
         "total_volunteers": total_volunteers,
+        "total_ngos": total_ngos,
         "critical_cases": critical,
         "high_priority_cases": high,
         "medium_priority_cases": medium,

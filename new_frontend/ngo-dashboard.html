@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SETU - NGO Dashboard</title>
 
-    <!-- Global Styles -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
@@ -24,12 +23,11 @@
         </nav>
     </header>
 
-    <!-- 📦 MAIN CONTAINER -->
+    <!-- 📦 MAIN -->
     <div class="container">
 
         <h1>NGO Dashboard</h1>
 
-        <!-- ℹ️ SYSTEM INFO -->
         <p style="margin-bottom: 10px; color: #7FBF9F; font-size: 14px;">
             Live data powered by Google Forms + automated matching engine
         </p>
@@ -38,17 +36,13 @@
             ⚡ Assignments are automatically handled by the system.
         </p>
 
-        <button onclick="runMatch()" style="margin-bottom: 20px; padding: 10px 20px; background-color: #7FBF9F; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Run Match</button>
+        <!-- ❌ Run Match button removed -->
 
-
-        <!-- 📊 REPORTS LIST -->
-        <div id="reportsList">
-            <!-- Dynamic reports will load here -->
-        </div>
+        <!-- 📊 REPORTS -->
+        <div id="reportsList"></div>
 
     </div>
 
-    <!-- 🔗 SCRIPT -->
     <script src="js/ngo-dashboard.js"></script>
 
 </body>

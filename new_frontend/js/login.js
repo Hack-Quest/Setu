@@ -1,65 +1,96 @@
 const API_BASE = window.SETU_API_BASE_URL || "";
 
+// 📩 Open Google Form (unchanged)
 function openNeedForm() {
-    window.open("https://docs.google.com/forms/d/e/1FAIpQLSfpOTtIUbv4g216ME419DG_BqF_PCS1chJ0es47HRbkznNA1g/viewform", "_blank");
+    window.open(
+        "https://docs.google.com/forms/d/e/1FAIpQLSfpOTtIUbv4g216ME419DG_BqF_PCS1chJ0es47HRbkznNA1g/viewform",
+        "_blank"
+    );
 }
 
-async function login() {
-
+// 📩 SEND OTP
+async function sendOTP() {
     const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const roleEl = document.getElementById("role");
-    const selectedRole = roleEl ? roleEl.value : "volunteer";
 
-    if (!email || !password) {
-        alert("Please fill all fields");
+    if (!email) {
+        alert("Please enter email");
         return;
     }
 
     try {
-
-        const res = await fetch(`${API_BASE}/auth/login`, {
+        const res = await fetch(`${API_BASE}/auth/send-otp`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                email: email,      // ✅ FIXED
-                password: password
-            })
+            body: JSON.stringify({ email })
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-            alert(data.detail || "Login failed");
+            alert(data.detail || "Failed to send OTP");
             return;
         }
 
-        // ✅ Save auth details
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("volunteer_id", data.volunteer_id);
-        if (data.name) localStorage.setItem("name", data.name);
+        alert("✅ OTP sent to your email");
 
-        console.log("Login response:", data);
+    } catch (err) {
+        console.error(err);
+        alert("Server error while sending OTP");
+    }
+}
 
-        // 🔥 ROLE HANDLING
-        let role = data.role;
+// 🔐 VERIFY OTP
+async function verifyOTP() {
+    const email = document.getElementById("email").value;
+    const otp = document.getElementById("otp").value;
 
-        // ⚠️ fallback (agar backend role nahi bhejta)
-        if (!role) {
-            role = selectedRole;
+    if (!email || !otp) {
+        alert("Enter email and OTP");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, otp })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.detail || "Invalid OTP");
+            return;
         }
 
-        // 🚀 REDIRECT
-        if (role === "ngo") {
+        // ✅ STORE AUTH DATA
+        localStorage.setItem("auth_token", data.token);
+        localStorage.setItem("role", data.role);
+
+        if (data.id) {
+            localStorage.setItem("volunteer_id", data.id);
+            localStorage.setItem("ngo_id", data.id);
+        }
+
+        if (data.name) {
+            localStorage.setItem("name", data.name);
+        }
+
+        console.log("Login success:", data);
+
+        // 🔀 REDIRECT
+        if (data.role === "ngo") {
             window.location.href = "ngo-dashboard.html";
         } else {
             window.location.href = "volunteer-dashboard.html";
         }
 
     } catch (err) {
-        console.error("Login error:", err);
-        alert("Server error");
+        console.error(err);
+        alert("Server error while verifying OTP");
     }
 }

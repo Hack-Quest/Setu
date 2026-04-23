@@ -20,6 +20,9 @@ from backend.routes.dashboard import router as dashboard_router
 from backend.routes.assignment import router as assignment_router
 from backend.routes.ngo import router as ngo_router
 
+# ✅ NEW IMPORT (ADDED)
+from backend.routes.stats import router as stats_router
+
 # Helpers
 from database.volunteers_db import save_volunteer
 from database.geocoding import get_coordinates
@@ -80,7 +83,7 @@ if raw_allowed_origins.strip():
 else:
     allowed_origins = DEFAULT_ALLOWED_ORIGINS
 
-# 🔥 CORS (hardened defaults)
+# 🔥 CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -120,7 +123,7 @@ def public_config():
     if not google_maps_api_key:
         return JSONResponse(
             status_code=503,
-            content={"error": "Google Maps API key is not configured (set GOOGLE_MAPS_KEY or GOOGLE_MAPS_API_KEY)"}
+            content={"error": "Google Maps API key is not configured"}
         )
 
     return {"google_maps_api_key": google_maps_api_key}
@@ -128,11 +131,7 @@ def public_config():
 # 🔗 NEED WEBHOOK
 @app.post("/webhook")
 @limiter.limit("5/minute")
-async def webhook(
-    request: Request,
-    payload: Dict,
-    background_tasks: BackgroundTasks
-):
+async def webhook(request: Request, payload: Dict, background_tasks: BackgroundTasks):
     try:
         mapped_data = {
             "reporter_name": payload.get("name", "Unknown"),
@@ -175,7 +174,6 @@ async def volunteer_webhook(request: Request, payload: Dict):
             "ngo_id": payload.get("ngo_id", None)
         }
 
-        # NGO verification
         if mapped_volunteer.get("ngo_id"):
             ngo = get_ngo(mapped_volunteer["ngo_id"])
             if ngo and ngo.get("verified"):
@@ -185,7 +183,6 @@ async def volunteer_webhook(request: Request, payload: Dict):
 
         doc_id = save_volunteer(mapped_volunteer)
 
-        # 🔥 Broadcast update via WebSocket
         await manager.broadcast_json({
             "type": "NEW_VOLUNTEER",
             "data": mapped_volunteer
@@ -205,3 +202,4 @@ app.include_router(match_router)
 app.include_router(dashboard_router)
 app.include_router(assignment_router)
 app.include_router(ngo_router)
+app.include_router(stats_router)

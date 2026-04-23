@@ -7,3 +7,5 @@ slowapi
 bcrypt
 firebase-admin
 googlemaps
+passlib[bcrypt]
+pytest

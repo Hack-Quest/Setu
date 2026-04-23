@@ -134,3 +134,11 @@ def update_volunteer_status(doc_id: str, is_available: bool):
     )
     status_text = "Available" if is_available else "Deployed"
     print(f"🔄 Volunteer {doc_id} status updated to: {status_text}")
+
+
+def get_all_volunteers() -> list:
+    """
+    Fetches all volunteers.
+    """
+    docs = db.collection("volunteers").stream()
+    return [{"id": doc.id, **doc.to_dict()} for doc in docs]

@@ -51,11 +51,11 @@
             <p>Emergencies</p>
         </div>
         <div>
-            <h2>120</h2>
+            <h2 id="volunteer-count">--</h2>
             <p>Volunteers</p>
         </div>
         <div>
-            <h2>12</h2>
+            <h2 id="ngo-count">--</h2>
             <p>NGOs</p>
         </div>
     </section>
@@ -65,21 +65,29 @@
         <iframe src="map.html"></iframe>
     </section>
 
-    <!-- ✅ COMMON JS (Google Forms) -->
+    <!-- ✅ COMMON JS -->
     <script src="js/common.js"></script>
 
-    <!-- 📊 STATS SCRIPT -->
+    <!-- 📊 STATS SCRIPT (FIXED) -->
     <script>
-        const API_BASE = window.SETU_API_BASE_URL || "";
+        const API_BASE = "http://127.0.0.1:8000";
 
         async function loadStats() {
             try {
-                const res = await fetch(`${API_BASE}/dashboard/reports`);
+                const res = await fetch(`${API_BASE}/stats`);
 
                 const data = await res.json();
-                const reports = data.reports || data;
 
-                document.getElementById("count").innerText = reports.length;
+                console.log("STATS:", data);
+
+                document.getElementById("count").innerText =
+                    data.total_reports ?? 0;
+
+                document.getElementById("volunteer-count").innerText =
+                    data.total_volunteers ?? 0;
+
+                document.getElementById("ngo-count").innerText =
+                    data.total_ngos ?? 0;
 
             } catch (err) {
                 console.error("Error loading stats:", err);
