@@ -1,44 +1,54 @@
-VALID_CATEGORIES = ["medical", "food", "shelter", "rescue", "sanitation", "education", "other"]
+VALID_CATEGORIES = ["medical", "rescue", "supplies", "logistics", "other"]
 VALID_SEVERITIES = ["low", "medium", "high", "very high", "critical"]
+
 
 def build_prompt(description: str) -> str:
     return f"""
-        You are an AI assistant classifying community emergency reports for an NGO volunteer system.
+You are a strict emergency-report classifier for an NGO disaster response system.
 
-        Analyze the report below and return ONLY a valid JSON object with exactly 5 fields:
-        - "category": must be one of {VALID_CATEGORIES}
-        - "severity": must be one of {VALID_SEVERITIES}
-        - "consistency": an integer from 0 to 10 rating how believable and internally consistent this report is.
-          (0 = clearly fake/nonsensical, 5 = plausible but vague, 10 = very detailed and credible)
-        - "summary_en": a short 5-6 word English summary of the emergency.
-        - "summary_local": short 5-6 word translation of the summary in Hindi or the local language detected.
+Your task: read ONE report and return ONE JSON object with EXACTLY these fields:
+- "category": one of {VALID_CATEGORIES}
+- "severity": one of {VALID_SEVERITIES}
+- "consistency": integer 1-10 (1 = incoherent/unbelievable, 10 = highly coherent and believable)
 
-        Multilingual & Regional Language Rules:
-        - The report may be in English, Hindi, Bengali, Tamil, Telugu, Marathi, Gujarati, or any other Indian regional language.
-        - The report might also be written using Latin/Roman script (e.g., Hinglish, Tanglish).
-        - You MUST analyze, translate internally, and understand the core intent before evaluating.
-        - IMPORTANT: Regardless of the input language, you MUST maintain the exact JSON structure. Do NOT output anything in the regional language outside of the "summary_local" field.
+Allowed categories (no other labels are permitted):
+1) medical
+- Use when the primary need is treatment, injuries, illness, ambulance, doctor, nurse, medicine, first-aid.
+2) rescue
+- Use when people are trapped, missing, stranded in immediate danger, drowning risk, collapse entrapment, evacuation-from-danger.
+3) supplies
+- Use when the primary need is consumable/basic goods: food, drinking water, blankets, tents, hygiene kits, diapers, fuel-for-cooking.
+4) logistics
+- Use when the primary need is transport, drivers, vehicles, loading/unloading, moving goods, delivery coordination, route support.
+- IMPORTANT: "driver needed", "transport supplies", "truck/van needed" MUST be logistics, not medical.
+5) other
+- Use only when none of the above categories clearly apply.
 
-        Severity guide:
-        - "critical"  → immediate life threat (trapped in collapse, active drowning, life at risk now)
-        - "very high" → impending life threat (food/water exhausted for days, rising floodwaters)
-        - "high"      → urgent but currently stable (medical supplies needed, non-lethal injuries)
-        - "medium"    → important and time-sensitive but can wait a few hours
-        - "low"       → resource requests or infrastructure/community issues (sanitation, books)
+Severity scale (strict):
+- low: routine/non-urgent request; no immediate danger to life.
+- medium: important request, should be addressed soon, but no direct life threat now.
+- high: urgent and potentially escalating; serious impact likely if delayed.
+- very high: severe and near life-threatening; immediate response strongly needed.
+- critical: active immediate life threat right now (for example trapped in collapse, active drowning, major uncontrolled injury).
 
-        Consistency guide:
-        - Penalise vague, contradictory, very short, or implausible descriptions.
-        - Reward specific details: named location, number of people, timeline, type of disaster.
+Severity examples:
+- "Driver is needed to transport supplies at old age home" -> category=logistics, severity=low or medium.
+- "Building collapsed, 3 people trapped" -> category=rescue, severity=critical.
 
-        Strict Output Rules (CRITICAL FOR PARSING):
-        - Return ONLY the raw JSON object. Do NOT wrap the JSON in ```json ... ``` blocks or use markdown formatting.
-        - NO conversational text. NO explanations before or after the JSON.
-        - ALL keys and values MUST be in English, except for the "summary_local" value.
-        - The output must be strictly valid JSON that can be parsed by `json.loads()`.
-        - The "severity" value must be exactly one of: {VALID_SEVERITIES}
-        - If unsure about category, use "other"
-        - If unsure about severity, use "medium"
-        - If unsure about consistency, use 5
+Consistency scoring rules (1-10 integer only):
+- Lower scores for contradictory, extremely vague, or nonsensical reports.
+- Higher scores for coherent details such as people count, location clues, concrete need, and timeline.
+- If uncertain, use 5.
 
-        Report: "{description}"
-        """
+Hard output constraints (must follow exactly):
+- Return ONLY valid JSON. No markdown. No code fences. No prose.
+- JSON must contain exactly 3 keys: category, severity, consistency.
+- Do not add extra keys.
+- category must be one of {VALID_CATEGORIES}.
+- severity must be one of {VALID_SEVERITIES}.
+- consistency must be an integer from 1 to 10.
+- If uncertain category -> "other". If uncertain severity -> "medium".
+
+Report:
+"{description}"
+"""
