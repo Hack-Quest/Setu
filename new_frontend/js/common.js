@@ -1,3 +1,5 @@
+window.SETU_API_BASE_URL = "https://setu-api-949977701091.asia-south1.run.app";
+
 function openNeedForm() {
     window.open("https://docs.google.com/forms/d/e/1FAIpQLSfpOTtIUbv4g216ME419DG_BqF_PCS1chJ0es47HRbkznNA1g/viewform", "_blank");
 }
