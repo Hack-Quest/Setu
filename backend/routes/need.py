@@ -22,18 +22,29 @@ def _auto_match_for_need(need_id: str):
     from database.needs_db import get_need_by_id
     from database.volunteers_db import get_available_volunteers
     from database.assignments_db import save_assignment
-    from backend.routes.match import find_best_volunteer, MAX_DISPATCH_KM, _haversine_km
+    from backend.routes.match import find_best_volunteer, MAX_DISPATCH_KM
 
     need = get_need_by_id(need_id)
     if not need:
+        print(f"[AUTO-MATCH] Need {need_id} not found — skipping.")
         return
+
     volunteers = get_available_volunteers()
     best = find_best_volunteer(need, volunteers)
-    if best:
-        dist = _haversine_km(need["lat"], need["lng"], best["lat"], best["lng"])
-        if dist <= MAX_DISPATCH_KM:
-            save_assignment(need_id, best["id"])
-            print(f"[Auto-Match] Need {need_id} → Volunteer {best['id']} ({dist:.1f}km)")
+
+    if not best:
+        print(f"[AUTO-MATCH] Need {need_id} → No suitable volunteer found.")
+        return
+
+    dist  = best.get("_distance_km", 0.0)
+    score = best.get("_score", 0.0)
+
+    if dist <= MAX_DISPATCH_KM:
+        save_assignment(need_id, best["id"])
+        print(f"[AUTO-MATCH] Need {need_id} → Volunteer {best['id']} | Score: {score:.2f} | Dist: {dist:.1f}km")
+    else:
+        print(f"[AUTO-MATCH] Need {need_id} → No volunteer within {MAX_DISPATCH_KM}km (nearest: {dist:.1f}km).")
+
 
 
 async def broadcast_high_trust_report(report_data: dict):
@@ -157,7 +168,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         final_data = {
             "id": len(needs_storage) + 1,
             "description": data.description,
-            "category": category,
+            "category": category.lower().strip(),  # always normalize to lowercase
             "severity": severity,
             "summary_en": summary_en,
             "summary_local": summary_local,

@@ -1,21 +1,18 @@
 const API_BASE = "http://127.0.0.1:8000";
 
-// 🔐 Get token
+// Get auth token — standardized key is 'token'
 function getToken() {
-    const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (!token) {
         window.location.href = "login.html";
-        throw new Error("No token");
+        throw new Error("Not authenticated");
     }
     return token;
 }
 
-// 🔓 Logout
+// Logout — clear all auth-related keys
 function logout() {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("token");
-    localStorage.removeItem("volunteer_id");
-    localStorage.removeItem("name");
+    ["token", "auth_token", "volunteer_id", "name"].forEach(k => localStorage.removeItem(k));
     window.location.href = "index.html";
 }
 

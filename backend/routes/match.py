@@ -1,14 +1,14 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from backend.auth import verify_token
-from database.needs_db import get_open_needs
+from database.needs_db import get_open_needs, get_need_by_id
 from database.volunteers_db import get_available_volunteers
 from database.assignments_db import save_assignment
 import math
 
-router = APIRouter(prefix="/match")  # ✅ IMPORTANT
+router = APIRouter(prefix="/match")
 
 # ---------------------------------------------------------------------------
-# Severity weights for composite scoring
+# Constants
 # ---------------------------------------------------------------------------
 SEVERITY_WEIGHT = {
     "critical": 1000,
@@ -17,12 +17,12 @@ SEVERITY_WEIGHT = {
     "medium": 80,
     "low": 20,
 }
+SEVERITY_ORDER = {"critical": 0, "very high": 1, "high": 2, "medium": 3, "low": 4}
 
-# Skill sensitivity: these categories require NGO-verified (Tier 1) volunteers.
 _SENSITIVE_CATEGORIES = {"medical", "rescue"}
 
-# Maximum dispatch radius (km).
 MAX_DISPATCH_KM = 50.0
+AVAILABILITY_PENALTY = 30  # deducted for recently assigned / unavailable volunteer
 
 
 # ---------------------------------------------------------------------------
@@ -41,140 +41,222 @@ def _haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
 # ---------------------------------------------------------------------------
 # Composite-score volunteer selection
 # ---------------------------------------------------------------------------
+def _compute_score(need: dict, volunteer: dict) -> tuple[float, float]:
+    """
+    Returns (score, distance_km).
+
+    score = (severity_weight / (distance_km + 1)) + tier_bonus - availability_penalty
+
+    • tier_bonus        = +50  if NGO-verified (Tier 1)
+    • availability_penalty = +30 deducted if volunteer.available is False
+    """
+    severity = need.get("severity", "medium").lower()
+    weight   = SEVERITY_WEIGHT.get(severity, 80)
+
+    n_lat = need.get("lat") or 0.0
+    n_lng = need.get("lng") or 0.0
+    v_lat = volunteer.get("lat") or 0.0
+    v_lng = volunteer.get("lng") or 0.0
+
+    dist_km     = _haversine_km(n_lat, n_lng, v_lat, v_lng)
+    tier_bonus  = 50 if volunteer.get("ngo_verified") else 0
+    penalty     = AVAILABILITY_PENALTY if not volunteer.get("available", True) else 0
+
+    score = (weight / (dist_km + 1)) + tier_bonus - penalty
+    return score, dist_km
+
+
 def find_best_volunteer(need: dict, all_volunteers: list) -> dict | None:
     """
-    Composite-score dispatch:
-
-    score = (severity_weight / (distance_km + 1)) + tier_bonus
-
-    • Sensitive needs (medical/rescue) → NGO-verified (Tier 1) pool only;
-      returns None (hard block) if no Tier 1 volunteer is available.
-    • All other needs → Tier 1 + Tier 2 pool with a +50 bonus for Tier 1.
-    • Highest score wins.
+    Returns the highest-scoring volunteer, or None if no suitable candidate.
+    Attaches _score and _distance_km to the returned dict for transparency.
     """
-    need_lat      = need.get("lat", 0.0)
-    need_lng      = need.get("lng", 0.0)
     need_category = need.get("category", "").lower()
-    severity      = need.get("severity", "medium").lower()
-    weight        = SEVERITY_WEIGHT.get(severity, 80)
 
-    # ── Step 1: skill filter (case-insensitive) ──────────────────────────
+    # Step 1: skill filter (case-insensitive), fallback to full pool
     skilled = [
         v for v in all_volunteers
         if need_category in [s.lower() for s in v.get("skills", [])]
     ]
     if not skilled:
-        skilled = all_volunteers  # fallback: no skill filter
+        skilled = all_volunteers
 
-    # ── Step 2: tier split ───────────────────────────────────────────────
+    # Step 2: tier enforcement for sensitive categories
     is_sensitive = need_category in _SENSITIVE_CATEGORIES
     tier1 = [v for v in skilled if v.get("ngo_verified") is True]
     tier2 = [v for v in skilled if not v.get("ngo_verified")]
 
     if is_sensitive and not tier1:
-        return None  # hard block: no NGO-verified volunteer for sensitive need
+        return None  # hard block
 
     pool = tier1 if is_sensitive else (tier1 + tier2)
     if not pool:
         return None
 
-    # ── Step 3: score and select ─────────────────────────────────────────
-    def composite_score(v):
-        v_lat = v.get("lat") or 0.0
-        v_lng = v.get("lng") or 0.0
-        n_lat = need_lat or 0.0
-        n_lng = need_lng or 0.0
-        dist = _haversine_km(n_lat, n_lng, v_lat, v_lng)
-        tier_bonus = 50 if v.get("ngo_verified") else 0
-        return (weight / (dist + 1)) + tier_bonus
+    # Step 3: rank by composite score
+    scored = []
+    for v in pool:
+        score, dist_km = _compute_score(need, v)
+        scored.append((score, dist_km, v))
 
-    return max(pool, key=composite_score)
+    scored.sort(key=lambda x: x[0], reverse=True)
+    best_score, best_dist, best_vol = scored[0]
+
+    # Attach computed values so callers can include them in responses
+    result = dict(best_vol)
+    result["_score"]       = best_score
+    result["_distance_km"] = best_dist
+    return result
 
 
 # ---------------------------------------------------------------------------
-# Route handler
+# Main match route — global priority ordering
 # ---------------------------------------------------------------------------
 @router.get("")
 def match_needs(token: str = Depends(verify_token)):
-    matches = []
+    """
+    Runs the global priority matching pass:
+    1. Sort all open needs by severity (critical first).
+    2. Assign the best available volunteer to each need in order.
+    3. Track used volunteers so no volunteer is double-dispatched.
+    """
     open_needs = get_open_needs()
 
-    # 🚨 TRIAGE: Higher severity gets first pick of available volunteers
-    severity_order = {"critical": 0, "very high": 1, "high": 2, "medium": 3, "low": 4}
-    open_needs.sort(key=lambda n: severity_order.get(str(n.get("severity", "low")).lower(), 4))
+    # Sort needs by severity weight (descending) for global priority dispatch
+    open_needs.sort(
+        key=lambda n: SEVERITY_ORDER.get(str(n.get("severity", "low")).lower(), 4)
+    )
 
-    # Pre-fetch volunteers once; pool is updated in-memory as assignments are made
     all_volunteers = get_available_volunteers()
-    assigned_ids: set[str] = set()
+    assigned_volunteer_ids: set[str] = set()
+    matches = []
 
     for need in open_needs:
 
-        # 🔴 Skip low-trust reports
+        # Skip low-trust reports
         if need.get("trust_score", 100) < 50:
             continue
 
-        need_lat = need.get("lat", 0.0)
-        need_lng = need.get("lng", 0.0)
         need_id  = need.get("id")
+        need_category = (need.get("category") or "").lower()
+        is_sensitive  = need_category in _SENSITIVE_CATEGORIES
+        severity      = (need.get("severity") or "low").lower()
 
-        # Available pool = not yet assigned in this run
-        available_pool = [v for v in all_volunteers if v.get("id") not in assigned_ids]
+        # Available pool = not used in this run
+        available_pool = [
+            v for v in all_volunteers
+            if v.get("id") not in assigned_volunteer_ids
+        ]
 
         best_vol = find_best_volunteer(need, available_pool)
 
-        # ── Sensitive need with no Tier 1 volunteer found ─────────────────
-        need_category = need.get("category", "").lower()
-        is_sensitive  = need_category in _SENSITIVE_CATEGORIES
-
+        # ── Sensitive need, no Tier 1 found ──────────────────────────────
         if best_vol is None and is_sensitive:
             matches.append({
-                "need_id":            need_id,
-                "category":           need_category,
-                "assigned_volunteer": None,
-                "status":             "Manual Escalation Required",
-                "reason":             "No NGO-verified (Tier 1) responder available for a sensitive need.",
+                "need_id":  need_id,
+                "severity": severity,
+                "category": need_category,
+                "status":   "Manual Escalation Required",
+                "reason":   "No NGO-verified (Tier 1) responder available for this sensitive need.",
             })
             continue
 
+        # ── No volunteer at all ───────────────────────────────────────────
         if best_vol is None:
-            # General need, no volunteer at all
             matches.append({
-                "need_id":            need_id,
-                "assigned_volunteer": "No suitable volunteer found",
-                "status":             "pending",
+                "need_id":  need_id,
+                "severity": severity,
+                "status":   "pending",
+                "reason":   "No suitable volunteer found in the system.",
             })
             continue
 
-        n_lat = need_lat or 0.0
-        n_lng = need_lng or 0.0
-        v_lat = best_vol.get("lat") or 0.0
-        v_lng = best_vol.get("lng") or 0.0
-
-        dist_km = _haversine_km(n_lat, n_lng, v_lat, v_lng)
+        dist_km = best_vol["_distance_km"]
+        score   = best_vol["_score"]
+        tier_label = "Tier 1 (NGO-Verified)" if best_vol.get("ngo_verified") else "Tier 2 (Community)"
 
         if dist_km <= MAX_DISPATCH_KM:
             save_assignment(need_id, best_vol.get("id"))
-            assigned_ids.add(best_vol.get("id"))
+            assigned_volunteer_ids.add(best_vol.get("id"))
 
-            tier_label = "Tier 1 (NGO-Verified)" if best_vol.get("ngo_verified") else "Tier 2 (Community)"
+            print(f"[MATCH] Need {need_id} → Volunteer {best_vol.get('id')} | Score: {score:.2f} | Dist: {dist_km:.1f}km")
+
             matches.append({
                 "need_id":            need_id,
-                "assigned_volunteer": best_vol.get("name"),
-                "volunteer_tier":     tier_label,
+                "severity":           severity,
+                "category":           need_category,
                 "volunteer_id":       best_vol.get("id"),
+                "volunteer_name":     best_vol.get("name"),
+                "volunteer_tier":     tier_label,
                 "distance_km":        round(dist_km, 2),
+                "score":              round(score, 2),
                 "status":             "assigned",
+                "reason":             (
+                    f"Selected based on highest composite score "
+                    f"({tier_label}, {round(dist_km, 2)}km away, severity={severity})"
+                ),
             })
         else:
             matches.append({
-                "need_id":            need_id,
-                "assigned_volunteer": "No nearby volunteer",
-                "status":             "pending",
-                "reason":             f"Nearest match is {round(dist_km, 2)} km away (limit: {MAX_DISPATCH_KM} km).",
+                "need_id":  need_id,
+                "severity": severity,
+                "status":   "pending",
+                "reason":   f"Nearest volunteer ({best_vol.get('name')}) is {round(dist_km, 2)}km away — exceeds {MAX_DISPATCH_KM}km limit.",
             })
 
     return {
-        "total_matches_made": sum(1 for m in matches if m["status"] == "assigned"),
+        "total_matches_made":    sum(1 for m in matches if m["status"] == "assigned"),
         "total_needs_processed": len(matches),
-        "matches": matches,
+        "matches":               matches,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Debug endpoint — for demo transparency
+# ---------------------------------------------------------------------------
+@router.get("/debug/{need_id}")
+def debug_match(need_id: str, token: str = Depends(verify_token)):
+    """
+    Returns a full score breakdown for every available volunteer against a
+    specific need. Use this to explain matching decisions during the demo.
+    """
+    need = get_need_by_id(need_id)
+    if not need:
+        raise HTTPException(status_code=404, detail=f"Need '{need_id}' not found.")
+
+    all_volunteers = get_available_volunteers()
+    breakdown = []
+
+    for v in all_volunteers:
+        score, dist_km = _compute_score(need, v)
+        tier_bonus = 50 if v.get("ngo_verified") else 0
+        penalty    = AVAILABILITY_PENALTY if not v.get("available", True) else 0
+        severity   = (need.get("severity") or "medium").lower()
+        weight     = SEVERITY_WEIGHT.get(severity, 80)
+        skilled    = (need.get("category", "").lower() in
+                      [s.lower() for s in v.get("skills", [])])
+
+        breakdown.append({
+            "volunteer_id":         v.get("id"),
+            "volunteer_name":       v.get("name"),
+            "ngo_verified":         v.get("ngo_verified", False),
+            "skills":               v.get("skills", []),
+            "skill_match":          skilled,
+            "distance_km":          round(dist_km, 2),
+            "severity_weight":      weight,
+            "tier_bonus":           tier_bonus,
+            "availability_penalty": penalty,
+            "score":                round(score, 2),
+        })
+
+    breakdown.sort(key=lambda x: x["score"], reverse=True)
+
+    return {
+        "need_id":       need_id,
+        "need_category": need.get("category"),
+        "need_severity": need.get("severity"),
+        "need_location": need.get("location_text"),
+        "volunteers_evaluated": len(breakdown),
+        "best_volunteer": breakdown[0] if breakdown else None,
+        "all_scores":    breakdown,
     }

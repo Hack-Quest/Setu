@@ -92,12 +92,16 @@ def save_volunteer(data: dict) -> str:
     Registers a new volunteer in Firestore.
     Automatically marks them as available for deployment.
     """
+    # Normalize skills to lowercase for reliable category matching
+    if "skills" in data and isinstance(data["skills"], list):
+        data["skills"] = [s.lower().strip() for s in data["skills"]]
+
     data["available"] = True
     data["registered_at"] = datetime.now(timezone.utc).isoformat()
 
     update_time, doc_ref = db.collection("volunteers").add(data)
 
-    print(f"🦸 Successfully registered volunteer with ID: {doc_ref.id}")
+    print(f"Volunteer registered: {doc_ref.id}")
     return doc_ref.id
 
 
