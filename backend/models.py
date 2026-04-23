@@ -50,3 +50,5 @@ class NGOInput(BaseModel):
     radius: float = 50.0   # operational radius in kilometres
     verified: bool = False
     coverage_area: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
