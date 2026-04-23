@@ -52,3 +52,12 @@ class NGOInput(BaseModel):
     coverage_area: Optional[str] = None
     email: Optional[str] = None
     password: Optional[str] = None
+
+
+class SendOTPInput(BaseModel):
+    email: str
+
+
+class VerifyOTPInput(BaseModel):
+    email: str
+    otp: str

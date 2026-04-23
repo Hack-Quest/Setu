@@ -1,7 +1,13 @@
 from fastapi import APIRouter, HTTPException
-from backend.models import VolunteerRegisterInput, VolunteerLoginInput
+from backend.models import VolunteerRegisterInput, VolunteerLoginInput, SendOTPInput, VerifyOTPInput
 from database.volunteers_db import register_volunteer_auth, login_volunteer
 from backend.auth import SECRET_TOKEN
+import random
+from backend.email_utils import send_otp_email
+from database.otp_db import save_otp, verify_otp_in_db
+from database.ngos_db import get_ngo_by_email
+from database.firestore_client import db
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 router = APIRouter()
 
@@ -51,3 +57,57 @@ def login_volunteer_endpoint(data: VolunteerLoginInput):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/send-otp")
+def send_otp_endpoint(data: SendOTPInput):
+    """Generate and send an OTP to the user's email."""
+    # Generate 6-digit OTP
+    otp = str(random.randint(100000, 999999))
+    
+    # Save OTP to database
+    save_otp(data.email, otp)
+    
+    # Send email
+    success = send_otp_email(data.email, otp)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to send OTP email")
+        
+    return {"message": "OTP sent successfully"}
+
+@router.post("/verify-otp")
+def verify_otp_endpoint(data: VerifyOTPInput):
+    """Verify OTP and determine user role for login."""
+    is_valid = verify_otp_in_db(data.email, data.otp)
+    if not is_valid:
+        raise HTTPException(status_code=401, detail="Invalid or expired OTP")
+        
+    # Check if NGO
+    ngo = get_ngo_by_email(data.email)
+    if ngo:
+        return {
+            "token": SECRET_TOKEN,
+            "role": "ngo",
+            "id": ngo["id"]
+        }
+        
+    # Check if Volunteer
+    docs = (
+        db.collection("volunteers_auth")
+        .where(filter=FieldFilter("email", "==", data.email))
+        .stream()
+    )
+    volunteer_list = list(docs)
+    if volunteer_list:
+        volunteer_doc = volunteer_list[0]
+        return {
+            "token": SECRET_TOKEN,
+            "role": "volunteer",
+            "id": volunteer_doc.id
+        }
+        
+    # User does not exist, redirect to registration
+    return {
+        "token": SECRET_TOKEN,
+        "role": "new_user",
+        "id": None
+    }

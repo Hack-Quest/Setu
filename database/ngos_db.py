@@ -1,5 +1,6 @@
 from database.firestore_client import db
 from datetime import datetime, timezone
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 
 def save_ngo(data: dict) -> str:
@@ -45,3 +46,22 @@ def verify_ngo(ngo_id: str, verified: bool = True) -> bool:
     status = "✅ Verified" if verified else "❌ Unverified"
     print(f"{status} NGO: {ngo_id}")
     return True
+
+
+def get_ngo_by_email(email: str) -> dict | None:
+    """
+    Retrieves a single NGO document by its email address.
+    Returns None if no such NGO exists.
+    """
+    docs = (
+        db.collection("ngos")
+        .where(filter=FieldFilter("email", "==", email))
+        .stream()
+    )
+    ngo_list = list(docs)
+    
+    if not ngo_list:
+        return None
+        
+    doc = ngo_list[0]
+    return {"id": doc.id, **doc.to_dict()}
