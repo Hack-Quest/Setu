@@ -66,28 +66,11 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-DEFAULT_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "http://127.0.0.1:3000",
-    "http://localhost:3000",
-]
-
-raw_allowed_origins = os.getenv("CORS_ALLOW_ORIGINS", "")
-if raw_allowed_origins.strip():
-    allowed_origins = [
-        origin.strip()
-        for origin in raw_allowed_origins.split(",")
-        if origin.strip()
-    ]
-else:
-    allowed_origins = DEFAULT_ALLOWED_ORIGINS
-
-# 🔥 CORS
+# 🔥 CORS — allow all origins (frontend served from static host / file://)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -152,6 +135,35 @@ async def webhook(request: Request, payload: Dict, background_tasks: BackgroundT
 
     except Exception as e:
         print("❌ Webhook Error:", e, flush=True)
+        return {"error": str(e)}
+
+
+# 🔗 ALIAS: /webhook/ngo-register → same SOS pipeline
+# Google Forms Apps Script hits this URL — keeping it here avoids touching the script.
+@app.post("/webhook/ngo-register")
+@limiter.limit("5/minute")
+async def webhook_ngo_register_alias(request: Request, payload: Dict, background_tasks: BackgroundTasks):
+    """Alias route for Google Forms SOS submissions that point to /webhook/ngo-register."""
+    try:
+        mapped_data = {
+            "reporter_name": payload.get("name", payload.get("reporter_name", "Unknown")),
+            "reporter_phone": payload.get("phone", payload.get("reporter_phone", "0000000000")),
+            "description": payload.get("description", ""),
+            "location": payload.get("address", payload.get("location", "Unknown Location")),
+            "disaster_type": payload.get("disaster_type", "Not Specified"),
+            "help_needed": payload.get("help_needed", "Not Specified"),
+        }
+
+        need_input = NeedInput(**mapped_data)
+
+        print("🚀 [/webhook/ngo-register alias] Routing to AI Engine...", flush=True)
+
+        result = process_and_save_need(need_input, background_tasks)
+
+        return {"message": "Webhook processed", "data": result}
+
+    except Exception as e:
+        print("❌ Webhook Alias Error:", e, flush=True)
         return {"error": str(e)}
 
 # 🔗 VOLUNTEER WEBHOOK

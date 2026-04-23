@@ -68,29 +68,35 @@
     <!-- ✅ COMMON JS -->
     <script src="js/common.js"></script>
 
-    <!-- 📊 STATS SCRIPT (FIXED) -->
+    <!-- 📊 STATS SCRIPT -->
     <script>
         const API_BASE = window.SETU_API_BASE_URL || "";
 
         async function loadStats() {
+            ["count", "volunteer-count", "ngo-count"].forEach(id => {
+                document.getElementById(id).innerText = "…";
+            });
+
             try {
                 const res = await fetch(`${API_BASE}/stats`);
 
-                const data = await res.json();
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
+                const data = await res.json();
                 console.log("STATS:", data);
 
                 document.getElementById("count").innerText =
-                    data.total_reports ?? 0;
-
+                    data.total_reports ?? "--";
                 document.getElementById("volunteer-count").innerText =
-                    data.total_volunteers ?? 0;
-
+                    data.total_volunteers ?? "--";
                 document.getElementById("ngo-count").innerText =
-                    data.total_ngos ?? 0;
+                    data.total_ngos ?? "--";
 
             } catch (err) {
                 console.error("Error loading stats:", err);
+                ["count", "volunteer-count", "ngo-count"].forEach(id => {
+                    document.getElementById(id).innerText = "--";
+                });
             }
         }
 
