@@ -6,7 +6,9 @@ from dotenv import load_dotenv
 # Load from shared config folder
 load_dotenv(dotenv_path="config/.env")
 
-SECRET_TOKEN = os.getenv("SECRET_TOKEN", "hackathon-secret")
+SECRET_TOKEN = os.getenv("SECRET_TOKEN")
+if not SECRET_TOKEN:
+    raise RuntimeError("SECRET_TOKEN is not set. Add it to config/.env.")
 
 # Single shared security scheme for all routers
 security = HTTPBearer(auto_error=False)

@@ -106,7 +106,7 @@
                     </div>
                     <div class="rounded-[1.5rem] border border-muted bg-surface p-5 shadow-soft">
                         <p class="text-xs uppercase tracking-[0.18em] text-ink-500 font-semibold">Output</p>
-                        <p class="mt-2 text-lg font-semibold">Mock dashboard seeded instantly</p>
+                        <p class="mt-2 text-lg font-semibold">Live dashboard activates after registration</p>
                     </div>
                 </div>
             </div>
@@ -120,7 +120,7 @@
                     </div>
                     <div
                         class="rounded-full bg-signal-light px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-signal">
-                        Mocked API
+                        Live API
                     </div>
                 </div>
 
@@ -221,7 +221,7 @@
                     throw new Error(response.error || 'Unable to create NGO profile.');
                 }
 
-                localStorage.setItem('setu_active_ngo_id', response.data.id);
+                localStorage.setItem('active_ngo_id', response.data.id);
                 localStorage.setItem('active_ngo_name', payload.name);
                 showMessage(`NGO profile created for ${payload.name}. Opening dashboard...`, 'success');
 

@@ -2,8 +2,18 @@ import unittest
 import requests
 import time
 import uuid
+import os
+from dotenv import load_dotenv
 
-BASE_URL = "http://127.0.0.1:8000"
+load_dotenv(dotenv_path="config/.env")
+
+BASE_URL = os.getenv("SETU_BASE_URL")
+SECRET_TOKEN = os.getenv("SECRET_TOKEN")
+
+if not BASE_URL:
+    raise RuntimeError("SETU_BASE_URL is not set. Add it to config/.env.")
+if not SECRET_TOKEN:
+    raise RuntimeError("SECRET_TOKEN is not set. Add it to config/.env.")
 
 # Global state to pass data between sequential tests
 class GlobalState:
@@ -43,7 +53,7 @@ class TestSetuIntegration(unittest.TestCase):
             "lng": 77.2090,
             "radius": 50.0
         }
-        headers = {"Authorization": "Bearer hackathon-secret"}
+        headers = {"Authorization": f"Bearer {SECRET_TOKEN}"}
         resp = requests.post(f"{BASE_URL}/ngo/register", json=payload, headers=headers)
         self.assertEqual(resp.status_code, 200, f"Failed NGO registration: {resp.text}")
         
@@ -199,7 +209,7 @@ class TestSetuIntegration(unittest.TestCase):
     def test_12_match_engine(self):
         """[NORMAL/SPECIAL] Execute Match Engine and verify logic"""
         # Provide hardcoded fallback secret to bypass Depend(verify_token) for the /match cron-like endpoint
-        headers = {"Authorization": "Bearer hackathon-secret"}
+        headers = {"Authorization": f"Bearer {SECRET_TOKEN}"}
         resp = requests.get(f"{BASE_URL}/match", headers=headers)
         self.assertEqual(resp.status_code, 200)
         

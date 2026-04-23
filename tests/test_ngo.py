@@ -3,12 +3,21 @@ import os
 import requests
 import time
 from google.cloud.firestore_v1.base_query import FieldFilter
+from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database.ngos_db import verify_ngo
 from database.firestore_client import db
 
-BASE_URL = "http://127.0.0.1:8000"
+load_dotenv(dotenv_path="config/.env")
+
+BASE_URL = os.getenv("SETU_BASE_URL")
+SECRET_TOKEN = os.getenv("SECRET_TOKEN")
+
+if not BASE_URL:
+    raise RuntimeError("SETU_BASE_URL is not set. Add it to config/.env.")
+if not SECRET_TOKEN:
+    raise RuntimeError("SECRET_TOKEN is not set. Add it to config/.env.")
 
 
 def run_test():
@@ -92,7 +101,7 @@ def run_test():
     db.collection("needs_reports").document(need_id).update({"lat": 28.6130, "lng": 77.2090})
 
     print("\n--- 6. Running Match Engine manually to ensure assignment ---")
-    headers = {"Authorization": "Bearer hackathon-secret"}
+    headers = {"Authorization": f"Bearer {SECRET_TOKEN}"}
     resp = requests.get(f"{BASE_URL}/match", headers=headers)
     resp.raise_for_status()
 

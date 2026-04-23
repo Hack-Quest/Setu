@@ -1,10 +1,21 @@
 import requests
 import time
 import json
+import os
+from dotenv import load_dotenv
 from database.ngos_db import verify_ngo
 
-BASE_URL = "http://127.0.0.1:8000"
-HEADERS = {"Authorization": "Bearer hackathon-secret"}
+load_dotenv(dotenv_path="config/.env")
+
+BASE_URL = os.getenv("SETU_BASE_URL")
+SECRET_TOKEN = os.getenv("SECRET_TOKEN")
+
+if not BASE_URL:
+    raise RuntimeError("SETU_BASE_URL is not set. Add it to config/.env.")
+if not SECRET_TOKEN:
+    raise RuntimeError("SECRET_TOKEN is not set. Add it to config/.env.")
+
+HEADERS = {"Authorization": f"Bearer {SECRET_TOKEN}"}
 
 def print_step(text):
     print(f"\n--- {text} ---")

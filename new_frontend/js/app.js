@@ -286,7 +286,9 @@ function renderMatches(matches) {
 }
 
 // 🌐 Real-Time WebSocket Updates & Multilingual Push
-const ws = new WebSocket("ws://127.0.0.1:8000/ws");
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const wsHost = window.SETU_WS_HOST || window.location.host;
+const ws = wsHost ? new WebSocket(`${wsProtocol}//${wsHost}/ws`) : null;
 let currentLang = 'en';
 
 const uiLang = document.getElementById('uiLang');
@@ -296,6 +298,7 @@ if (uiLang) {
     });
 }
 
+if (ws) {
 ws.onmessage = function (event) {
     let data;
     try {
@@ -319,6 +322,7 @@ ws.onmessage = function (event) {
         loadDashboard(); // Refresh stats
     }
 };
+}
 
 function showGlobalToast(message, type) {
     let toastContainer = document.getElementById('global-toast-container');

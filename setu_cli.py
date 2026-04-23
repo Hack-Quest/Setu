@@ -4,13 +4,19 @@ import os
 import json
 from getpass import getpass
 import csv
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path="config/.env")
 
 # ================= CONFIG =================
-BASE_URL = os.getenv("SETU_BASE_URL", "http://127.0.0.1:8000")
+BASE_URL = os.getenv("SETU_BASE_URL")
 SECRET_TOKEN = os.getenv("SECRET_TOKEN")
 
+if not BASE_URL:
+    print("❌ ERROR: SETU_BASE_URL not set in config/.env")
+    sys.exit(1)
 if not SECRET_TOKEN:
-    print("❌ ERROR: SETU_SECRET_TOKEN not set in environment")
+    print("❌ ERROR: SECRET_TOKEN not set in config/.env")
     sys.exit(1)
 
 HEADERS = {

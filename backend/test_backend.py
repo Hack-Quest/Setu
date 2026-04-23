@@ -24,6 +24,7 @@ import json
 import sys
 import os
 from unittest.mock import MagicMock, patch, AsyncMock
+from dotenv import load_dotenv
 
 import pytest
 
@@ -31,7 +32,11 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-VALID_TOKEN = "hackathon-secret"
+load_dotenv(dotenv_path="config/.env")
+
+VALID_TOKEN = os.getenv("SECRET_TOKEN")
+if not VALID_TOKEN:
+    raise RuntimeError("SECRET_TOKEN is not set. Add it to config/.env.")
 AUTH_HEADERS = {"Authorization": f"Bearer {VALID_TOKEN}"}
 
 

@@ -1,9 +1,17 @@
-const API_BASE = "http://127.0.0.1:8000";
-const token = localStorage.getItem("token") || "hackathon-secret";
+const API_BASE = window.SETU_API_BASE_URL || "";
+
+function getToken() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        window.location.href = "login.html";
+        throw new Error("Not authenticated");
+    }
+    return token;
+}
 
 async function api(endpoint, options = {}) {
     const res = await fetch(`${API_BASE}${endpoint}`, {
-        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Authorization": `Bearer ${getToken()}`, "Content-Type": "application/json" },
         ...options
     });
     if (!res.ok) {

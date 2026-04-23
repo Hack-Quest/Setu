@@ -57,7 +57,7 @@
     <script>
 
         // 🔥 CONFIG
-        const API_BASE = "http://127.0.0.1:8000";
+        const API_BASE = window.SETU_API_BASE_URL || "";
         const API = `${API_BASE}/dashboard/reports`;
 
         // 🔗 Google Form
@@ -103,11 +103,7 @@
         // 🔄 LOAD DATA
         async function loadNeeds() {
             try {
-                const res = await fetch(API, {
-                    headers: {
-                        Authorization: "Bearer hackathon-secret"
-                    }
-                });
+                const res = await fetch(API);
 
                 const raw = await res.json();
                 const reports = raw.reports || raw;

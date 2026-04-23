@@ -36,26 +36,26 @@ Then open: **http://127.0.0.1:5500/index.html**
 - AI processes reports for category, severity, and trust score
 - Displays dispatch action recommendation (auto_dispatch, human_review, flagged)
 - Shows detailed trust scoring reasons
-- **Auth**: Bearer token: `hackathon-secret`
+- **Auth**: Bearer token from `SECRET_TOKEN` (configured in `config/.env`)
 
 ### 3. **Volunteer Registration**
 - Register available responders with skills
 - Auto-geocodes location
 - Tracks total active volunteers
-- **Auth**: Bearer token: `hackathon-secret`
+- **Auth**: Bearer token from `SECRET_TOKEN` (configured in `config/.env`)
 
 ### 4. **Match Engine**
 - Runs intelligent volunteer-to-need matching
 - Uses Haversine distance for proximity matching
 - Filters by skills and trust score
 - Displays assignments with distance and status
-- **Auth**: Bearer token: `hackathon-secret`
+- **Auth**: Bearer token from `SECRET_TOKEN` (configured in `config/.env`)
 
 ## 🔐 Authentication
 
 All API endpoints that require auth use:
 ```
-Authorization: Bearer hackathon-secret
+Authorization: Bearer <SECRET_TOKEN from config/.env>
 ```
 
 This is configured globally in `api.js` and automatically included in all POST/GET requests.
