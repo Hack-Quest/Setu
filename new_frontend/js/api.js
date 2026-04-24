@@ -39,6 +39,10 @@ class ApiService {
     static async getDashboard() { return this.request('/dashboard'); }
     static async getReports() { return this.request('/dashboard/reports'); }
     static async registerNGO(data) { return this.request('/ngo/register', { method: 'POST', body: JSON.stringify(data) }); }
+    static async sendOTP(phone) { return this.request('/auth/send-otp', { method: 'POST', body: JSON.stringify({ phone }) }); }
+    static async verifyOTP(phone, otp) { return this.request('/auth/verify-otp', { method: 'POST', body: JSON.stringify({ phone, otp }) }); }
+    static async getStats() { return this.request('/stats'); }
+    static async resolveAssignment(id) { return this.request(`/assignment/${id}/resolve`, { method: 'PATCH' }); }
 
     /**
      * Parallel fetch for NGO profile + global stats.

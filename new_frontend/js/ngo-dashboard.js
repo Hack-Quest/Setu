@@ -177,19 +177,34 @@ async function handleExcelUpload(event) {
 
         let success = 0, failed = 0;
 
+        const token = getToken();
+
         for (const row of rows) {
+            // Skills may be a comma-separated string in Excel — normalise to array
+            const rawSkills = row["skills"] || row["Skills"] || "";
+            const skillsArray = Array.isArray(rawSkills)
+                ? rawSkills
+                : String(rawSkills).split(",").map(s => s.trim()).filter(Boolean);
+
             const payload = {
-                volunteer_name: row["name"] || row["Name"] || row["volunteer_name"] || "Unknown",
+                name: row["name"] || row["Name"] || row["volunteer_name"] || "Unknown",
                 phone: String(row["phone"] || row["Phone"] || "0000000000"),
                 location: row["location"] || row["Location"] || "",
-                skills: row["skills"] || row["Skills"] || "",
+                skills: skillsArray,
+                // NGO bulk-add doesn't require volunteer email/password — use placeholder;
+                // the backend /volunteer route strips privileged fields anyway.
+                email: row["email"] || row["Email"] || `${Date.now()}@ngo-upload.internal`,
+                password: "BulkUpload!1",
                 ngo_id: row["ngo_id"] || row["NGO ID"] || null
             };
 
             try {
-                const res = await fetch(`${API_BASE}/volunteer_webhook`, {
+                const res = await fetch(`${API_BASE}/volunteer`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
                     body: JSON.stringify(payload)
                 });
                 res.ok ? success++ : failed++;

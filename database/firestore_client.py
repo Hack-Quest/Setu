@@ -5,17 +5,19 @@ from dotenv import load_dotenv
 
 load_dotenv("config/.env")
 
-cert_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-if not cert_path:
-    cert_path = os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__), "..", "config", "serviceAccountKey.json"
-        )
-    )
+PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "project-ecb78041-2b9f-43b6-a06")
 
+# ✅ Cloud-native init: uses Application Default Credentials (ADC).
+# On Cloud Run this is the attached service account; locally it uses
+# `gcloud auth application-default login`.  No serviceAccountKey.json needed.
 if not firebase_admin._apps:
-    cred = credentials.Certificate(cert_path)
-    firebase_admin.initialize_app(cred)
+    try:
+        cred = credentials.ApplicationDefault()
+        firebase_admin.initialize_app(cred, {"projectId": PROJECT_ID})
+        print("✅ Firestore Client: initialized via ADC", flush=True)
+    except Exception as e:
+        print(f"⚠️ ADC failed ({e}). Falling back to project-only init.", flush=True)
+        firebase_admin.initialize_app(options={"projectId": PROJECT_ID})
 
 db = firestore.client()
 

@@ -1,5 +1,7 @@
 from typing import List, Dict
 import os
+import firebase_admin
+from firebase_admin import credentials
 from fastapi import (
     FastAPI, Request, BackgroundTasks, WebSocket, WebSocketDisconnect
 )
@@ -19,8 +21,6 @@ from backend.routes.match import router as match_router
 from backend.routes.dashboard import router as dashboard_router
 from backend.routes.assignment import router as assignment_router
 from backend.routes.ngo import router as ngo_router
-
-# ✅ NEW IMPORT (ADDED)
 from backend.routes.stats import router as stats_router
 
 # Helpers
@@ -29,7 +29,6 @@ from database.geocoding import get_coordinates
 from database.ngos_db import get_ngo
 
 load_dotenv(dotenv_path="config/.env")
-
 
 # 🔌 WebSocket Manager
 class WebSocketManager:
@@ -50,15 +49,11 @@ class WebSocketManager:
             try:
                 await connection.send_json(data)
             except Exception as e:
-                print(f"WebSocket Error: {e}", flush=True)
                 stale_connections.append(connection)
-        
         for stale in stale_connections:
             self.disconnect(stale)
 
-
 manager = WebSocketManager()
-
 app = FastAPI()
 
 # 🔒 Rate limiter
@@ -66,11 +61,11 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# 🔥 CORS — allow all origins (frontend served from static host / file://)
+# 🔥 CORS - Allows your local frontend to talk to this live backend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -85,33 +80,16 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
-# 🏠 Home
+# 🏠 Health Checks
 @app.get("/")
 def home():
-    return {"message": "Backend is running"}
+    return {"message": "Setu Backend Active", "env": "Cloud Run"}
 
-# 💚 Health
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "database": "connected"}
 
-
-@app.get("/config/public")
-def public_config():
-    google_maps_api_key = (
-        os.getenv("GOOGLE_MAPS_KEY", "").strip()
-        or os.getenv("GOOGLE_MAPS_API_KEY", "").strip()
-    )
-
-    if not google_maps_api_key:
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Google Maps API key is not configured"}
-        )
-
-    return {"google_maps_api_key": google_maps_api_key}
-
-# 🔗 NEED WEBHOOK
+# 🔗 DISASTER WEBHOOK (Primary SOS entry point)
 @app.post("/webhook")
 @limiter.limit("5/minute")
 async def webhook(request: Request, payload: Dict, background_tasks: BackgroundTasks):
@@ -124,26 +102,17 @@ async def webhook(request: Request, payload: Dict, background_tasks: BackgroundT
             "disaster_type": payload.get("disaster_type", "Not Specified"),
             "help_needed": payload.get("help_needed", "Not Specified"),
         }
-
         need_input = NeedInput(**mapped_data)
-
-        print("🚀 Routing to AI Engine...", flush=True)
-
         result = process_and_save_need(need_input, background_tasks)
-
-        return {"message": "Webhook processed", "data": result}
-
+        return {"message": "SOS Report Saved", "data": result}
     except Exception as e:
-        print("❌ Webhook Error:", e, flush=True)
         return {"error": str(e)}
 
-
-# 🔗 ALIAS: /webhook/ngo-register → same SOS pipeline
-# Google Forms Apps Script hits this URL — keeping it here avoids touching the script.
+# 🔗 ALIAS (Matches your 200 OK log path)
 @app.post("/webhook/ngo-register")
 @limiter.limit("5/minute")
 async def webhook_ngo_register_alias(request: Request, payload: Dict, background_tasks: BackgroundTasks):
-    """Alias route for Google Forms SOS submissions that point to /webhook/ngo-register."""
+    # If a form hits this accidentally, we still process it as an SOS/Need
     try:
         mapped_data = {
             "reporter_name": payload.get("name", payload.get("reporter_name", "Unknown")),
@@ -153,60 +122,13 @@ async def webhook_ngo_register_alias(request: Request, payload: Dict, background
             "disaster_type": payload.get("disaster_type", "Not Specified"),
             "help_needed": payload.get("help_needed", "Not Specified"),
         }
-
         need_input = NeedInput(**mapped_data)
-
-        print("🚀 [/webhook/ngo-register alias] Routing to AI Engine...", flush=True)
-
         result = process_and_save_need(need_input, background_tasks)
-
-        return {"message": "Webhook processed", "data": result}
-
+        return {"message": "Legacy Alias processed", "data": result}
     except Exception as e:
-        print("❌ Webhook Alias Error:", e, flush=True)
         return {"error": str(e)}
 
-# 🔗 VOLUNTEER WEBHOOK
-@app.post("/volunteer_webhook")
-@limiter.limit("5/minute")
-async def volunteer_webhook(request: Request, payload: Dict):
-    try:
-        coords = get_coordinates(payload.get("location", "")) or {"lat": 0, "lng": 0}
-
-        mapped_volunteer = {
-            "name": payload.get("volunteer_name", "Unknown"),
-            "phone": payload.get("phone", "0000000000"),
-            "skills": (
-                [skill.strip().lower() for skill in payload.get("skills", "").split(",")]
-                if payload.get("skills")
-                else []
-            ),
-            "lat": coords["lat"],
-            "lng": coords["lng"],
-            "ngo_id": payload.get("ngo_id", None)
-        }
-
-        if mapped_volunteer.get("ngo_id"):
-            ngo = get_ngo(mapped_volunteer["ngo_id"])
-            if ngo and ngo.get("verified"):
-                mapped_volunteer["ngo_verified"] = True
-
-        print("📥 Incoming Volunteer:", mapped_volunteer, flush=True)
-
-        doc_id = save_volunteer(mapped_volunteer)
-
-        await manager.broadcast_json({
-            "type": "NEW_VOLUNTEER",
-            "data": mapped_volunteer
-        })
-
-        return {"message": "Volunteer registered", "id": doc_id}
-
-    except Exception as e:
-        print("❌ Volunteer Error:", e, flush=True)
-        return {"error": str(e)}
-
-# 📦 Routers
+# 📦 Include all specialized routers
 app.include_router(need_router)
 app.include_router(volunteer_router)
 app.include_router(volunteer_auth_router, prefix="/auth")

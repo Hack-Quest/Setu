@@ -2,19 +2,12 @@ import pandas as pd
 from datetime import datetime
 from google.cloud import firestore
 import os
-from google.cloud import firestore
-from google.oauth2 import service_account
 
-KEY_PATH = os.path.join(os.getcwd(), 'config', 'serviceAccountKey.json')
+PROJECT_ID = "project-ecb78041-2b9f-43b6-a06"
 
-if os.path.exists(KEY_PATH):
-    credentials = service_account.Credentials.from_service_account_file(KEY_PATH)
-    db = firestore.Client(credentials=credentials, project=credentials.project_id)
-    print("✅ Firestore Authenticated using Service Account Key")
-else:
-    print(f"❌ ERROR: Key not found at {KEY_PATH}")
-    # Fallback to default (which is currently failing)
-    db = firestore.Client()
+# ✅ Uses Application Default Credentials — run `gcloud auth application-default login` locally.
+db = firestore.Client(project=PROJECT_ID)
+print("✅ Firestore Authenticated via ADC")
 
 def ingest_pros(file_path):
     # Read the generated Excel
