@@ -164,12 +164,24 @@ def match_needs(token: str = Depends(verify_token)):
 
         scored = []
 
+        print("==== NEED DEBUG ====")
+        print("Need ID:", need_id)
+        print("Category:", need_category)
+        print("Lat/Lng:", need.get("lat"), need.get("lng"))
+        print("====================")
+        
         for v in available_pool:
-            if not v.get("available", True):
-                continue
+            print("------ DEBUG VOLUNTEER ------")
+            print("Volunteer ID:", v.get("id"))
+            print("Skills:", v.get("skills"))
+            print("Available:", v.get("available"))
+            print("Lat/Lng:", v.get("lat"), v.get("lng"))
 
             score, dist_km = _compute_score(need, v)
 
+            print("Distance:", dist_km)
+            print("Score:", score)
+            print("-----------------------------")
             if dist_km <= MAX_DISPATCH_KM:
                 scored.append((score, dist_km, v))
 
