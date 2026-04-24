@@ -29,6 +29,21 @@ def save_assignment(need_id: str, volunteer_id: str) -> str:
     # Set the Volunteer's availability to False (they are now busy)
     update_volunteer_status(volunteer_id, False)   
     
+    vol_ref = db.collection("volunteers").document(volunteer_id)
+    vol_doc = vol_ref.get()
+
+    if vol_doc.exists:
+        vol_data = vol_doc.to_dict()
+        current = vol_data.get("active_assignments", 0)
+
+        vol_ref.update({
+            "active_assignments": current + 1
+        })
+
+        # OPTIONAL: auto-disable overloaded volunteer
+        if current + 1 >= 3:
+            vol_ref.update({"available": False})
+    
     print(f"🔗 Assignment {doc_ref.id} created: Volunteer {volunteer_id} -> Need {need_id}")
     return doc_ref.id
 
@@ -47,6 +62,23 @@ def resolve_assignment(doc_id: str, need_id: str, volunteer_id: str):
     
     # 3. Set volunteer 'is_available' back to True
     update_volunteer_status(volunteer_id, True)   
+    
+    vol_ref = db.collection("volunteers").document(volunteer_id)
+    vol_doc = vol_ref.get()
+
+    if vol_doc.exists:
+        vol_data = vol_doc.to_dict()
+        current = vol_data.get("active_assignments", 0)
+
+        new_count = max(0, current - 1)
+
+        vol_ref.update({
+            "active_assignments": new_count
+        })
+
+        # Re-enable volunteer if they were blocked
+        if new_count < 3:
+            vol_ref.update({"available": True})
     
     print(f"✅ Assignment {doc_id} resolved! Volunteer is free again.")
 

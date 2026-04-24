@@ -97,6 +97,7 @@ def save_volunteer(data: dict) -> str:
         data["skills"] = [s.lower().strip() for s in data["skills"]]
 
     data["available"] = True
+    data["active_assignments"] = 0
     data["registered_at"] = datetime.now(timezone.utc).isoformat()
 
     update_time, doc_ref = db.collection("volunteers").add(data)

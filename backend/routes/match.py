@@ -96,12 +96,16 @@ def find_best_volunteer(need: dict, all_volunteers: list) -> dict | None:
     # Step 3: rank by composite score
     scored = []
     for v in pool:
+        if not v.get("available", True):
+            continue
+
         score, dist_km = _compute_score(need, v)
-        scored.append((score, dist_km, v))
+        scored.append((score, dist_km, v))  # 🔥 MISSING LINE
 
     scored.sort(key=lambda x: x[0], reverse=True)
     best_score, best_dist, best_vol = scored[0]
-
+    if not scored:
+        return None
     # Attach computed values so callers can include them in responses
     result = dict(best_vol)
     result["_score"]       = best_score
