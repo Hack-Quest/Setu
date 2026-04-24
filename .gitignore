@@ -25,3 +25,5 @@ ngrok
 .ngrok2/
 ngrok.log
 
+config/.env
+config/cloudrun_env.yaml
