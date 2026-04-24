@@ -103,9 +103,10 @@ def find_best_volunteer(need: dict, all_volunteers: list) -> dict | None:
         scored.append((score, dist_km, v))  # 🔥 MISSING LINE
 
     scored.sort(key=lambda x: x[0], reverse=True)
-    best_score, best_dist, best_vol = scored[0]
     if not scored:
         return None
+    best_score, best_dist, best_vol = scored[0]
+
     # Attach computed values so callers can include them in responses
     result = dict(best_vol)
     result["_score"]       = best_score
@@ -151,62 +152,55 @@ def match_needs(token: str = Depends(verify_token)):
             v for v in all_volunteers
             if v.get("id") not in assigned_volunteer_ids
         ]
+        # 🔥 MULTI-VOLUNTEER LOGIC (CORRECT PLACEMENT)
 
-        best_vol = find_best_volunteer(need, available_pool)
+        MAX_VOLUNTEERS_PER_NEED = 3
 
-        # ── Sensitive need, no Tier 1 found ──────────────────────────────
-        if best_vol is None and is_sensitive:
+        scored = []
+
+        for v in available_pool:
+            if not v.get("available", True):
+                continue
+
+            score, dist_km = _compute_score(need, v)
+
+            if dist_km <= MAX_DISPATCH_KM:
+                scored.append((score, dist_km, v))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+
+        selected = scored[:MAX_VOLUNTEERS_PER_NEED]
+
+        if not selected:
             matches.append({
-                "need_id":  need_id,
+                "need_id": need_id,
                 "severity": severity,
-                "category": need_category,
-                "status":   "Manual Escalation Required",
-                "reason":   "No NGO-verified (Tier 1) responder available for this sensitive need.",
+                "status": "pending",
+                "reason": "No suitable volunteers found."
             })
             continue
 
-        # ── No volunteer at all ───────────────────────────────────────────
-        if best_vol is None:
-            matches.append({
-                "need_id":  need_id,
-                "severity": severity,
-                "status":   "pending",
-                "reason":   "No suitable volunteer found in the system.",
+        assigned_list = []
+
+        for score, dist_km, vol in selected:
+            save_assignment(need_id, vol.get("id"))
+            assigned_volunteer_ids.add(vol.get("id"))
+
+            assigned_list.append({
+                "volunteer_id": vol.get("id"),
+                "name": vol.get("name"),
+                "distance_km": round(dist_km, 2),
+                "score": round(score, 2),
             })
-            continue
 
-        dist_km = best_vol["_distance_km"]
-        score   = best_vol["_score"]
-        tier_label = "Tier 1 (NGO-Verified)" if best_vol.get("ngo_verified") else "Tier 2 (Community)"
-
-        if dist_km <= MAX_DISPATCH_KM:
-            save_assignment(need_id, best_vol.get("id"))
-            assigned_volunteer_ids.add(best_vol.get("id"))
-
-            print(f"[MATCH] Need {need_id} → Volunteer {best_vol.get('id')} | Score: {score:.2f} | Dist: {dist_km:.1f}km")
-
-            matches.append({
-                "need_id":            need_id,
-                "severity":           severity,
-                "category":           need_category,
-                "volunteer_id":       best_vol.get("id"),
-                "volunteer_name":     best_vol.get("name"),
-                "volunteer_tier":     tier_label,
-                "distance_km":        round(dist_km, 2),
-                "score":              round(score, 2),
-                "status":             "assigned",
-                "reason":             (
-                    f"Selected based on highest composite score "
-                    f"({tier_label}, {round(dist_km, 2)}km away, severity={severity})"
-                ),
-            })
-        else:
-            matches.append({
-                "need_id":  need_id,
-                "severity": severity,
-                "status":   "pending",
-                "reason":   f"Nearest volunteer ({best_vol.get('name')}) is {round(dist_km, 2)}km away — exceeds {MAX_DISPATCH_KM}km limit.",
-            })
+        matches.append({
+            "need_id": need_id,
+            "severity": severity,
+            "category": need_category,
+            "assigned_volunteers": assigned_list,
+            "status": "assigned",
+            "count": len(assigned_list)
+        })
 
     return {
         "total_matches_made":    sum(1 for m in matches if m["status"] == "assigned"),
