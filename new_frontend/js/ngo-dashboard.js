@@ -1,33 +1,10 @@
 const API_BASE = window.SETU_API_BASE_URL || "";
+requireAuth();
 
 // ─── Auth ───────────────────────────────────────────────────────────────────
-function getToken() {
-    return localStorage.getItem("auth_token") || localStorage.getItem("token") || null;
-}
-
 function logout() {
     localStorage.clear();
     window.location.href = "index.html";
-}
-
-// ─── API Helper ──────────────────────────────────────────────────────────────
-async function api(endpoint, options = {}) {
-    try {
-        const token = getToken();
-        const headers = { "Content-Type": "application/json" };
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-
-        const res = await fetch(`${API_BASE}${endpoint}`, { headers, ...options });
-
-        if (!res.ok) {
-            console.error(`API error ${res.status} on ${endpoint}`);
-            return null;
-        }
-        return await res.json();
-    } catch (err) {
-        console.error("API failed:", err);
-        return null;
-    }
 }
 
 // ─── Severity Badge ──────────────────────────────────────────────────────────
@@ -48,7 +25,8 @@ async function checkHealth() {
     if (!el) return;
     el.textContent = "Checking…";
     el.style.color = "#aaa";
-    const data = await api("/health");
+    const response = await ApiService.getHealth();
+    const data = response && response.ok ? response.data : null;
     if (data && data.status === "ok") {
         el.textContent = "● Backend Online";
         el.style.color = "#27ae60";
@@ -63,7 +41,8 @@ async function runMatch() {
     const btn = document.getElementById("runMatchBtn");
     if (btn) { btn.disabled = true; btn.textContent = "Running…"; }
 
-    const data = await api("/match");
+    const response = await ApiService.runMatch();
+    const data = response && response.ok ? response.data : null;
 
     if (btn) { btn.disabled = false; btn.textContent = "⚡ Run Matching Engine"; }
 
@@ -85,7 +64,8 @@ async function loadReports() {
     const container = document.getElementById("reportsList");
     container.innerHTML = "<p style='color:#aaa'>Loading…</p>";
 
-    const data = await api("/dashboard/reports");
+    const response = await ApiService.getReports();
+    const data = response && response.ok ? response.data : null;
 
     if (!data) {
         container.innerHTML = "<p>⚠️ Could not load reports.</p>";
@@ -141,10 +121,8 @@ function renderReports(reports) {
 async function resolve(needId, volunteerId, assignmentId) {
     if (!confirm("Mark this assignment as resolved?")) return;
 
-    const res = await api(`/assignment/${assignmentId}/resolve`, {
-        method: "PATCH",
-        body: JSON.stringify({ need_id: needId, volunteer_id: volunteerId })
-    });
+    const response = await ApiService.resolveAssignment(assignmentId, { need_id: needId, volunteer_id: volunteerId });
+    const res = response && response.ok ? response.data : null;
 
     if (res) loadReports();
     else alert("Resolve failed.");
@@ -177,8 +155,6 @@ async function handleExcelUpload(event) {
 
         let success = 0, failed = 0;
 
-        const token = getToken();
-
         for (const row of rows) {
             // Skills may be a comma-separated string in Excel — normalise to array
             const rawSkills = row["skills"] || row["Skills"] || "";
@@ -199,14 +175,7 @@ async function handleExcelUpload(event) {
             };
 
             try {
-                const res = await fetch(`${API_BASE}/volunteer`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    },
-                    body: JSON.stringify(payload)
-                });
+                const res = await ApiService.postVolunteer(payload);
                 res.ok ? success++ : failed++;
             } catch {
                 failed++;

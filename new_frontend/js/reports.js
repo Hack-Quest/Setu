@@ -7,12 +7,15 @@ function openNeedForm() {
 
 async function loadReports() {
     try {
-        const res = await fetch(`${API_BASE}/dashboard/reports`);
+        const response = await ApiService.getReports();
 
-        const data = await res.json();
-        allReports = data.reports || data;
-
-        renderReports(allReports);
+        if (response.ok) {
+            const data = response.data;
+            allReports = data.reports || data;
+            renderReports(allReports);
+        } else {
+            console.error(response.error);
+        }
 
     } catch (err) {
         console.error(err);

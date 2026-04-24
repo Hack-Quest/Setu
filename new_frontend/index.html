@@ -66,11 +66,11 @@
     </section>
 
     <!-- ✅ COMMON JS -->
+    <script src="js/api.js"></script>
     <script src="js/common.js"></script>
 
     <!-- 📊 STATS SCRIPT -->
     <script>
-        const API_BASE = window.SETU_API_BASE_URL || "";
 
         async function loadStats() {
             ["count", "volunteer-count", "ngo-count"].forEach(id => {
@@ -78,11 +78,11 @@
             });
 
             try {
-                const res = await fetch(`${API_BASE}/stats`);
+                const response = await ApiService.getStats();
 
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                if (!response.ok) throw new Error(response.error || `HTTP Error`);
 
-                const data = await res.json();
+                const data = response.data;
                 console.log("STATS:", data);
 
                 document.getElementById("count").innerText =

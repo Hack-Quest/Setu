@@ -11,3 +11,9 @@ function openNGOForm() {
 function openVolunteerForm() {
     window.open("https://docs.google.com/forms/d/e/1FAIpQLSclY6jrgE1n3PmEiBQuTwO8o5Ew9QuOrN3_zyTnDLEUbpladw/viewform", "_blank");
 }
+
+function requireAuth() {
+    if (!localStorage.getItem("auth_token")) {
+        window.location.href = "login.html";
+    }
+}

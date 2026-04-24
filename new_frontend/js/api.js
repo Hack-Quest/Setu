@@ -7,7 +7,7 @@ class ApiService {
      */
     static async request(endpoint, options = {}) {
         const url = `${API_BASE_URL}${endpoint}`;
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
 
         const headers = {
             'Content-Type': 'application/json',
@@ -39,10 +39,23 @@ class ApiService {
     static async getDashboard() { return this.request('/dashboard'); }
     static async getReports() { return this.request('/dashboard/reports'); }
     static async registerNGO(data) { return this.request('/ngo/register', { method: 'POST', body: JSON.stringify(data) }); }
-    static async sendOTP(phone) { return this.request('/auth/send-otp', { method: 'POST', body: JSON.stringify({ phone }) }); }
-    static async verifyOTP(phone, otp) { return this.request('/auth/verify-otp', { method: 'POST', body: JSON.stringify({ phone, otp }) }); }
+    static async sendOtp(data) {
+        return this.request('/auth/send-otp', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    static async verifyOtp(data) {
+        return this.request('/auth/verify-otp', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
     static async getStats() { return this.request('/stats'); }
-    static async resolveAssignment(id) { return this.request(`/assignment/${id}/resolve`, { method: 'PATCH' }); }
+    static async getHealth() { return this.request('/health'); }
+    static async getVolunteerAssignments(volunteerId) { return this.request(`/assignment/volunteer/${volunteerId}`); }
+    static async resolveAssignment(id, data) { return this.request(`/assignment/${id}/resolve`, { method: 'PATCH', body: JSON.stringify(data) }); }
 
     /**
      * Parallel fetch for NGO profile + global stats.

@@ -95,10 +95,10 @@ def health():
 async def webhook(request: Request, payload: Dict, background_tasks: BackgroundTasks):
     try:
         mapped_data = {
-            "reporter_name": payload.get("name", "Unknown"),
-            "reporter_phone": payload.get("phone", "0000000000"),
+            "reporter_name": payload.get("reporter_name", "Unknown"),
+            "reporter_phone": payload.get("reporter_phone", "0000000000"),
             "description": payload.get("description", ""),
-            "location": payload.get("address", "Unknown Location"),
+            "location": payload.get("location", "Unknown Location"),
             "disaster_type": payload.get("disaster_type", "Not Specified"),
             "help_needed": payload.get("help_needed", "Not Specified"),
         }
@@ -115,10 +115,10 @@ async def webhook_ngo_register_alias(request: Request, payload: Dict, background
     # If a form hits this accidentally, we still process it as an SOS/Need
     try:
         mapped_data = {
-            "reporter_name": payload.get("name", payload.get("reporter_name", "Unknown")),
-            "reporter_phone": payload.get("phone", payload.get("reporter_phone", "0000000000")),
+            "reporter_name": payload.get("reporter_name", payload.get("name", "Unknown")),
+            "reporter_phone": payload.get("reporter_phone", payload.get("phone", "0000000000")),
             "description": payload.get("description", ""),
-            "location": payload.get("address", payload.get("location", "Unknown Location")),
+            "location": payload.get("location", payload.get("address", "Unknown Location")),
             "disaster_type": payload.get("disaster_type", "Not Specified"),
             "help_needed": payload.get("help_needed", "Not Specified"),
         }

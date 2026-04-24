@@ -18,18 +18,10 @@ async function sendOTP() {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/auth/send-otp`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email })
-        });
+        const response = await ApiService.sendOtp({ email });
 
-        const data = await res.json();
-
-        if (!res.ok) {
-            alert(data.detail || "Failed to send OTP");
+        if (!response.ok) {
+            alert(response.error || "Failed to send OTP");
             return;
         }
 
@@ -52,20 +44,14 @@ async function verifyOTP() {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/auth/verify-otp`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email, otp })
-        });
+        const response = await ApiService.verifyOtp({ email, otp });
 
-        const data = await res.json();
-
-        if (!res.ok) {
-            alert(data.detail || "Invalid OTP");
+        if (!response.ok) {
+            alert(response.error || "Invalid OTP");
             return;
         }
+
+        const data = response.data;
 
         // ✅ STORE AUTH DATA
         localStorage.setItem("auth_token", data.token);
