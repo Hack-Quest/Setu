@@ -139,7 +139,13 @@ def match_needs(token: str = Depends(verify_token)):
     for need in open_needs:
 
         # Skip low-trust reports
-        if need.get("trust_score", 100) < 50:
+        trust = need.get("trust_score", 100)
+        severity = (need.get("severity") or "low").lower()
+
+        # 🔥 Smart trust gating
+        if severity in ["critical", "very high"]:
+            pass  # always allow high severity
+        elif trust < 50:
             continue
 
         need_id  = need.get("id")

@@ -100,6 +100,12 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             )
 
         trust_score = trust_result["score"]
+        # 🔥 BOOST trust for realistic inputs
+        if len(data.description.split()) > 8:
+            trust_score += 10
+
+        # Cap at 100
+        trust_score = min(trust_score, 100)
 
         # 🧠 5️⃣ TIERED TRIAGE SYSTEM (FIXED)
         if trust_score <= 30:
@@ -107,6 +113,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         elif 31 <= trust_score <= 75:
             review = secondary_review(data.description)
             trust_score += review["adjustment"]
+            trust_score = max(0, min(trust_score, 100))
             dispatch_action = "secondary_review"
         else:
             dispatch_action = "auto_dispatch"

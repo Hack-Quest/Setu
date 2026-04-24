@@ -57,6 +57,16 @@ def register_volunteer_auth(
     }
 
     update_time, doc_ref = db.collection("volunteers_auth").add(volunteer_data)
+    # 🔥 ALSO SAVE IN MAIN VOLUNTEERS COLLECTION (FOR MATCHING)
+    db.collection("volunteers").add({
+        "name": name,
+        "phone": phone,
+        "skills": volunteer_data["skills"],
+        "lat": volunteer_data["lat"],
+        "lng": volunteer_data["lng"],
+        "available": True,
+        "active_assignments": 0,
+    })
     print(f"🦸 Volunteer registered with ID: {doc_ref.id}")
     return {"success": True, "volunteer_id": doc_ref.id}
 
@@ -96,6 +106,13 @@ def save_volunteer(data: dict) -> str:
     if "skills" in data and isinstance(data["skills"], list):
         data["skills"] = [s.lower().strip() for s in data["skills"]]
 
+    from database.geocoding import get_coordinates
+
+    coords = get_coordinates(data.get("location"))
+
+    data["lat"] = coords.get("lat", 0.0) if coords else 0.0
+    data["lng"] = coords.get("lng", 0.0) if coords else 0.0
+    
     data["available"] = True
     data["active_assignments"] = 0
     data["registered_at"] = datetime.now(timezone.utc).isoformat()
