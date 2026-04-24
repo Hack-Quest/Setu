@@ -11,25 +11,38 @@ function openNeedForm() {
 // 📩 SEND OTP
 async function sendOTP() {
     const email = document.getElementById("email").value;
+    const role = document.getElementById("role").value;
 
     if (!email) {
-        alert("Please enter email");
+        showToast("Please enter email", "info");
         return;
     }
 
     try {
-        const response = await ApiService.sendOtp({ email });
+        const response = await ApiService.sendOtp({ email, role });
 
         if (!response.ok) {
-            alert(response.error || "Failed to send OTP");
+            showToast(response.error || "Failed to send OTP", "error");
             return;
         }
 
-        alert("✅ OTP sent to your email");
+        showToast("✅ OTP sent to your email", "success");
+
+        // Reveal OTP section
+        document.getElementById("otp-section").style.display = "block";
+        
+        // Disable email input
+        document.getElementById("email").disabled = true;
+        
+        // Disable role selection
+        document.getElementById("role").disabled = true;
+
+        // Change button text
+        document.querySelector(".btn-primary").innerText = "Resend OTP";
 
     } catch (err) {
         console.error(err);
-        alert("Server error while sending OTP");
+        showToast("Server error while sending OTP", "error");
     }
 }
 
@@ -37,9 +50,10 @@ async function sendOTP() {
 async function verifyOTP() {
     const email = document.getElementById("email").value;
     const otp = document.getElementById("otp").value;
+    const role = document.getElementById("role").value;
 
     if (!email || !otp) {
-        alert("Enter email and OTP");
+        showToast("Enter email and OTP", "info");
         return;
     }
 
@@ -47,7 +61,7 @@ async function verifyOTP() {
         const response = await ApiService.verifyOtp({ email, otp });
 
         if (!response.ok) {
-            alert(response.error || "Invalid OTP");
+            showToast(response.error || "Invalid OTP", "error");
             return;
         }
 
@@ -55,7 +69,7 @@ async function verifyOTP() {
 
         // ✅ STORE AUTH DATA
         localStorage.setItem("auth_token", data.token);
-        localStorage.setItem("role", data.role);
+        localStorage.setItem("role", role);
 
         if (data.id) {
             localStorage.setItem("volunteer_id", data.id);
@@ -69,7 +83,7 @@ async function verifyOTP() {
         console.log("Login success:", data);
 
         // 🔀 REDIRECT
-        if (data.role === "ngo") {
+        if (role === "ngo") {
             window.location.href = "ngo-dashboard.html";
         } else {
             window.location.href = "volunteer-dashboard.html";
@@ -77,6 +91,6 @@ async function verifyOTP() {
 
     } catch (err) {
         console.error(err);
-        alert("Server error while verifying OTP");
+        showToast("Server error while verifying OTP", "error");
     }
 }

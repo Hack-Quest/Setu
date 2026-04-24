@@ -47,7 +47,7 @@ async function runMatch() {
     if (btn) { btn.disabled = false; btn.textContent = "⚡ Run Matching Engine"; }
 
     if (!data) {
-        alert("Matching engine failed — check console.");
+        showToast("Matching engine failed — check console.", "error");
         return;
     }
 
@@ -55,7 +55,7 @@ async function runMatch() {
     let assigned = 0, unmatched = 0;
     matches.forEach(m => m.status === "assigned" ? assigned++ : unmatched++);
 
-    alert(`✅ Matching complete!\n\nAssigned: ${assigned}\nUnmatched / Escalated: ${unmatched}`);
+    showToast(`✅ Matching complete!\n\nAssigned: ${assigned}\nUnmatched / Escalated: ${unmatched}`, "success");
     initDashboard(); // refresh the list
 }
 
