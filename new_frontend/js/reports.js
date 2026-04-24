@@ -1,9 +1,6 @@
 const API_BASE = window.SETU_API_BASE_URL || "";
 let allReports = [];
 
-function openNeedForm() {
-    window.open("https://forms.gle/YOUR_NEED_FORM", "_blank");
-}
 
 async function loadReports() {
     try {
@@ -33,9 +30,15 @@ function renderReports(reports) {
         const card = document.createElement("div");
         card.className = "report-card";
 
+        const tier = r.volunteer_tier || "";
+        let badgeClass = "tier-badge";
+        if (tier.includes("Tier 1")) badgeClass += " tier-1";
+        else if (tier.includes("Tier 2")) badgeClass += " tier-2";
+        const tierBadgeHTML = tier ? `<span class="${badgeClass}">${tier}</span>` : "";
+
         card.innerHTML = `
             <div class="report-header">
-                <h3>${r.disaster_type || "Emergency"}</h3>
+                <h3>${r.disaster_type || "Emergency"} ${tierBadgeHTML}</h3>
                 <span class="badge ${severity}">
                     ${severity.toUpperCase()}
                 </span>

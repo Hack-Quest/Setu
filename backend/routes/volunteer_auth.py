@@ -68,6 +68,7 @@ def send_otp_endpoint(data: SendOTPInput):
     save_otp(data.email, otp)
     
     # Send email
+
     success = send_otp_email(data.email, otp)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to send OTP email")
@@ -77,37 +78,51 @@ def send_otp_endpoint(data: SendOTPInput):
 @router.post("/verify-otp")
 def verify_otp_endpoint(data: VerifyOTPInput):
     """Verify OTP and determine user role for login."""
-    is_valid = verify_otp_in_db(data.email, data.otp)
-    if not is_valid:
-        raise HTTPException(status_code=401, detail="Invalid or expired OTP")
+    try:
+        print("VERIFY OTP INPUT:", data.model_dump() if hasattr(data, "model_dump") else data.dict())
         
-    # Check if NGO
-    ngo = get_ngo_by_email(data.email)
-    if ngo:
+        is_valid = verify_otp_in_db(data.email, data.otp)
+        if not is_valid:
+            raise HTTPException(status_code=401, detail="Invalid or expired OTP")
+            
+        email = data.email.strip().lower()
+        
+        # Check if NGO
+        ngo = get_ngo_by_email(email)
+        if ngo:
+            return {
+                "token": SECRET_TOKEN,
+                "role": "ngo",
+                "id": ngo["id"]
+            }
+            
+        # 🔍 Fetch volunteer from DB
+        volunteers = db.collection("volunteers_auth").where(filter=FieldFilter("email", "==", email)).get()
+        print("VOLUNTEER QUERY RESULT:", len(volunteers))
+        
+        volunteer_id = None
+        if volunteers and len(volunteers) > 0:
+            volunteer_id = volunteers[0].id
+            
+        if volunteer_id:
+            return {
+                "token": SECRET_TOKEN,
+                "role": "volunteer",
+                "id": volunteer_id,
+                "volunteer_id": volunteer_id,
+                "email": email
+            }
+            
+        # User does not exist, redirect to registration
         return {
             "token": SECRET_TOKEN,
-            "role": "ngo",
-            "id": ngo["id"]
+            "role": "new_user",
+            "id": None,
+            "volunteer_id": None
         }
-        
-    # Check if Volunteer
-    docs = (
-        db.collection("volunteers_auth")
-        .where(filter=FieldFilter("email", "==", data.email))
-        .stream()
-    )
-    volunteer_list = list(docs)
-    if volunteer_list:
-        volunteer_doc = volunteer_list[0]
-        return {
-            "token": SECRET_TOKEN,
-            "role": "volunteer",
-            "id": volunteer_doc.id
-        }
-        
-    # User does not exist, redirect to registration
-    return {
-        "token": SECRET_TOKEN,
-        "role": "new_user",
-        "id": None
-    }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("VERIFY OTP ERROR:", str(e))
+        raise HTTPException(status_code=500, detail="Internal server error")

@@ -97,8 +97,13 @@ async function initDashboard() {
     reports.forEach(r => {
         const severity = (r.severity || "low").toLowerCase();
         const severityClass = getSeverityClass(severity);
-        const rName = r.reporter_name || r.volunteer_name || r.assigned_volunteer || "Auto-assigned";
-        
+        const tier = r.volunteer_tier || "";
+        let badgeClass = "tier-badge";
+        if (tier.includes("Tier 1")) badgeClass += " tier-1";
+        else if (tier.includes("Tier 2")) badgeClass += " tier-2";
+        const tierBadgeHTML = tier ? `<span class="${badgeClass}">${tier}</span>` : "";
+
+        const rName = (r.reporter_name || r.volunteer_name || r.assigned_volunteer || "Auto-assigned") + tierBadgeHTML;
         let resolveBtn = "";
         const isAssigned = r.status === "assigned";
         if (isAssigned && r.assignment_id && r.volunteer_id) {

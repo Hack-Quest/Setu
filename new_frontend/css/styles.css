@@ -395,3 +395,28 @@ iframe {
         opacity: 1;
     }
 }
+
+/* ========================= */
+/* 🏅 TIER BADGES            */
+/* ========================= */
+
+.tier-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 999px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* Tier 1 (trusted) */
+.tier-1 {
+    background: #16a34a;
+    color: white;
+}
+
+/* Tier 2 (community) */
+.tier-2 {
+    background: #f59e0b;
+    color: white;
+}
