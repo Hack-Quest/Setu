@@ -48,6 +48,8 @@ Hard output constraints (must follow exactly):
 - severity must be one of {VALID_SEVERITIES}.
 - consistency must be an integer from 1 to 10.
 - If uncertain category -> "other". If uncertain severity -> "medium".
+- Prefer higher consistency ONLY if report includes realistic details (location, number of people, specific need).
+- Penalize vague reports like "help needed", "urgent", without details.
 
 Report:
 "{description}"

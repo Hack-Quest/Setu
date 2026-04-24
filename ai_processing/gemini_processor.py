@@ -25,7 +25,12 @@ _GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 _GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # Safe defaults used whenever providers fail or return malformed output.
-_SAFE_DEFAULT_RESULT = {"category": "other", "severity": "medium", "consistency": 5}
+_SAFE_DEFAULT_RESULT = {
+    "category": "other",
+    "severity": "medium",
+    "consistency": 5,
+    "reasoning": "fallback default",
+}
 
 
 def _init_gemini_model():
@@ -72,7 +77,9 @@ def _extract_json_text(raw_response: Any) -> str:
         raise ValueError("AI response text is empty")
 
     # First preference: explicit fenced JSON block.
-    fenced_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw_text, flags=re.DOTALL | re.IGNORECASE)
+    fenced_match = re.search(
+        r"```(?:json)?\s*(\{.*?\})\s*```", raw_text, flags=re.DOTALL | re.IGNORECASE
+    )
     if fenced_match:
         return fenced_match.group(1).strip()
 
@@ -80,7 +87,7 @@ def _extract_json_text(raw_response: Any) -> str:
     first_brace = raw_text.find("{")
     last_brace = raw_text.rfind("}")
     if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
-        return raw_text[first_brace:last_brace + 1].strip()
+        return raw_text[first_brace : last_brace + 1].strip()
 
     # If no object can be extracted, fail fast so fallback can run.
     raise ValueError("No JSON object found in AI response")
@@ -101,7 +108,13 @@ def _normalize_classification(parsed: Dict[str, Any]) -> Dict[str, Any]:
     if category not in VALID_CATEGORIES:
         category = "other"
 
-    severity = str(parsed.get("severity", "medium")).strip().lower().replace("_", " ").replace("-", " ")
+    severity = (
+        str(parsed.get("severity", "medium"))
+        .strip()
+        .lower()
+        .replace("_", " ")
+        .replace("-", " ")
+    )
     if severity not in VALID_SEVERITIES:
         severity = "medium"
 
@@ -110,11 +123,13 @@ def _normalize_classification(parsed: Dict[str, Any]) -> Dict[str, Any]:
     except (TypeError, ValueError):
         consistency = 5
     consistency = max(1, min(10, consistency))
+    reasoning = str(parsed.get("reasoning", "")).strip()
 
     return {
         "category": category,
         "severity": severity,
         "consistency": consistency,
+        "reasoning": reasoning[:200],  # keep it small
     }
 
 
@@ -190,9 +205,7 @@ def _call_groq(prompt: str) -> Dict[str, Any]:
 
     response_json = response.json()
     raw_text = (
-        response_json.get("choices", [{}])[0]
-        .get("message", {})
-        .get("content", "")
+        response_json.get("choices", [{}])[0].get("message", {}).get("content", "")
     )
     return _parse_and_validate(raw_text)
 
