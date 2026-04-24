@@ -14,11 +14,11 @@ if not firebase_admin._apps:
     try:
         cred = credentials.ApplicationDefault()
         firebase_admin.initialize_app(cred, {"projectId": PROJECT_ID})
-        print("✅ Firestore Client: initialized via ADC", flush=True)
+        print("[OK] Firestore Client: initialized via ADC", flush=True)
     except Exception as e:
-        print(f"⚠️ ADC failed ({e}). Falling back to project-only init.", flush=True)
+        print(f"[WARN] ADC failed ({e}). Falling back to project-only init.", flush=True)
         firebase_admin.initialize_app(options={"projectId": PROJECT_ID})
 
 db = firestore.client()
 
-print("✅ Firestore Client Initialized Successfully")
+print("[OK] Firestore Client Initialized Successfully")

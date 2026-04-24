@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
 from backend.auth import verify_token
-from database.assignments_db import resolve_assignment, get_assignments_by_volunteer_id
 from database.firestore_client import db
 
 router = APIRouter(prefix="/assignment")
@@ -19,6 +18,8 @@ def accept_need(
     
     # Get volunteer UID from the verified Firebase token
     volunteer_id = token.get("uid") 
+    if not volunteer_id:
+         raise HTTPException(status_code=401, detail="User ID (UID) missing from token.")
     
     try:
         assignment_id = save_assignment(need_id, volunteer_id)
@@ -28,6 +29,8 @@ def accept_need(
             "message": f"Volunteer {volunteer_id} is now handling Need {need_id}"
         }
     except Exception as e:
+        # Log the error for Cloud Run debugging
+        print(f"Error in accept_need: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/volunteer/{volunteer_id}")
@@ -36,6 +39,8 @@ def get_volunteer_assignments(
     token: str = Depends(verify_token)
 ):
     from database.needs_db import get_need_by_id
+    from database.assignments_db import get_assignments_by_volunteer_id
+    
     assignments = get_assignments_by_volunteer_id(volunteer_id)
     
     # Join with need details for frontend display
@@ -62,6 +67,8 @@ def resolve(
     Volunteer calls this to close a case.
     Marks assignment resolved and frees the volunteer status.
     """
+    from database.assignments_db import resolve_assignment
+
     doc_ref = db.collection("assignments").document(assignment_id)
     snap = doc_ref.get()
     
