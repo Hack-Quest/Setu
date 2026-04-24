@@ -56,76 +56,98 @@ async function runMatch() {
     matches.forEach(m => m.status === "assigned" ? assigned++ : unmatched++);
 
     alert(`✅ Matching complete!\n\nAssigned: ${assigned}\nUnmatched / Escalated: ${unmatched}`);
-    loadReports(); // refresh the list
+    initDashboard(); // refresh the list
 }
 
-// ─── Load Reports ────────────────────────────────────────────────────────────
-async function loadReports() {
-    const container = document.getElementById("reportsList");
-    container.innerHTML = "<p style='color:#aaa'>Loading…</p>";
+// ─── Dynamic Dashboard Population ─────────────────────────────────────────────
+function getSeverityClass(severity) {
+    if (!severity) return "severity-low";
+    const s = severity.toLowerCase();
+    if (s === "critical" || s === "very high" || s === "high") return "severity-high";
+    if (s === "medium") return "severity-medium";
+    return "severity-low";
+}
 
-    const response = await ApiService.getReports();
+async function initDashboard() {
+    const container = document.getElementById("ngoDashboardBody");
+    if (!container) return;
+    container.innerHTML = "<tr><td colspan='5' style='padding: 12px; text-align: center;'>Loading...</td></tr>";
+
+    const response = await ApiService.getDashboard();
     const data = response && response.ok ? response.data : null;
 
     if (!data) {
-        container.innerHTML = "<p>⚠️ Could not load reports.</p>";
+        container.innerHTML = "<tr><td colspan='5' style='padding: 12px; text-align: center;'>⚠️ Could not load reports.</td></tr>";
         return;
     }
 
-    const reports = data.reports || data || [];
+    const reports = data.reports || [];
     reports.sort((a, b) =>
         (SEVERITY_ORDER[(a.severity || "low").toLowerCase()] ?? 5) -
         (SEVERITY_ORDER[(b.severity || "low").toLowerCase()] ?? 5)
     );
-    renderReports(reports);
-}
 
-function renderReports(reports) {
-    const container = document.getElementById("reportsList");
     container.innerHTML = "";
 
     if (!reports.length) {
-        container.innerHTML = "<p>No active reports.</p>";
+        container.innerHTML = "<tr><td colspan='5' style='padding: 12px; text-align: center;'>No active reports.</td></tr>";
         return;
     }
 
     reports.forEach(r => {
         const severity = (r.severity || "low").toLowerCase();
-        const volunteerName = r.volunteer_name || r.assigned_volunteer || "Auto-assigned";
-        const isAssigned = r.status === "assigned";
-
+        const severityClass = getSeverityClass(severity);
+        const rName = r.reporter_name || r.volunteer_name || r.assigned_volunteer || "Auto-assigned";
+        
         let resolveBtn = "";
+        const isAssigned = r.status === "assigned";
         if (isAssigned && r.assignment_id && r.volunteer_id) {
-            resolveBtn = `<button onclick="resolve('${r.id}','${r.volunteer_id}','${r.assignment_id}')"
-                style="margin-top:10px;padding:6px 14px;background:#e74c3c;color:#fff;border:none;border-radius:5px;cursor:pointer;">
+            resolveBtn = `<br><button onclick="resolve('${r.id}','${r.volunteer_id}','${r.assignment_id}',this)"
+                style="margin-top:5px;padding:4px 10px;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.75rem;">
                 Mark Resolved</button>`;
         }
 
-        const card = document.createElement("div");
-        card.className = "report-card";
-        card.innerHTML = `
-            <div class="report-header">
-                <h3>${r.disaster_type || "Emergency"}</h3>
-                ${severityBadge(severity)}
-            </div>
-            <p class="desc">${r.summary_en || r.description || ""}</p>
-            <p class="status">Status: ${r.status || "pending"}</p>
-            <p>Assigned: <b>${volunteerName}</b></p>
-            ${resolveBtn}
+        const tr = document.createElement("tr");
+        tr.style.borderBottom = "1px solid #2a2a3c";
+        tr.innerHTML = `
+            <td style="padding: 12px;">${rName}</td>
+            <td style="padding: 12px;">${r.location || "N/A"}</td>
+            <td style="padding: 12px;">${r.disaster_type || "Emergency"} ${severityBadge(severity)}</td>
+            <td style="padding: 12px;">${r.summary_en || r.description || ""}</td>
+            <td class="${severityClass}" style="padding: 12px;">${r.status || "pending"} ${resolveBtn}</td>
         `;
-        container.appendChild(card);
+        container.appendChild(tr);
     });
 }
 
-// ─── Resolve Assignment ───────────────────────────────────────────────────────
-async function resolve(needId, volunteerId, assignmentId) {
+// ─── Resolve Assignment (NGO) ─────────────────────────────────────────────────
+async function resolve(needId, volunteerId, assignmentId, btn) {
     if (!confirm("Mark this assignment as resolved?")) return;
 
-    const response = await ApiService.resolveAssignment(assignmentId, { need_id: needId, volunteer_id: volunteerId });
+    // Optimistic UX — disable button while the call is in flight
+    if (btn) { btn.disabled = true; btn.textContent = "Resolving…"; }
+
+    const response = await ApiService.resolveAssignment(assignmentId, {
+        need_id: needId,
+        volunteer_id: volunteerId
+    });
     const res = response && response.ok ? response.data : null;
 
-    if (res) loadReports();
-    else alert("Resolve failed.");
+    if (res) {
+        showToast("Assignment resolved — volunteer is now available.", "success");
+        // Remove the row from the DOM locally without a full refresh
+        const row = btn ? btn.closest("tr") : null;
+        if (row) {
+            row.style.transition = "opacity 0.4s ease";
+            row.style.opacity = "0";
+            row.addEventListener("transitionend", () => row.remove(), { once: true });
+        } else {
+            initDashboard();
+        }
+    } else {
+        showToast(response?.error || "Resolve failed — please try again.", "error");
+        if (btn) { btn.disabled = false; btn.textContent = "Mark Resolved"; }
+    }
 }
 
 // ─── Bulk Upload (Excel) ──────────────────────────────────────────────────────
@@ -197,4 +219,4 @@ async function handleExcelUpload(event) {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 checkHealth();
-loadReports();
+initDashboard();

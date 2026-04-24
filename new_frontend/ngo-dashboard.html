@@ -121,7 +121,20 @@
         </div>
 
         <!-- ── Reports ──────────────────────────────────────── -->
-        <div id="reportsList"></div>
+        <table class="dashboard-table" style="width: 100%; text-align: left; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+                <tr style="background: rgba(59, 130, 246, 0.2); border-bottom: 2px solid #3b82f6;">
+                    <th style="padding: 12px;">Reporter Name</th>
+                    <th style="padding: 12px;">Location</th>
+                    <th style="padding: 12px;">Disaster Type</th>
+                    <th style="padding: 12px;">Description</th>
+                    <th style="padding: 12px;">Status</th>
+                </tr>
+            </thead>
+            <tbody id="ngoDashboardBody">
+                <tr><td colspan="5" style="padding: 12px; text-align: center;">Loading...</td></tr>
+            </tbody>
+        </table>
 
     </div>
 

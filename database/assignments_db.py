@@ -2,6 +2,7 @@ from database.firestore_client import db
 from datetime import datetime, timezone
 from google.cloud.firestore_v1.base_query import FieldFilter
 
+# These helpers must exist in your other DB files
 from database.needs_db import update_need_status
 from database.volunteers_db import update_volunteer_status
 
@@ -21,9 +22,12 @@ def save_assignment(need_id: str, volunteer_id: str) -> str:
     # 1. Create the assignment record
     update_time, doc_ref = db.collection("assignments").add(doc)
     
-    # 2. Update the connected systems! (This is the "Smart" part)
-    update_need_status(need_id, "assigned")        # Need is no longer open
-    update_volunteer_status(volunteer_id, False)   # Volunteer is now deployed
+    # 2. Update the connected systems (Atomic State Change)
+    # Set need to 'assigned' so it disappears from the global open list
+    update_need_status(need_id, "assigned")        
+    
+    # Set volunteer 'is_available' to False
+    update_volunteer_status(volunteer_id, False)   
     
     print(f"🔗 Assignment {doc_ref.id} created: Volunteer {volunteer_id} -> Need {need_id}")
     return doc_ref.id
@@ -32,17 +36,18 @@ def resolve_assignment(doc_id: str, need_id: str, volunteer_id: str):
     """
     Marks the job as done, resolves the need, and frees up the volunteer.
     """
-    
     db.collection("assignments").document(doc_id).update({
         "status": "resolved",
         "resolved_at": datetime.now(timezone.utc).isoformat()
     })
     
+    # Update need to 'resolved'
     update_need_status(need_id, "resolved")      
+    
+    # Set volunteer 'is_available' back to True
     update_volunteer_status(volunteer_id, True)   
     
     print(f"✅ Assignment {doc_id} resolved! Volunteer is free again.")
-
 
 def get_assignments_by_volunteer_id(volunteer_id: str):
     """

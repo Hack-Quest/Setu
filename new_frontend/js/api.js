@@ -55,6 +55,7 @@ class ApiService {
     static async getStats() { return this.request('/stats'); }
     static async getHealth() { return this.request('/health'); }
     static async getVolunteerAssignments(volunteerId) { return this.request(`/assignment/volunteer/${volunteerId}`); }
+    static async acceptNeed(needId) { return this.request(`/assignment/volunteer/${needId}`, { method: 'POST' }); }
     static async resolveAssignment(id, data) { return this.request(`/assignment/${id}/resolve`, { method: 'PATCH', body: JSON.stringify(data) }); }
 
     /**

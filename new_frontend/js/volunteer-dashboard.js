@@ -28,71 +28,135 @@ async function loadProfile() {
     document.getElementById("ngo").innerText = "NGO: Connected";
     document.getElementById("status").innerText = "Status: Checking...";
 
-    // 📡 Fetch assignments
-    const response = await ApiService.getVolunteerAssignments(volunteerId);
-    const assignments = response && response.ok ? response.data : null;
-    const container = document.getElementById("assignment");
-
-    if (!assignments || assignments.length === 0) {
-        container.innerHTML = "No active assignment";
-        document.getElementById("status").innerText = "Status: Available";
-        return;
-    }
-
-    // 🔍 Filter active
-    const activeAssignments = assignments.filter(a => !a.resolved_at);
-
-    if (activeAssignments.length === 0) {
-        container.innerHTML = "No active assignment";
-        document.getElementById("status").innerText = "Status: Available";
-        return;
-    }
-
-    const a = activeAssignments[0];
-
-    document.getElementById("status").innerText = "Status: Assigned";
-
-    const severity = (a.severity || "low").toLowerCase();
-
-    container.innerHTML = `
-        <div style="margin-bottom: 10px;">
-            <b>${a.disaster_type || "Emergency"}</b>
-            <span class="badge ${severity}" style="float: right;">
-                ${severity.toUpperCase()}
-            </span>
-        </div>
-
-        <p>${a.description || "No description provided."}</p>
-
-        <p style="margin-top: 10px;">
-            Status: <b>${a.status || "assigned"}</b>
-        </p>
-
-        <button onclick="resolveAssignment('${a.need_id}', '${a.assignment_id}')"
-            style="margin-top: 15px; padding: 10px 20px; background-color: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%;">
-            Mark as Resolved
-        </button>
-    `;
+    // The assignment loading is now handled by initDashboard()
 }
 
-// ✅ Resolve assignment (FIXED)
-async function resolveAssignment(needId, assignmentId) {
+// ─── Dynamic Dashboard Population ─────────────────────────────────────────────
+function getSeverityClass(severity) {
+    if (!severity) return "severity-low";
+    const s = severity.toLowerCase();
+    if (s === "critical" || s === "very high" || s === "high") return "severity-high";
+    if (s === "medium") return "severity-medium";
+    return "severity-low";
+}
 
+async function initDashboard() {
+    const container = document.getElementById("volunteerDashboardBody");
+    if (!container) return;
+    container.innerHTML = "<tr><td colspan='6' style='padding: 12px; text-align: center;'>Loading...</td></tr>";
+
+    const response = await ApiService.getDashboard();
+    const data = response && response.ok ? response.data : null;
+
+    if (!data) {
+        container.innerHTML = "<tr><td colspan='6' style='padding: 12px; text-align: center;'>⚠️ Could not load dashboard data.</td></tr>";
+        return;
+    }
+
+    const reports = data.reports || [];
+    container.innerHTML = "";
+
+    if (!reports.length) {
+        container.innerHTML = "<tr><td colspan='6' style='padding: 12px; text-align: center;'>No active assignments.</td></tr>";
+        return;
+    }
+
+    reports.forEach(r => {
+        const severity = (r.severity || "low").toLowerCase();
+        const severityClass = getSeverityClass(severity);
+        const tr = document.createElement("tr");
+        tr.dataset.needId = r.id;
+        tr.style.borderBottom = "1px solid #2a2a3c";
+        const rName = r.reporter_name || "Unknown";
+        const isAssigned = r.status === "assigned";
+        const isResolved = r.status === "resolved";
+
+        // Actions column: show Resolve if assigned, Accept if open
+        let actionBtn = "—";
+        if (isAssigned && r.assignment_id) {
+            actionBtn = `<button
+                onclick="resolveAssignment('${r.id}','${r.assignment_id}',this)"
+                style="padding:5px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.78rem;font-weight:600;">
+                ✔ Resolve
+            </button>`;
+        } else if (!isResolved) {
+            actionBtn = `<button
+                onclick="acceptNeed('${r.id}',this)"
+                style="padding:5px 12px;background:#3b82f6;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.78rem;font-weight:600;">
+                ⚡ Accept
+            </button>`;
+        }
+
+        tr.innerHTML = `
+            <td style="padding: 12px;">${rName}</td>
+            <td style="padding: 12px;">${r.location || "N/A"}</td>
+            <td style="padding: 12px;">${r.disaster_type || "Emergency"}</td>
+            <td style="padding: 12px;">${r.summary_en || r.description || ""}</td>
+            <td class="${severityClass}" style="padding: 12px;">${r.status || "pending"}</td>
+            <td style="padding: 12px;">${actionBtn}</td>
+        `;
+        container.appendChild(tr);
+    });
+}
+
+// ─── Accept Need (Volunteer) ───────────────────────────────────────────────────
+async function acceptNeed(needId, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = "Accepting…"; }
+
+    const response = await ApiService.acceptNeed(needId);
+
+    if (response && response.ok) {
+        showToast("Need accepted — you are now assigned!", "success");
+        // Update status cell and swap button to Resolve in the same row
+        const row = btn ? btn.closest("tr") : null;
+        if (row) {
+            const statusCell = row.querySelector("td:nth-child(5)");
+            if (statusCell) {
+                statusCell.textContent = "assigned";
+                statusCell.className = "severity-high"; // high urgency once accepted
+            }
+            const assignmentId = response.data?.assignment_id || "";
+            btn.closest("td").innerHTML = `<button
+                onclick="resolveAssignment('${needId}','${assignmentId}',this)"
+                style="padding:5px 12px;background:#e74c3c;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.78rem;font-weight:600;">
+                ✔ Resolve
+            </button>`;
+        }
+    } else {
+        showToast(response?.error || "Could not accept need — please try again.", "error");
+        if (btn) { btn.disabled = false; btn.textContent = "⚡ Accept"; }
+    }
+}
+
+// ─── Resolve Assignment (Volunteer) ───────────────────────────────────────────
+async function resolveAssignment(needId, assignmentId, btn) {
     if (!confirm("Are you sure you want to mark this assignment as resolved?"))
         return;
 
-    const res = await ApiService.resolveAssignment(assignmentId, {
+    if (btn) { btn.disabled = true; btn.textContent = "Resolving…"; }
+
+    const response = await ApiService.resolveAssignment(assignmentId, {
         need_id: needId,
         volunteer_id: volunteerId
     });
 
-    if (res) {
-        alert("Assignment resolved successfully!");
-        loadProfile();
+    if (response && response.ok) {
+        showToast("Assignment resolved — great work! 🎉", "success");
+        const row = btn ? btn.closest("tr") : null;
+        if (row) {
+            row.style.transition = "opacity 0.4s ease";
+            row.style.opacity = "0";
+            row.addEventListener("transitionend", () => row.remove(), { once: true });
+        }
+        // Also update the profile status chip
+        const statusEl = document.getElementById("status");
+        if (statusEl) statusEl.innerText = "Status: Available";
     } else {
-        alert("Failed to resolve assignment");
+        showToast(response?.error || "Failed to resolve assignment.", "error");
+        if (btn) { btn.disabled = false; btn.textContent = "✔ Resolve"; }
     }
 }
 
 // 🚀 INIT
 loadProfile();
+initDashboard();

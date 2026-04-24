@@ -49,5 +49,6 @@ def dashboard():
         "low_priority_cases": low,
         "flagged_cases": flagged,
         "unmatched_cases": unmatched,
-        "recent_need": recent_need
+        "recent_need": recent_need,
+        "reports": needs
     }
