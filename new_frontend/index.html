@@ -47,8 +47,8 @@
     <!-- 📊 STATS -->
     <section class="stats">
         <div>
-            <h2 id="count">--</h2>
-            <p>Emergencies</p>
+            <h2 id="totalReports">0</h2>
+            <p>Total Reports</p>
         </div>
         <div>
             <h2 id="volunteer-count">--</h2>
@@ -65,43 +65,9 @@
         <iframe src="map.html"></iframe>
     </section>
 
-    <!-- ✅ COMMON JS -->
-    <script src="js/api.js"></script>
     <script src="js/common.js"></script>
-
-    <!-- 📊 STATS SCRIPT -->
-    <script>
-
-        async function loadStats() {
-            ["count", "volunteer-count", "ngo-count"].forEach(id => {
-                document.getElementById(id).innerText = "…";
-            });
-
-            try {
-                const response = await ApiService.getStats();
-
-                if (!response.ok) throw new Error(response.error || `HTTP Error`);
-
-                const data = response.data;
-                console.log("STATS:", data);
-
-                document.getElementById("count").innerText =
-                    data.total_reports ?? "--";
-                document.getElementById("volunteer-count").innerText =
-                    data.total_volunteers ?? "--";
-                document.getElementById("ngo-count").innerText =
-                    data.total_ngos ?? "--";
-
-            } catch (err) {
-                console.error("Error loading stats:", err);
-                ["count", "volunteer-count", "ngo-count"].forEach(id => {
-                    document.getElementById(id).innerText = "--";
-                });
-            }
-        }
-
-        loadStats();
-    </script>
+    <script src="js/api.js"></script>
+    <script src="js/index.js"></script>
 
 </body>
 

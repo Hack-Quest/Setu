@@ -1,12 +1,13 @@
 // new_frontend/js/api.js
-const API_BASE_URL = window.SETU_API_BASE_URL || '';
+// NOTE: Read lazily inside request() so common.js has time to set the value first.
+const getApiBaseUrl = () => window.SETU_API_BASE_URL || '';
 
 class ApiService {
     /**
      * Centralized request handler with dynamic Token injection.
      */
     static async request(endpoint, options = {}) {
-        const url = `${API_BASE_URL}${endpoint}`;
+        const url = `${getApiBaseUrl()}${endpoint}`;
         const token = localStorage.getItem('auth_token');
 
         const headers = {

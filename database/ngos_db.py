@@ -99,7 +99,7 @@ def get_volunteer_stats() -> dict:
 
 
 def get_report_stats() -> dict:
-    reports = db.collection("reports").stream()
+    reports = db.collection("needs_reports").stream()
 
     total_reports = 0
 
