@@ -22,7 +22,7 @@ def register_volunteer_auth(
     email: str, password: str, name: str, phone: str, location: str, skills: list
 ) -> dict:
     """Register a new volunteer with email and password authentication"""
-    # Check if email already exists
+
     existing = (
         db.collection("volunteers_auth")
         .where(filter=FieldFilter("email", "==", email))
@@ -31,12 +31,9 @@ def register_volunteer_auth(
     if list(existing):
         return {"error": "Email already registered"}
 
-    # Hash password
     password_hash = hash_password(password)
 
-    # Get coordinates
     from database.geocoding import get_coordinates
-
     coords = get_coordinates(location)
 
     volunteer_data = {
@@ -57,11 +54,12 @@ def register_volunteer_auth(
     }
 
     update_time, doc_ref = db.collection("volunteers_auth").add(volunteer_data)
-    # 🔥 ALSO SAVE IN MAIN VOLUNTEERS COLLECTION (FOR MATCHING)
-    doc_ref = db.collection("volunteers").document()
 
-    doc_ref.set({
-        "id": doc_ref.id,   # 🔥 ADD THIS
+    # 🔥 ALSO SAVE IN MAIN VOLUNTEERS COLLECTION (FOR MATCHING)
+    main_ref = db.collection("volunteers").document()
+
+    main_ref.set({
+        "id": main_ref.id,
         "name": name,
         "phone": phone,
         "skills": volunteer_data["skills"],
@@ -70,12 +68,12 @@ def register_volunteer_auth(
         "available": True,
         "active_assignments": 0,
     })
-    print(f"🦸 Volunteer registered with ID: {doc_ref.id}")
-    return {"success": True, "volunteer_id": doc_ref.id}
+
+    print(f"🦸 Volunteer registered with ID: {main_ref.id}")
+    return {"success": True, "volunteer_id": main_ref.id}
 
 
 def login_volunteer(email: str, password: str) -> dict:
-    """Authenticate volunteer with email and password"""
     docs = (
         db.collection("volunteers_auth")
         .where(filter=FieldFilter("email", "==", email))
@@ -105,17 +103,28 @@ def save_volunteer(data: dict) -> str:
     Registers a new volunteer in Firestore.
     Automatically marks them as available for deployment.
     """
-    # Normalize skills to lowercase for reliable category matching
+
+    # Normalize skills
     if "skills" in data and isinstance(data["skills"], list):
         data["skills"] = [s.lower().strip() for s in data["skills"]]
 
+    # 🔥 FIXED GEOLOGIC (ROBUST)
     from database.geocoding import get_coordinates
 
-    coords = get_coordinates(data.get("location"))
+    location_text = data.get("location") or data.get("location_text") or ""
+
+    coords = get_coordinates(location_text)
+
+    if not coords:
+        print(f"⚠️ Geocoding failed for location: {location_text}")
 
     data["lat"] = coords.get("lat", 0.0) if coords else 0.0
     data["lng"] = coords.get("lng", 0.0) if coords else 0.0
-    
+
+    # 🔥 SAFETY CHECK
+    if data["lat"] == 0.0 and data["lng"] == 0.0:
+        print("❌ WARNING: Volunteer saved with invalid coordinates")
+
     data["available"] = True
     data["active_assignments"] = 0
     data["registered_at"] = datetime.now(timezone.utc).isoformat()
@@ -127,9 +136,6 @@ def save_volunteer(data: dict) -> str:
 
 
 def get_available_volunteers(category: str = None) -> list:
-    """
-    Fetches available volunteers. Optionally filters by a specific skill.
-    """
     docs = (
         db.collection("volunteers")
         .where(filter=FieldFilter("available", "==", True))
@@ -144,9 +150,6 @@ def get_available_volunteers(category: str = None) -> list:
 
 
 def update_volunteer_status(doc_id: str, is_available: bool):
-    """
-    Toggles a volunteer's availability (e.g., False when they are on a mission).
-    """
     db.collection("volunteers").document(doc_id).update(
         {
             "available": is_available,
@@ -158,8 +161,5 @@ def update_volunteer_status(doc_id: str, is_available: bool):
 
 
 def get_all_volunteers() -> list:
-    """
-    Fetches all volunteers.
-    """
     docs = db.collection("volunteers").stream()
     return [{"id": doc.id, **doc.to_dict()} for doc in docs]
