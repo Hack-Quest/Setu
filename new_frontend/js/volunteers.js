@@ -117,13 +117,14 @@ function renderVolunteers(volunteers) {
         const skill = v.skill || v.skills || v.role || "No skills listed";
         const location = v.location || v.area || v.city || "";
         const phone = v.phone || v.contact || "";
-        const tier = v.tier || v.tier_level || "";
         const isAvailable = v.available === true || String(v.available).toLowerCase() === "true";
-
-        let badgeClass = "tier-badge";
-        if (String(tier).includes("1")) badgeClass += " tier-1";
-        else if (String(tier).includes("2")) badgeClass += " tier-2";
-        const tierBadgeHTML = tier ? `<span class="${badgeClass}">Tier ${String(tier).replace('Tier ', '')}</span>` : "";
+        const isTier1 = (v.ngo_verified === true || String(v.ngo_verified).toLowerCase() === "true") || 
+                        (Array.isArray(v.credential_tags) && v.credential_tags.length > 0) || 
+                        !!v.ngo_id;
+                        
+        const tierText = isTier1 ? "Tier 1 - Verified Responder" : "Tier 2 - Community Volunteer";
+        const badgeClass = isTier1 ? "tier-badge tier-1" : "tier-badge tier-2";
+        const tierBadgeHTML = `<span class="${badgeClass}">${tierText}</span>`;
 
         const item = document.createElement("div");
         item.className = "report-item";

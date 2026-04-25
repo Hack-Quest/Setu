@@ -45,7 +45,8 @@ def list_volunteers():
         volunteers = get_all_volunteers()
         # Strip sensitive fields before sending to frontend
         safe_fields = ["id", "name", "skills", "available", "location",
-                       "active_assignments", "ngo_id", "registered_at"]
+                       "active_assignments", "ngo_id", "registered_at",
+                       "ngo_verified", "credential_tags"]
         sanitized = [
             {k: v for k, v in vol.items() if k in safe_fields}
             for vol in volunteers
