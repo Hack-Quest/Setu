@@ -5,18 +5,6 @@ let currentMainFilter   = "total";    // "total" | "unassigned" | "assigned"
 let currentSeverity     = "all";      // "all" | "critical" | "high" | "medium"
 
 
-// ── Safe assignment detection ────────────────────────────────────────
-function isAssigned(r) {
-    return !!(
-        r.assigned_to ||
-        r.volunteer_id ||
-        r.assignedVolunteerId ||
-        r.assigned ||
-        (r.status && r.status.toLowerCase() === "assigned")
-    );
-}
-
-
 // ── Data loading (API call UNCHANGED) ───────────────────────────────
 async function loadReports() {
     document.getElementById("reports-loading").style.display = "flex";
@@ -49,7 +37,7 @@ async function loadReports() {
             allReports = [];
         }
 
-        console.log("FINAL REPORTS:", allReports);
+        console.log("REPORTS RECEIVED:", allReports);
         if (allReports.length > 0) {
             console.log("SAMPLE REPORT:", allReports[0]);
         }
@@ -70,7 +58,7 @@ async function loadReports() {
 // ── Stats panel ──────────────────────────────────────────────────────
 function updateStats() {
     const total = allReports.length;
-    const assigned = allReports.filter(r => isAssigned(r)).length;
+    const assigned = allReports.filter(r => r.assigned === true).length;
     const unassigned = total - assigned;
 
     console.log("STATS:", { total, assigned, unassigned });
@@ -88,9 +76,9 @@ function getFilteredSet() {
 
     // Main filter (total / unassigned / assigned)
     if (currentMainFilter === "unassigned") {
-        base = base.filter(r => !isAssigned(r));
+        base = base.filter(r => !r.assigned);
     } else if (currentMainFilter === "assigned") {
-        base = base.filter(r =>  isAssigned(r));
+        base = base.filter(r => r.assigned === true);
     }
 
     // Severity sub-filter

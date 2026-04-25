@@ -10,8 +10,29 @@ router = APIRouter(prefix="/dashboard")
 @router.get("/reports")
 def get_reports_endpoint():
     from database.needs_db import get_all_needs
-    # Return directly as a list
-    return get_all_needs()
+    
+    docs = get_all_needs()
+    reports = []
+    
+    for r in docs:
+        # Normalize assignment status for the frontend
+        is_assigned = bool(
+            r.get("assigned_to") or
+            r.get("volunteer_id") or
+            r.get("assignedVolunteerId") or
+            r.get("assigned") == True or
+            str(r.get("status")).lower() == "assigned"
+        )
+        r["assigned"] = is_assigned
+        r["status"] = "assigned" if is_assigned else "unassigned"
+        reports.append(r)
+        
+    print("TOTAL REPORTS RETURNED:", len(reports))
+    
+    return {
+        "ok": True,
+        "data": reports
+    }
 
 @router.get("")
 def dashboard():
