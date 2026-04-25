@@ -21,15 +21,7 @@ def create_volunteer(data: VolunteerInput, token: str = Depends(verify_token)): 
         volunteer_dict.pop("ngo_id", None)
         volunteer_dict.pop("credential_tags", None)
 
-        # 🌍 Auto-geocode location
-        coords = get_coordinates(data.location)
-        if coords:
-            volunteer_dict["lat"] = coords.get("lat", 0.0)
-            volunteer_dict["lng"] = coords.get("lng", 0.0)
-
-        # 🧹 Don't persist the raw location string
-        volunteer_dict.pop("location", None)
-
+        # Geocoding and location handling is now centralized in save_volunteer()
         print("📥 Incoming Volunteer Data:", volunteer_dict)
 
         save_volunteer(volunteer_dict)

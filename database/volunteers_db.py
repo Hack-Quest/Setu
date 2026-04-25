@@ -105,44 +105,65 @@ def login_volunteer(email: str, password: str) -> dict:
     }
 
 
-def save_volunteer(data: dict) -> str:
+def save_volunteer(data) -> str:
     """
     Registers a new volunteer in Firestore.
     Automatically marks them as available for deployment.
     """
 
     # Normalize skills
-    if "skills" in data and isinstance(data["skills"], list):
+    if isinstance(data, dict) and "skills" in data and isinstance(data["skills"], list):
         data["skills"] = [s.lower().strip() for s in data["skills"]]
 
-    # 🔥 FIXED GEOLOGIC (ROBUST)
     from database.geocoding import get_coordinates
 
-    location_text = data.get("location") or data.get("location_text") or ""
+    # 🔥 HANDLE BOTH dict AND object
+    if isinstance(data, dict):
+        location_text = data.get("location") or data.get("location_text") or ""
+    else:
+        location_text = getattr(data, "location", None) or getattr(data, "location_text", None) or ""
+
+    print("📍 LOCATION RECEIVED:", location_text)
+
+    # 🚨 HARD VALIDATION
+    if not location_text.strip():
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="Location is required"
+        )
 
     coords = get_coordinates(location_text)
 
-    if not coords or coords.get("lat") == 0 or coords.get("lng") == 0:
+    # ✅ FINAL VALIDATION
+    if not coords or coords.get("lat") is None or coords.get("lng") is None:
         from fastapi import HTTPException
         raise HTTPException(
             status_code=400,
             detail=f"Invalid or unresolvable location: {location_text}"
         )
 
-    data["lat"] = coords["lat"]
-    data["lng"] = coords["lng"]
+    # 🔥 STORE CORRECTLY
+    if isinstance(data, dict):
+        data["lat"] = coords["lat"]
+        data["lng"] = coords["lng"]
+        data["available"] = True
+        data["active_assignments"] = 0
+        data["registered_at"] = datetime.now(timezone.utc).isoformat()
 
-    # 🔥 SAFETY CHECK
-    if data["lat"] == 0.0 and data["lng"] == 0.0:
-        print("❌ WARNING: Volunteer saved with invalid coordinates")
+        update_time, doc_ref = db.collection("volunteers").add(data)
+    else:
+        # If it's an object, convert to dict
+        data_dict = data.dict()
+        data_dict["lat"] = coords["lat"]
+        data_dict["lng"] = coords["lng"]
+        data_dict["available"] = True
+        data_dict["active_assignments"] = 0
+        data_dict["registered_at"] = datetime.now(timezone.utc).isoformat()
 
-    data["available"] = True
-    data["active_assignments"] = 0
-    data["registered_at"] = datetime.now(timezone.utc).isoformat()
+        update_time, doc_ref = db.collection("volunteers").add(data_dict)
 
-    update_time, doc_ref = db.collection("volunteers").add(data)
-
-    print(f"Volunteer registered: {doc_ref.id}")
+    print(f"✅ Volunteer registered: {doc_ref.id}")
     return doc_ref.id
 
 

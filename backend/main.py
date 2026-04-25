@@ -132,8 +132,6 @@ async def webhook(request: Request, payload: Dict, background_tasks: BackgroundT
 async def webhook_ngo_register_alias(request: Request, payload: Dict, background_tasks: BackgroundTasks):
     # If a form hits this accidentally, we still process it as an SOS/Need
     try:
-        coords = get_coordinates(payload.get("location", "")) or {"lat": 0, "lng": 0}
-
         mapped_volunteer = {
             "name": payload.get("volunteer_name", "Unknown"),
             "email": payload.get("email", "no-email@setu.com"),  # ✅ Field added to fix the "test" email issue
@@ -143,8 +141,7 @@ async def webhook_ngo_register_alias(request: Request, payload: Dict, background
                 if payload.get("skills")
                 else []
             ),
-            "lat": coords["lat"],
-            "lng": coords["lng"],
+            "location": payload.get("location", ""),
             "ngo_id": payload.get("ngo_id", None),
             "available": True,
             "active_assignments": 0

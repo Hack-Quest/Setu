@@ -12,7 +12,7 @@ def get_coordinates(address: str) -> dict:
     Automatically falls back to OpenStreetMap if Google fails or is missing a key.
     """
     api_key = os.getenv("GOOGLE_MAPS_KEY")
-
+    print("API KEY:", api_key)
     # try google maps
     if api_key:
         for attempt in range(2):
@@ -26,11 +26,13 @@ def get_coordinates(address: str) -> dict:
                     return {"lat": loc["lat"], "lng": loc["lng"]}
                 else:
                     print(f"Google Maps found no results for: {address}. Trying OSM...")
+                    break
                     
             except Exception as e:
+                print(f"Google Maps API failed ({e}).")
                 if attempt == 1:
-                    return None
-                print(f"Google Maps API failed ({e}). Falling back to OSM...")
+                    print("Falling back to OSM...")
+                    break
     else:
          print("GOOGLE_MAPS_KEY is missing. Defaulting to OpenStreetMap...")
 
