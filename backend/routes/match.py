@@ -118,7 +118,7 @@ def find_best_volunteer(need: dict, all_volunteers: list) -> dict | None:
 # Main match route — global priority ordering
 # ---------------------------------------------------------------------------
 @router.get("")
-def match_needs(token: str = Depends(verify_token)):
+def match_needs():
     """
     Runs the global priority matching pass:
     1. Sort all open needs by severity (critical first).
