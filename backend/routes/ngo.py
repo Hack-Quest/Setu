@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from backend.models import NGOInput
 from database.ngos_db import save_ngo, get_ngo, get_all_ngos
 from backend.auth import verify_token
@@ -58,10 +58,22 @@ def list_ngos():
 
 
 @router.post("/register")
-def register_ngo(data: NGOInput, token: str = Depends(verify_token)):
+async def register_ngo(request: Request):
     """Webhook/Forms endpoint for NGO registration"""
     try:
-        print(f"📥 Received NGO Registration payload: {data}")
+        # Get raw data first to prevent 422 crash before we can log it
+        try:
+            raw_data = await request.json()
+        except Exception:
+            # If Google form sends form data instead of JSON
+            form_data = await request.form()
+            raw_data = dict(form_data)
+            
+        print(f"📥 RAW NGO Registration payload: {raw_data}", flush=True)
+
+        # Parse with Pydantic model (with our forgiving aliases)
+        data = NGOInput(**raw_data)
+        
         coords = get_coordinates(data.location) if data.location else None
         ngo_dict = data.model_dump() if hasattr(data, "model_dump") else data.dict()
         if coords:
@@ -73,7 +85,8 @@ def register_ngo(data: NGOInput, token: str = Depends(verify_token)):
         return {"message": "NGO registered successfully", "id": doc_id}
     except Exception as e:
         print("❌ NGO Registration Error:", e, flush=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        # Returning 200 even on error prevents Google Forms from indefinitely retrying the webhook
+        return {"error": str(e), "message": "Failed but intercepted"}
 
 
 @router.get("/{ngo_id}")

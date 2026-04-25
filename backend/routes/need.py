@@ -78,9 +78,18 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         consistency = ai_result["consistency"]
 
         # 3️⃣ GEOLOCATION
-        coords = get_coordinates(data.location_text) or {}
-        lat = coords.get("lat", 0)
-        lng = coords.get("lng", 0)
+        lat = data.lat
+        lng = data.lng
+        
+        # Geocode only if exact coords aren't provided
+        if lat == 0.0 and lng == 0.0 and data.location_text.strip() and data.location_text != "Unknown Location":
+            coords = get_coordinates(data.location_text) or {}
+            lat = coords.get("lat", 0.0)
+            lng = coords.get("lng", 0.0)
+            
+        # Fallback string representation if none provided
+        if lat != 0.0 and lng != 0.0 and (not data.location_text.strip() or data.location_text == "Unknown Location"):
+            data.location_text = f"{lat}, {lng}"
 
         payload = data.model_dump() if hasattr(data, "model_dump") else data.dict()
 

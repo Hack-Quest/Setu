@@ -110,11 +110,28 @@ def public_config():
 @limiter.limit("5/minute")
 async def webhook(request: Request, payload: Dict, background_tasks: BackgroundTasks):
     try:
+        print(f"📥 RAW Need Webhook payload: {payload}", flush=True)
+        
+        def safe_float(val):
+            try:
+                if val is None or str(val).strip() == "":
+                    return 0.0
+                return float(val)
+            except (ValueError, TypeError):
+                return 0.0
+
+        # Concatenate everything into description so the AI doesn't miss the full story
+        # if the user typed their emergency into the wrong box.
+        full_desc = f"Report: {payload.get('description', '')} | Details: {payload.get('location', '')} | Help: {payload.get('help_needed', '')}"
+
         mapped_data = {
             "reporter_name": payload.get("reporter_name", "Unknown"),
             "reporter_phone": payload.get("reporter_phone", "0000000000"),
-            "description": payload.get("description", ""),
-            "location": payload.get("location", "Unknown Location"),
+            "description": full_desc,
+            # Fallback to help_needed if location is a huge paragraph or empty
+            "location_text": payload.get("location") or payload.get("help_needed") or payload.get("address") or "Unknown Location",
+            "lat": safe_float(payload.get("lat") or payload.get("Latitude") or payload.get("latitude")),
+            "lng": safe_float(payload.get("lng") or payload.get("Longitude") or payload.get("longitude")),
             "disaster_type": payload.get("disaster_type", "Not Specified"),
             "help_needed": payload.get("help_needed", "Not Specified"),
         }

@@ -3,14 +3,16 @@ from typing import List, Optional
 
 
 class NeedInput(BaseModel):
-    reporter_name: str
-    reporter_phone: str
+    reporter_name: str = Field(default="Unknown", validation_alias=AliasChoices("reporter_name", "name"))
+    reporter_phone: str = Field(default="0000000000", validation_alias=AliasChoices("reporter_phone", "phone"))
     location_text: str = Field(
-        validation_alias=AliasChoices("location_text", "location")
+        default="", validation_alias=AliasChoices("location_text", "location", "address")
     )
-    disaster_type: str
-    help_needed: str
-    description: str
+    lat: float = 0.0
+    lng: float = 0.0
+    disaster_type: str = Field(default="Not Specified")
+    help_needed: str = Field(default="Not Specified")
+    description: str = Field(default="")
 
 
 class VolunteerInput(BaseModel):
@@ -42,9 +44,9 @@ class VolunteerLoginInput(BaseModel):
 
 
 class NGOInput(BaseModel):
-    ngo_name: str
-    owner_name: str
-    reg_number: str
+    ngo_name: str = Field(default="Unknown NGO", validation_alias=AliasChoices("ngo_name", "organization_name", "name", "organization"))
+    owner_name: str = Field(default="Unknown Admin", validation_alias=AliasChoices("owner_name", "contact_name", "admin", "owner"))
+    reg_number: str = Field(default="PENDING", validation_alias=AliasChoices("reg_number", "registration_number", "reg_no"))
     location: str = Field(default="", validation_alias=AliasChoices("location", "coverage_area"))
     lat: float = 0.0
     lng: float = 0.0
