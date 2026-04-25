@@ -149,7 +149,12 @@ def match_needs(token: str = Depends(verify_token)):
             continue
 
         need_id  = need.get("id")
-        need_category = (need.get("category") or "").lower()
+        need_category = (
+            need.get("help_needed") or
+            need.get("category") or
+            need.get("disaster_type") or
+            ""
+        ).lower()
         is_sensitive  = need_category in _SENSITIVE_CATEGORIES
         severity      = (need.get("severity") or "low").lower()
 
