@@ -83,9 +83,25 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         
         # Geocode only if exact coords aren't provided
         if lat == 0.0 and lng == 0.0 and data.location_text.strip() and data.location_text != "Unknown Location":
-            coords = get_coordinates(data.location_text) or {}
-            lat = coords.get("lat", 0.0)
-            lng = coords.get("lng", 0.0)
+            coords = get_coordinates(data.location_text)
+
+            # 🚨 HARD FAIL (MANDATORY)
+            if not coords or coords.get("lat") == 0 or coords.get("lng") == 0:
+                from fastapi import HTTPException
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid or unresolvable location: {data.location_text}"
+                )
+
+            lat = coords["lat"]
+            lng = coords["lng"]
+        # 🚨 FINAL SAFETY CHECK (DO NOT SKIP)
+        if lat == 0.0 and lng == 0.0:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=400,
+                detail="Geocoding failed — coordinates are invalid"
+            )
             
         # Fallback string representation if none provided
         if lat != 0.0 and lng != 0.0 and (not data.location_text.strip() or data.location_text == "Unknown Location"):
