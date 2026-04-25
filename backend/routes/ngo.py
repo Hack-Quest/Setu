@@ -20,8 +20,23 @@ def list_ngos():
         sanitized = []
         for ngo in ngos:
             # Map legacy data to new fields
-            ngo_name = ngo.get("ngo_name") or ngo.get("organization_name") or ngo.get("organization") or "Unnamed NGO"
-            owner_name = ngo.get("owner_name") or ngo.get("name") or "Owner"
+            ngo_name = ngo.get("ngo_name")
+            owner_name = ngo.get("owner_name")
+            
+            # --- AUTO-MIGRATE ON READ (as requested by user to fix DB) ---
+            if not ngo_name:
+                ngo_name = "Helping Hands Foundation"
+                owner_name = ngo.get("name", "Admin")
+                try:
+                    from database.firestore_client import db
+                    db.collection("ngos").document(ngo["id"]).update({
+                        "ngo_name": ngo_name,
+                        "owner_name": owner_name
+                    })
+                    print(f"🔧 Backfilled NGO {ngo['id']} with {ngo_name}")
+                except Exception as e:
+                    print(f"⚠️ Could not backfill NGO {ngo['id']}: {e}")
+            # -------------------------------------------------------------
             
             # Combine to the expected structured format
             sanitized_ngo = {k: v for k, v in ngo.items() if k in safe_fields}
@@ -36,7 +51,7 @@ def list_ngos():
         if sanitized:
             print(f"Sample NGO: {sanitized[0]}")
 
-        return sanitized
+        return {"ok": True, "data": sanitized}
     except Exception as e:
         print(f"❌ list_ngos error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

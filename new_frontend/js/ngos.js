@@ -81,8 +81,8 @@ function renderNGOs(ngos) {
     }
 
     ngos.forEach(ngo => {
-        // ── Strictly use NGO Name, but gracefully label legacy names to avoid pure "Unnamed NGO" ──
-        const ngoName = ngo.ngo_name || ngo.organization_name || (ngo.name ? `${ngo.name} (Organization Pending)` : "Unnamed NGO");
+        // ── Strictly use NGO Name ──
+        const ngoName = ngo.ngo_name || ngo.organization_name || "Unnamed NGO";
         
         const description = ngo.description || ngo.type || ngo.category || ngo.ngo_type || "No description available";
         const region = ngo.region || ngo.area || ngo.city || ngo.location || "";

@@ -494,6 +494,25 @@ nav a:hover {
     color: var(--text-bright) !important;
 }
 
+.nav-run-btn {
+    background: #ff6b00;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    margin-left: 25px;
+
+    /* REMOVE GLOW */
+    box-shadow: none;
+    transition: background 0.2s ease;
+}
+
+.nav-run-btn:hover {
+    background: #e55a00;
+}
+
 .nav-login-btn {
     border: 1px solid var(--border) !important;
     padding: 6px 16px;
