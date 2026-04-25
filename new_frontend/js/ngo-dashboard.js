@@ -193,10 +193,12 @@ async function handleExcelUpload(event) {
                 name: row["name"] || row["Name"] || row["volunteer_name"] || "Unknown",
                 phone: String(row["phone"] || row["Phone"] || "0000000000"),
                 location: row["location"] || row["Location"] || "",
+                lat: parseFloat(row["Latitude"] || row["lat"] || 0),
+                lng: parseFloat(row["Longitude"] || row["lng"] || 0),
                 skills: skillsArray,
                 // NGO bulk-add doesn't require volunteer email/password — use placeholder;
                 // the backend /volunteer route strips privileged fields anyway.
-                email: row["email"] || row["Email"] || `${Date.now()}@ngo-upload.internal`,
+                email: row["email"] || row["Email"] || `${Date.now()}-${Math.floor(Math.random() * 1000)}@ngo-upload.internal`,
                 password: "BulkUpload!1",
                 ngo_id: row["ngo_id"] || row["NGO ID"] || null
             };

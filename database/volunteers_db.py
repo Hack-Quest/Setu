@@ -120,28 +120,42 @@ def save_volunteer(data) -> str:
     # 🔥 HANDLE BOTH dict AND object
     if isinstance(data, dict):
         location_text = data.get("location") or data.get("location_text") or ""
+        lat = float(data.get("lat", 0.0))
+        lng = float(data.get("lng", 0.0))
     else:
         location_text = getattr(data, "location", None) or getattr(data, "location_text", None) or ""
+        lat = float(getattr(data, "lat", 0.0))
+        lng = float(getattr(data, "lng", 0.0))
 
     print("📍 LOCATION RECEIVED:", location_text)
 
-    # 🚨 HARD VALIDATION
-    if not location_text.strip():
-        from fastapi import HTTPException
-        raise HTTPException(
-            status_code=400,
-            detail="Location is required"
-        )
+    # ✅ Skip geocoding if coordinates are already provided
+    if lat != 0.0 and lng != 0.0:
+        coords = {"lat": lat, "lng": lng}
+        if not location_text.strip():
+            location_text = f"{lat}, {lng}"
+    else:
+        # 🚨 HARD VALIDATION
+        if not location_text.strip():
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=400,
+                detail="Location is required"
+            )
 
-    coords = get_coordinates(location_text)
+        coords = get_coordinates(location_text)
 
-    # ✅ FINAL VALIDATION
-    if not coords or coords.get("lat") is None or coords.get("lng") is None:
-        from fastapi import HTTPException
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid or unresolvable location: {location_text}"
-        )
+        # ✅ FINAL VALIDATION
+        if not coords or coords.get("lat") is None or coords.get("lng") is None:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid or unresolvable location: {location_text}"
+            )
+
+    # Finally, ensure we're saving the correct location text and coords back into data
+    if isinstance(data, dict):
+        data["location"] = location_text
 
     # 🔥 STORE CORRECTLY
     if isinstance(data, dict):
