@@ -42,6 +42,22 @@ def get_open_needs() -> list:
     return [{**doc.to_dict(), "id": doc.id} for doc in docs]
 
 
+def get_all_needs() -> list:
+    """
+    Fetches all needs from Firestore regardless of status, so the dashboard
+    can see total, unassigned, and assigned reports accurately.
+    """
+    docs = list(db.collection("needs_reports").stream())
+    
+    print("\n[DB DEBUG] fetching from 'needs_reports' collection...")
+    print(f"[DB DEBUG] TOTAL DOCS FOUND: {len(docs)}")
+    
+    for d in docs:
+        print(f"[DB DEBUG] Doc {d.id} -> {d.to_dict()}")
+        
+    return [{**doc.to_dict(), "id": doc.id} for doc in docs]
+
+
 def get_need_by_id(doc_id: str) -> dict:
     """Fetches a single need by its exact Firestore document ID."""
     doc = db.collection("needs_reports").document(str(doc_id)).get()

@@ -4,49 +4,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SETU - Reports</title>
+    <title>SETU – Emergency Reports</title>
+    <meta name="description" content="Live emergency needs reports on the SETU disaster response platform.">
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
-
-    <style>
-        /* 👉 TEMP FIX (layout issue solve) */
-        .container {
-            max-width: 900px;
-            margin: auto;
-        }
-
-        .report-card {
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-    </style>
+    <link rel="stylesheet" href="css/reports.css">
 </head>
 
 <body>
 
+    <!-- 🔝 NAVBAR -->
     <header class="main-header">
         <div class="logo">SETU</div>
-
         <nav>
             <a href="index.html">Home</a>
-            <a href="reports.html">Reports</a>
+            <a href="reports.html" class="nav-active">Reports</a>
             <a href="map.html">Map</a>
             <a href="#" onclick="openNeedForm()">Report Need</a>
-            <a href="login.html">Login</a>
+            <a href="login.html" class="nav-login-btn">Login</a>
         </nav>
     </header>
 
-    <div class="container">
+    <!-- 📐 MAIN CONTAINER -->
+    <div class="reports-container">
 
-        <h1>Live Reports</h1>
+        <!-- Page header -->
+        <div class="ops-page-header">
+            <div>
+                <h1 class="ops-title">Emergency Reports</h1>
+                <p class="ops-subtitle">Live incident feed — click a stat to filter</p>
+            </div>
 
-        <div class="filters">
-            <button onclick="filterReports('all')">All</button>
-            <button onclick="filterReports('critical')">Critical</button>
-            <button onclick="filterReports('high')">High</button>
-            <button onclick="filterReports('medium')">Medium</button>
+            <!-- Filter bar -->
+            <div class="ops-filters">
+                <button class="filter-btn filter-btn--active" onclick="filterReports('all')" id="filter-all">All</button>
+                <button class="filter-btn filter-btn--critical" onclick="filterReports('critical')" id="filter-critical">Critical</button>
+                <button class="filter-btn filter-btn--high" onclick="filterReports('high')" id="filter-high">High</button>
+                <button class="filter-btn filter-btn--medium" onclick="filterReports('medium')" id="filter-medium">Medium</button>
+            </div>
         </div>
 
-        <div id="reportsList"></div>
+        <!-- 📊 STATS BAR (clickable filters) -->
+        <div class="stats-bar">
+            <div class="rpt-stat-card rpt-stat-card--active" id="stat-total" onclick="applyMainFilter('total')" title="Show all reports">
+                <h3 id="totalReports">—</h3>
+                <p>Total Reports</p>
+            </div>
+            <div class="rpt-stat-card rpt-stat-card--alert" id="stat-unassigned" onclick="applyMainFilter('unassigned')" title="Show unassigned only">
+                <h3 id="unassignedCount">—</h3>
+                <p>Unassigned</p>
+            </div>
+            <div class="rpt-stat-card rpt-stat-card--ok" id="stat-assigned" onclick="applyMainFilter('assigned')" title="Show assigned only">
+                <h3 id="assignedCount">—</h3>
+                <p>Assigned</p>
+            </div>
+        </div>
+
+        <!-- Loading state -->
+        <div id="reports-loading" class="ops-loading">
+            <div class="ops-spinner"></div>
+            <p>Fetching incident reports…</p>
+        </div>
+
+        <!-- Empty state -->
+        <div id="reports-empty" class="ops-empty" style="display:none;">
+            ✅ No unassigned reports at this time.
+        </div>
+
+        <!-- Report grid — single section -->
+        <div id="reportsList" class="report-list"></div>
 
     </div>
 
@@ -57,5 +86,4 @@
     <script src="js/reports.js"></script>
 
 </body>
-
 </html>
