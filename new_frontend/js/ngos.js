@@ -9,6 +9,7 @@ async function loadNGOs() {
 
     try {
         const response = await ApiService.getNGOs();
+        console.log("📥 GET NGOs API Response:", response);
 
         if (!response || (!response.data && !Array.isArray(response))) {
             console.error("NO DATA FROM API");
@@ -18,6 +19,7 @@ async function loadNGOs() {
         }
 
         const data = response.data || response;
+        console.log("🎯 Processed NGO Data:", data);
 
         // Normalize Data
         if (Array.isArray(data)) {
@@ -79,8 +81,8 @@ function renderNGOs(ngos) {
     }
 
     ngos.forEach(ngo => {
-        // ── Prioritize NGO Name over Owner Name ──
-        const ngoName = ngo.ngo_name || ngo.organization_name || ngo.organization || ngo.name || "NGO";
+        // ── Strictly use NGO Name, but gracefully label legacy names to avoid pure "Unnamed NGO" ──
+        const ngoName = ngo.ngo_name || ngo.organization_name || (ngo.name ? `${ngo.name} (Organization Pending)` : "Unnamed NGO");
         
         const description = ngo.description || ngo.type || ngo.category || ngo.ngo_type || "No description available";
         const region = ngo.region || ngo.area || ngo.city || ngo.location || "";

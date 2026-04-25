@@ -15,13 +15,27 @@ def list_ngos():
     """Public endpoint — returns all registered NGOs."""
     try:
         ngos = get_all_ngos()
-        # Only expose safe public fields
         safe_fields = ["id", "ngo_name", "owner_name", "description", "type", "location", "email",
                        "phone", "verified", "registered_at", "region"]
-        sanitized = [
-            {k: v for k, v in ngo.items() if k in safe_fields}
-            for ngo in ngos
-        ]
+        sanitized = []
+        for ngo in ngos:
+            # Map legacy data to new fields
+            ngo_name = ngo.get("ngo_name") or ngo.get("organization_name") or ngo.get("organization") or "Unnamed NGO"
+            owner_name = ngo.get("owner_name") or ngo.get("name") or "Owner"
+            
+            # Combine to the expected structured format
+            sanitized_ngo = {k: v for k, v in ngo.items() if k in safe_fields}
+            sanitized_ngo["ngo_name"] = ngo_name
+            sanitized_ngo["owner_name"] = owner_name
+            sanitized_ngo.setdefault("verified", False)
+            sanitized_ngo.setdefault("email", ngo.get("email", ""))
+            sanitized_ngo.setdefault("description", ngo.get("description", ""))
+            sanitized.append(sanitized_ngo)
+
+        print(f"✅ Returned {len(sanitized)} structured NGOs")
+        if sanitized:
+            print(f"Sample NGO: {sanitized[0]}")
+
         return sanitized
     except Exception as e:
         print(f"❌ list_ngos error: {e}")
@@ -32,6 +46,7 @@ def list_ngos():
 def register_ngo(data: NGOInput, token: str = Depends(verify_token)):
     """Webhook/Forms endpoint for NGO registration"""
     try:
+        print(f"📥 Received NGO Registration payload: {data}")
         coords = get_coordinates(data.location) if data.location else None
         ngo_dict = data.model_dump() if hasattr(data, "model_dump") else data.dict()
         if coords:

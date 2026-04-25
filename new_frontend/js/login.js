@@ -71,7 +71,9 @@ async function verifyOTP() {
         }
 
         // Name
-        if (data.name) {
+        if (data.ngo_name) {
+            localStorage.setItem("name", data.ngo_name);
+        } else if (data.name) {
             localStorage.setItem("name", data.name);
         }
 

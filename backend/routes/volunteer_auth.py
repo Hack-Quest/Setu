@@ -90,10 +90,17 @@ def verify_otp_endpoint(data: VerifyOTPInput):
         # Check if NGO
         ngo = get_ngo_by_email(email)
         if ngo:
+            ngo_name = ngo.get("ngo_name") or ngo.get("organization_name") or ngo.get("organization") or "Unnamed NGO"
+            owner_name = ngo.get("owner_name") or ngo.get("name") or "Owner"
             return {
                 "token": SECRET_TOKEN,
                 "role": "ngo",
-                "id": ngo["id"]
+                "id": ngo["id"],
+                "ngo_name": ngo_name,
+                "owner_name": owner_name,
+                "email": ngo.get("email", email),
+                "verified": ngo.get("verified", False),
+                "description": ngo.get("description", "")
             }
             
         # 🔍 Fetch volunteer from volunteers_auth collection (registered via app)
