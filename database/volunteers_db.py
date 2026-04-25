@@ -58,7 +58,10 @@ def register_volunteer_auth(
 
     update_time, doc_ref = db.collection("volunteers_auth").add(volunteer_data)
     # 🔥 ALSO SAVE IN MAIN VOLUNTEERS COLLECTION (FOR MATCHING)
-    db.collection("volunteers").add({
+    doc_ref = db.collection("volunteers").document()
+
+    doc_ref.set({
+        "id": doc_ref.id,   # 🔥 ADD THIS
         "name": name,
         "phone": phone,
         "skills": volunteer_data["skills"],
