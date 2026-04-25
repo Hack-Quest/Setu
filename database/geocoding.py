@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 import googlemaps
 from dotenv import load_dotenv
@@ -14,19 +15,22 @@ def get_coordinates(address: str) -> dict:
 
     # try google maps
     if api_key:
-        try:
-            client = googlemaps.Client(key=api_key)
-            result = client.geocode(address)
-            
-            if result:
-                loc = result[0]["geometry"]["location"]
-                # print("Geocoded via Google Maps")
-                return {"lat": loc["lat"], "lng": loc["lng"]}
-            else:
-                print(f"Google Maps found no results for: {address}. Trying OSM...")
+        for attempt in range(2):
+            try:
+                client = googlemaps.Client(key=api_key)
+                result = client.geocode(address)
                 
-        except Exception as e:
-            print(f"Google Maps API failed ({e}). Falling back to OSM...")
+                if result:
+                    loc = result[0]["geometry"]["location"]
+                    # print("Geocoded via Google Maps")
+                    return {"lat": loc["lat"], "lng": loc["lng"]}
+                else:
+                    print(f"Google Maps found no results for: {address}. Trying OSM...")
+                    
+            except Exception as e:
+                if attempt == 1:
+                    return None
+                print(f"Google Maps API failed ({e}). Falling back to OSM...")
     else:
          print("GOOGLE_MAPS_KEY is missing. Defaulting to OpenStreetMap...")
 
@@ -43,6 +47,7 @@ def get_coordinates(address: str) -> dict:
             "User-Agent": "Setu" 
         }
 
+        time.sleep(1)
         response = requests.get(url, params=params, headers=headers, timeout=10)
         response.raise_for_status() # Catches HTTP errors
         data = response.json()

@@ -35,6 +35,13 @@ def register_volunteer_auth(
 
     from database.geocoding import get_coordinates
     coords = get_coordinates(location)
+    
+    if not coords or coords.get("lat") == 0 or coords.get("lng") == 0:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid or unresolvable location: {location}"
+        )
 
     volunteer_data = {
         "email": email,
@@ -47,8 +54,8 @@ def register_volunteer_auth(
             if isinstance(skills, list)
             else [skills.lower().strip()]
         ),
-        "lat": coords.get("lat", 0.0) if coords else 0.0,
-        "lng": coords.get("lng", 0.0) if coords else 0.0,
+        "lat": coords["lat"],
+        "lng": coords["lng"],
         "available": True,
         "registered_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -115,11 +122,15 @@ def save_volunteer(data: dict) -> str:
 
     coords = get_coordinates(location_text)
 
-    if not coords:
-        print(f"⚠️ Geocoding failed for location: {location_text}")
+    if not coords or coords.get("lat") == 0 or coords.get("lng") == 0:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid or unresolvable location: {location_text}"
+        )
 
-    data["lat"] = coords.get("lat", 0.0) if coords else 0.0
-    data["lng"] = coords.get("lng", 0.0) if coords else 0.0
+    data["lat"] = coords["lat"]
+    data["lng"] = coords["lng"]
 
     # 🔥 SAFETY CHECK
     if data["lat"] == 0.0 and data["lng"] == 0.0:
