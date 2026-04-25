@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path="config/.env")
 
 # ================= CONFIG =================
-BASE_URL = os.getenv("SETU_BASE_URL")
+BASE_URL = os.getenv("SETU_API_BASE_URL") or os.getenv("SETU_BASE_URL")
 SECRET_TOKEN = os.getenv("SECRET_TOKEN")
 
 if not BASE_URL:
@@ -144,13 +144,10 @@ def register_volunteer():
         "password": getpass("Password: "),
         "phone": input("Phone: "),
         "location": input("Location: "),
-        "skills": [s.strip().lower() for s in skills_input.split(",")],
-        "lat": 26.45,
-        "lng": 80.33,
-        "ngo_id": input("NGO ID (optional): ") or None
+        "skills": [s.strip().lower() for s in skills_input.split(",") if s.strip()]
     }
 
-    res = _post("/volunteer", payload)
+    res = _post("/auth/register", payload, auth=False)
     data = handle_response(res)
     if not data:
         pause()
@@ -237,27 +234,27 @@ def bulk_upload_volunteers():
             success = failed = 0
 
             for row in reader:
-                skills_clean = ",".join([
-                    s.strip().lower() for s in row.get("skills", "").split(",")
-                ])
+                # Skills may be a comma-separated string in CSV
+                raw_skills = row.get("skills") or row.get("Skills") or ""
+                skills_list = [s.strip().lower() for s in raw_skills.split(",") if s.strip()]
 
                 payload = {
-                    "volunteer_name": row.get("name"),
-                    "phone": row.get("phone"),
-                    "location": row.get("location"),
-                    "skills": skills_clean,
+                    "name": row.get("name") or row.get("Name") or "Unknown",
+                    "phone": str(row.get("phone") or row.get("Phone") or "0000000000"),
+                    "location": row.get("location") or row.get("Location") or "",
+                    "skills": skills_list,
+                    "email": row.get("email") or f"vol_{os.urandom(4).hex()}@setu.internal",
+                    "password": "BulkUpload!1",
                     "ngo_id": ngo_id
                 }
 
-                res = _post("/volunteer_webhook", payload, auth=False)
+                res = _post("/volunteer", payload, auth=True)
 
                 if res.status_code == 200:
                     success += 1
                 else:
                     failed += 1
-
-            print(green(f"✅ Uploaded: {success}"))
-            print(yellow(f"⚠️ Failed: {failed}"))
+                    print(red(f"  ❌ Failed for {payload['name']}: {res.text}"))
 
     except Exception as e:
         print(red(f"Error: {e}"))
@@ -272,13 +269,19 @@ def run_match():
     data = safe_json(res)
 
     for m in data.get("matches", []):
-        if m.get("status") == "assigned":
+        status = m.get("status")
+        need_id = m.get("need_id")
+        severity = m.get("severity", "low")
+
+        if status == "assigned":
+            volunteers = m.get("assigned_volunteers", [])
+            vol_names = ", ".join([f"{v.get('name', 'Unknown')} ({v.get('distance_km', 'N/A')}km)" for v in volunteers])
             print(green(
-                f"🚑 {m.get('need_type','need')} → Volunteer {m['assigned_volunteer']} [{m['volunteer_tier']}]"
+                f"🚑 Need {need_id} [{severity.upper()}] → Assigned to: {vol_names}"
             ))
         else:
             print(yellow(
-                f"⚠️ Need {m['need_id']} → {m.get('reason', 'No match')}"
+                f"⚠️ Need {need_id} [{severity.upper()}] → {m.get('reason', 'No match')}"
             ))
 
     pause()
@@ -288,7 +291,7 @@ def check_assignments():
     section("CHECK ASSIGNMENTS")
 
     vid = input("Volunteer ID: ")
-    res = _get(f"/assignment/volunteer/{vid}")
+    res = _get(f"/assignment/volunteer/{vid}", auth=True)
     print_json(safe_json(res))
 
     pause()
@@ -298,7 +301,7 @@ def ngo_dashboard():
     section("NGO DASHBOARD")
 
     ngo_id = input("NGO ID: ")
-    res = _get(f"/ngo/{ngo_id}/dashboard")
+    res = _get(f"/ngo/{ngo_id}/dashboard", auth=True)
     print_json(safe_json(res))
 
     pause()

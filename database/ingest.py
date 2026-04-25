@@ -19,22 +19,26 @@ def ingest_pros(file_path):
     for _, row in df.iterrows():
         # Prepare the Tier 1 Professional Profile
         volunteer_data = {
-            "name": str(row['Name']),
-            "phone": str(row['Phone']),
-            "specialty": str(row['Specialty']).upper(),
-            "skills": [s.strip() for s in str(row['Skills']).split(',')],
-            "ngo_affiliation": str(row['NGO_Affiliation']),
-            "verification_code": str(row['Verification_Code']),
-            "is_verified": True,  # Explicitly True for Tier 1
-            "status": "available",
-            "location": {
-                "lat": float(row['Latitude']),
-                "lng": float(row['Longitude'])
-            },
-            "last_active": datetime.utcnow().isoformat(),
-            "total_missions": 0,
-            "is_on_mission": False
-        }
+    "name": str(row['Name']),
+    "phone": str(row['Phone']),
+    
+    # ✅ CRITICAL FIXES
+    "skills": [s.strip().lower() for s in str(row['Skills']).split(',')],
+    "ngo_verified": True,              # 🔥 REQUIRED
+    "available": True,                 # 🔥 REQUIRED
+    
+    # ✅ FLAT COORDINATES (VERY IMPORTANT)
+    "lat": float(row['Latitude']),
+    "lng": float(row['Longitude']),
+    
+    # Optional but fine
+    "specialty": str(row['Specialty']).upper(),
+    "ngo_affiliation": str(row['NGO_Affiliation']),
+    "verification_code": str(row['Verification_Code']),
+    
+    "registered_at": datetime.utcnow().isoformat(),
+    "active_assignments": 0
+}
         
         # 2. Inject into Firestore
         # Using Phone as document ID to prevent duplicates if you run it twice
