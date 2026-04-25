@@ -11,9 +11,27 @@ def save_assignment(need_id: str, volunteer_id: str) -> str:
     Creates a new assignment and automatically updates the 
     status of both the volunteer and the community need.
     """
+
+    # 🔥 NEW: Fetch volunteer details
+    vol_ref = db.collection("volunteers").document(volunteer_id)
+    vol_doc = vol_ref.get()
+    vol_data = vol_doc.to_dict() if vol_doc.exists else {}
+
+    # 🔥 NEW: Fetch need details
+    need_ref = db.collection("needs_reports").document(need_id)
+    need_doc = need_ref.get()
+    need_data = need_doc.to_dict() if need_doc.exists else {}
+
+    # 🔥 UPDATED: enriched assignment document
     doc = {
         "need_id": need_id,
+        "need_description": need_data.get("description", ""),
+        "need_location": need_data.get("location_text", ""),
+
         "volunteer_id": volunteer_id,
+        "volunteer_name": vol_data.get("name", ""),
+        "volunteer_phone": vol_data.get("phone", ""),
+
         "assigned_at": datetime.now(timezone.utc).isoformat(),
         "status": "assigned",
         "resolved_at": None
@@ -23,10 +41,7 @@ def save_assignment(need_id: str, volunteer_id: str) -> str:
     _, doc_ref = db.collection("assignments").add(doc)
     
     # 2. Update the connected systems (Atomic-like updates)
-    # Set the Need status to 'assigned' so it disappears from the 'open' list
     update_need_status(need_id, "assigned")        
-    
-    # Set the Volunteer's availability to False (they are now busy)
     update_volunteer_status(volunteer_id, False)   
     
     vol_ref = db.collection("volunteers").document(volunteer_id)
@@ -40,27 +55,23 @@ def save_assignment(need_id: str, volunteer_id: str) -> str:
             "active_assignments": current + 1
         })
 
-        # OPTIONAL: auto-disable overloaded volunteer
         if current + 1 >= 3:
             vol_ref.update({"available": False})
     
     print(f"🔗 Assignment {doc_ref.id} created: Volunteer {volunteer_id} -> Need {need_id}")
     return doc_ref.id
 
+
 def resolve_assignment(doc_id: str, need_id: str, volunteer_id: str):
     """
     Marks the job as done, resolves the need, and frees up the volunteer.
     """
-    # 1. Update assignment record
     db.collection("assignments").document(doc_id).update({
         "status": "resolved",
         "resolved_at": datetime.now(timezone.utc).isoformat()
     })
     
-    # 2. Update need status to 'resolved'
     update_need_status(need_id, "resolved")      
-    
-    # 3. Set volunteer 'is_available' back to True
     update_volunteer_status(volunteer_id, True)   
     
     vol_ref = db.collection("volunteers").document(volunteer_id)
@@ -76,17 +87,13 @@ def resolve_assignment(doc_id: str, need_id: str, volunteer_id: str):
             "active_assignments": new_count
         })
 
-        # Re-enable volunteer if they were blocked
         if new_count < 3:
             vol_ref.update({"available": True})
     
     print(f"✅ Assignment {doc_id} resolved! Volunteer is free again.")
 
+
 def get_assignments_by_volunteer_id(volunteer_id: str):
-    """
-    Returns assignment documents for a specific volunteer.
-    Includes Firestore document IDs in each returned record.
-    """
     docs = (
         db.collection("assignments")
         .where(filter=FieldFilter("volunteer_id", "==", volunteer_id))

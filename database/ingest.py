@@ -11,8 +11,11 @@ print("✅ Firestore Authenticated via ADC")
 
 def ingest_pros(file_path):
     # Read the generated Excel
-    df = pd.read_excel(r"C:\Users\mudit\Downloads\Setu_Verified_Responders.xlsx")
-    
+    df = pd.read_excel(r"C:\Users\mudit\Downloads\ngo1.xlsx")
+
+    df.columns = df.columns.str.strip()
+    df.columns = df.columns.str.replace(" ", "_")
+
     # Counter for logs
     count = 0
     
