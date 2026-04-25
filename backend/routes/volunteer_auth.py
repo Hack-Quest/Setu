@@ -96,29 +96,34 @@ def verify_otp_endpoint(data: VerifyOTPInput):
                 "id": ngo["id"]
             }
             
-        # 🔍 Fetch volunteer from DB
+        # 🔍 Fetch volunteer from volunteers_auth collection (registered via app)
         volunteers = db.collection("volunteers_auth").where(filter=FieldFilter("email", "==", email)).get()
-        print("VOLUNTEER QUERY RESULT:", len(volunteers))
-        
+        print("VOLUNTEERS_AUTH QUERY RESULT:", len(volunteers))
+
+        # 🔁 Fallback: check volunteers collection (Google Form users)
+        if not volunteers or len(volunteers) == 0:
+            volunteers = db.collection("volunteers").where(filter=FieldFilter("email", "==", email)).get()
+            print("VOLUNTEERS (FORM) QUERY RESULT:", len(volunteers))
+
         volunteer_id = None
         if volunteers and len(volunteers) > 0:
             volunteer_id = volunteers[0].id
-            
-        if volunteer_id:
+
+        print("VOLUNTEER ID:", volunteer_id)
+
+        if not volunteer_id:
             return {
-                "token": SECRET_TOKEN,
-                "role": "volunteer",
-                "id": volunteer_id,
-                "volunteer_id": volunteer_id,
-                "email": email
+                "ok": False,
+                "role": "new_user",
+                "message": "Email not registered as a volunteer. Please register first."
             }
-            
-        # User does not exist, redirect to registration
+
         return {
             "token": SECRET_TOKEN,
-            "role": "new_user",
-            "id": None,
-            "volunteer_id": None
+            "role": "volunteer",
+            "id": volunteer_id,
+            "volunteer_id": volunteer_id,
+            "email": email
         }
 
     except HTTPException:

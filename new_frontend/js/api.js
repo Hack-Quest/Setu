@@ -78,7 +78,9 @@ class ApiService {
         return this.request('/volunteer', { method: 'POST', body: JSON.stringify(data) });
     }
 
-    static async runMatch() { return this.request('/match'); }
+    static async runMatch()       { return this.request('/match'); }
+    static async getVolunteers()  { return this.request('/volunteers'); }
+    static async getNGOs()        { return this.request('/ngo/list'); }
 }
 window.ApiService = ApiService;
 window.api = ApiService;

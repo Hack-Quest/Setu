@@ -75,11 +75,15 @@ async function verifyOTP() {
             localStorage.setItem("name", data.name);
         }
 
-        // 🔀 REDIRECT
+        // 🔀 REDIRECT — handle new/unregistered users
         if (role === "ngo") {
             window.location.href = "ngo-dashboard.html";
-        } else {
+        } else if (data.volunteer_id && data.volunteer_id !== "null") {
             window.location.href = "volunteer-dashboard.html";
+        } else {
+            // Volunteer email not registered in system
+            showToast("⚠️ Email not found. Please register as a volunteer first.", "error");
+            return; // Don't redirect at all
         }
 
     } catch (err) {

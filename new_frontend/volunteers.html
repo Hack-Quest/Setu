@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SETU – Volunteers</title>
+    <meta name="description" content="Browse registered volunteers on the SETU disaster response platform.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/list-page.css">
+</head>
+
+<body>
+
+    <header class="main-header">
+        <div class="logo">SETU</div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="reports.html">Reports</a>
+            <a href="map.html">Map</a>
+            <a href="#" onclick="openNeedForm()">Report Need</a>
+            <a href="login.html" class="nav-login-btn">Login</a>
+        </nav>
+    </header>
+
+    <main class="list-page">
+        <div class="list-header">
+            <div>
+                <h1 class="list-title">🤝 Volunteers</h1>
+                <p class="list-subtitle">All registered volunteers on the SETU network</p>
+            </div>
+            <div class="list-meta">
+                <span id="vol-total-badge" class="count-badge">Loading…</span>
+            </div>
+        </div>
+
+        <!-- Search bar -->
+        <div class="list-controls">
+            <input id="vol-search" class="list-search" type="text" placeholder="Search by name, skill, or location…">
+        </div>
+
+        <!-- Loading state -->
+        <div id="vol-loading" class="list-loading">
+            <div class="spinner"></div>
+            <p>Fetching volunteers…</p>
+        </div>
+
+        <!-- Error state -->
+        <div id="vol-error" class="list-error" style="display:none;">
+            <p id="vol-error-msg">⚠️ Unable to load volunteers.</p>
+        </div>
+
+        <!-- Empty state -->
+        <div id="vol-empty" class="list-empty" style="display:none;">
+            <p>No volunteers found.</p>
+        </div>
+
+        <!-- Grid -->
+        <div id="vol-grid" class="volunteer-grid" style="display:none;"></div>
+    </main>
+
+    <div id="toast-container"></div>
+
+    <script src="js/common.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/volunteers.js"></script>
+
+</body>
+</html>

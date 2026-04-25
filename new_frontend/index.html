@@ -4,7 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SETU</title>
+    <title>SETU – Smarter Disaster Response</title>
+    <meta name="description" content="SETU connects volunteers and NGOs to deliver faster, smarter disaster relief coordination across India.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -20,49 +25,85 @@
             <a href="reports.html">Reports</a>
             <a href="map.html">Map</a>
             <a href="#" onclick="openNeedForm()">Report Need</a>
-            <a href="login.html">Login</a>
+            <a href="login.html" class="nav-login-btn">Login</a>
         </nav>
     </header>
 
     <!-- 🎯 HERO -->
     <section class="hero">
-        <h1>Smarter Decisions. Stronger Response.</h1>
+        <div class="hero-inner">
+            <span class="system-badge">
+                <span class="badge-dot"></span>
+                System Active
+            </span>
+
+            <h1 class="hero-heading">
+                Smarter Decisions.<br>
+                <span class="hero-accent">Stronger Response.</span>
+            </h1>
+
+            <p class="hero-sub">
+                Connecting relief workers, NGOs, and communities — enabling faster, data-driven disaster response across India.
+            </p>
+
+            <div class="hero-actions hero-actions--center">
+                <button class="btn-primary btn-primary--lg" onclick="openNeedForm()">
+                    <span>🚨</span> Initiate Response
+                </button>
+            </div>
+        </div>
+
+        <div class="hero-glow"></div>
+        <div class="hero-bg"></div>
     </section>
 
     <!-- 🧩 ACTION CARDS -->
-    <section class="cards">
+    <section class="cards" style="margin-bottom: 40px;">
         <div class="card" onclick="openNeedForm()">
-            🚨 Report Emergency
+            <div class="card-icon">🚨</div>
+            <h3 class="card-title">Report Emergency</h3>
+            <p class="card-desc">Submit a new needs report for affected communities.</p>
         </div>
 
         <div class="card" onclick="openVolunteerForm()">
-            🤝 Join as Volunteer
+            <div class="card-icon">🤝</div>
+            <h3 class="card-title">Join as Volunteer</h3>
+            <p class="card-desc">Register your skills and availability to help on the ground.</p>
         </div>
 
         <div class="card" onclick="openNGOForm()">
-            🏢 Register NGO
+            <div class="card-icon">🏢</div>
+            <h3 class="card-title">Register NGO</h3>
+            <p class="card-desc">Onboard your organization to coordinate and deploy resources.</p>
+        </div>
+
+        <div class="card card-highlight" onclick="runMatching()">
+            <div class="card-icon">⚡</div>
+            <h3 class="card-title">Run Matching</h3>
+            <p class="card-desc">Trigger AI-powered volunteer-to-need matching for active reports.</p>
         </div>
     </section>
 
     <!-- 📊 STATS -->
-    <section class="stats">
-        <div>
-            <h2 id="totalReports">0</h2>
-            <p>Total Reports</p>
+    <section class="stats-section" style="margin-top: 40px;">
+        <div class="stat-card stat-card--link" onclick="window.location.href='reports.html'" title="View all reports">
+            <div class="stat-icon">📋</div>
+            <h2 id="totalReports" class="stat-number">0</h2>
+            <p class="stat-label">Total Reports</p>
+            <span class="stat-link-hint">View Reports →</span>
         </div>
-        <div>
-            <h2 id="volunteer-count">--</h2>
-            <p>Volunteers</p>
+        <div class="stat-card stat-card--link" onclick="window.location.href='volunteers.html'" title="View all volunteers">
+            <div class="stat-icon">🤝</div>
+            <h2 id="volunteer-count" class="stat-number">--</h2>
+            <p class="stat-label">Volunteers</p>
+            <span class="stat-link-hint">View Volunteers →</span>
         </div>
-        <div>
-            <h2 id="ngo-count">--</h2>
-            <p>NGOs</p>
+        <div class="stat-card stat-card--link" onclick="window.location.href='ngos.html'" title="View all NGOs">
+            <div class="stat-icon">🏢</div>
+            <h2 id="ngo-count" class="stat-number">--</h2>
+            <p class="stat-label">NGOs</p>
+            <span class="stat-link-hint">View NGOs →</span>
         </div>
-    </section>
-
-    <!-- 🗺️ MAP -->
-    <section class="map-section">
-        <iframe src="map.html"></iframe>
     </section>
 
     <div id="toast-container"></div>

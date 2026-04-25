@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from backend.auth import verify_token                    # ✅ Centralised auth
-from database.volunteers_db import save_volunteer, get_available_volunteers, hash_password
+from database.volunteers_db import save_volunteer, get_available_volunteers, get_all_volunteers, hash_password
 from backend.models import VolunteerInput
 from database.geocoding import get_coordinates
 
@@ -44,3 +44,22 @@ def create_volunteer(data: VolunteerInput, token: str = Depends(verify_token)): 
     except Exception as e:
         print(f"❌ Route Error: {e}")
         return {"error": str(e)}
+
+
+@router.get("/volunteers")
+def list_volunteers():
+    """Public endpoint — returns all registered volunteers."""
+    try:
+        volunteers = get_all_volunteers()
+        # Strip sensitive fields before sending to frontend
+        safe_fields = ["id", "name", "skills", "available", "location",
+                       "active_assignments", "ngo_id", "registered_at"]
+        sanitized = [
+            {k: v for k, v in vol.items() if k in safe_fields}
+            for vol in volunteers
+        ]
+        return sanitized
+    except Exception as e:
+        print(f"❌ list_volunteers error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+

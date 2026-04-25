@@ -19,3 +19,19 @@ async function loadStats() {
 }
 
 window.addEventListener("DOMContentLoaded", loadStats);
+
+async function runMatching() {
+    showToast("Running matching engine...", "info");
+    try {
+        const res = await ApiService.runMatch();
+        if (res.ok) {
+            showToast("Matching completed successfully ✅", "success");
+        } else {
+            showToast("Error running matching: " + (res.error || "Unknown error"), "error");
+        }
+    } catch (err) {
+        showToast("Error running matching", "error");
+        console.error("runMatching error:", err);
+    }
+}
+window.runMatching = runMatching;

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from backend.models import NGOInput
-from database.ngos_db import save_ngo, get_ngo
+from database.ngos_db import save_ngo, get_ngo, get_all_ngos
 from backend.auth import verify_token
 from database.geocoding import get_coordinates
 from database.firestore_client import db
@@ -8,6 +8,24 @@ from database.needs_db import get_need_by_id
 from google.cloud.firestore_v1.base_query import FieldFilter
 
 router = APIRouter(prefix="/ngo", tags=["NGO"])
+
+
+@router.get("/list")
+def list_ngos():
+    """Public endpoint — returns all registered NGOs."""
+    try:
+        ngos = get_all_ngos()
+        # Only expose safe public fields
+        safe_fields = ["id", "name", "type", "location", "email",
+                       "phone", "verified", "registered_at", "region"]
+        sanitized = [
+            {k: v for k, v in ngo.items() if k in safe_fields}
+            for ngo in ngos
+        ]
+        return sanitized
+    except Exception as e:
+        print(f"❌ list_ngos error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/register")

@@ -10,10 +10,25 @@ function logout() {
 // 📌 Volunteer ID
 const volunteerId = localStorage.getItem("volunteer_id");
 
-// 🔥 CRITICAL FIX (invalid ID check)
+// 🔥 CRITICAL FIX (invalid ID check — graceful, no redirect loop)
 if (!volunteerId || volunteerId === "null" || volunteerId === "undefined") {
-    console.error("Invalid volunteer ID, redirecting...");
-    window.location.href = "login.html";
+    console.error("Invalid volunteer ID");
+
+    document.body.innerHTML = `
+        <div style="text-align:center;padding:40px;font-family:sans-serif;">
+            <h2>Session Error</h2>
+            <p>Could not retrieve your volunteer ID.</p>
+            <p>Please <a href="login.html">log in again</a>.</p>
+            <p style="color:#888;font-size:0.9em;">Redirecting in 3 seconds...</p>
+        </div>
+    `;
+
+    // Delayed redirect — prevents infinite loop
+    setTimeout(() => {
+        window.location.href = "login.html";
+    }, 3000);
+
+    throw new Error("Stopping dashboard execution due to invalid volunteer ID");
 }
 
 // 👤 Load Profile
