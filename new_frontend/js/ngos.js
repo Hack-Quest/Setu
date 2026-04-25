@@ -84,7 +84,9 @@ function renderNGOs(ngos) {
         // ── Strictly use NGO Name ──
         const ngoName = ngo.ngo_name || ngo.organization_name || "Unnamed NGO";
         
-        const description = ngo.description || ngo.type || ngo.category || ngo.ngo_type || "No description available";
+        const description = ngo.description || ngo.type || ngo.category || ngo.ngo_type
+            || (ngo.owner_name ? `Owner: ${ngo.owner_name}` : "")
+            || "";
         const region = ngo.region || ngo.area || ngo.city || ngo.location || "";
         const contact = ngo.contact || ngo.email || ngo.phone || "";
         const isVerified = ngo.verified === true || String(ngo.verified).toLowerCase() === "true";

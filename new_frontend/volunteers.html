@@ -22,8 +22,7 @@
         <nav>
             <a href="index.html">Home</a>
             <a href="map.html">Map</a>
-            <a href="#" onclick="openNeedForm()">Report Need</a>
-            <button class="nav-run-btn" onclick="runMatching()">⚡ Run Matching</button>
+            <button class="nav-run-btn" onclick="runMatching()">Run Matching</button>
             <a href="login.html" class="nav-login-btn">Login</a>
         </nav>
     </header>
@@ -40,23 +39,29 @@
 
             <!-- Filter bar -->
             <div class="ops-filters">
-                <button class="filter-btn filter-btn--active" onclick="filterVolunteers('all')" id="filter-all">All</button>
-                <button class="filter-btn filter-btn--ok" onclick="filterVolunteers('available')" id="filter-available">Available</button>
-                <button class="filter-btn filter-btn--alert" onclick="filterVolunteers('busy')" id="filter-busy">Busy</button>
+                <button class="filter-btn filter-btn--active" onclick="filterVolunteers('all')"
+                    id="filter-all">All</button>
+                <button class="filter-btn filter-btn--ok" onclick="filterVolunteers('available')"
+                    id="filter-available">Available</button>
+                <button class="filter-btn filter-btn--alert" onclick="filterVolunteers('busy')"
+                    id="filter-busy">Busy</button>
             </div>
         </div>
 
         <!-- 📊 STATS BAR (clickable filters) -->
         <div class="stats-bar">
-            <div class="rpt-stat-card rpt-stat-card--active" id="stat-total" onclick="applyMainFilter('total')" title="Show all volunteers">
+            <div class="rpt-stat-card rpt-stat-card--active" id="stat-total" onclick="applyMainFilter('total')"
+                title="Show all volunteers">
                 <h3 id="totalVolunteers">—</h3>
                 <p>TOTAL VOLUNTEERS</p>
             </div>
-            <div class="rpt-stat-card rpt-stat-card--ok" id="stat-available" onclick="applyMainFilter('available')" title="Show available only">
+            <div class="rpt-stat-card rpt-stat-card--ok" id="stat-available" onclick="applyMainFilter('available')"
+                title="Show available only">
                 <h3 id="availableCount">—</h3>
                 <p>AVAILABLE</p>
             </div>
-            <div class="rpt-stat-card rpt-stat-card--alert" id="stat-busy" onclick="applyMainFilter('busy')" title="Show busy only">
+            <div class="rpt-stat-card rpt-stat-card--alert" id="stat-busy" onclick="applyMainFilter('busy')"
+                title="Show busy only">
                 <h3 id="busyCount">—</h3>
                 <p>BUSY</p>
             </div>
@@ -80,4 +85,5 @@
     <script src="js/volunteers.js"></script>
 
 </body>
+
 </html>

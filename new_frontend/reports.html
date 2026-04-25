@@ -22,8 +22,7 @@
         <nav>
             <a href="index.html">Home</a>
             <a href="map.html">Map</a>
-            <a href="#" onclick="openNeedForm()">Report Need</a>
-            <button class="nav-run-btn" onclick="runMatching()">⚡ Run Matching</button>
+            <button class="nav-run-btn" onclick="runMatching()">Run Matching</button>
             <a href="login.html" class="nav-login-btn">Login</a>
         </nav>
     </header>
@@ -40,24 +39,31 @@
 
             <!-- Filter bar -->
             <div class="ops-filters">
-                <button class="filter-btn filter-btn--active" onclick="filterReports('all')" id="filter-all">All</button>
-                <button class="filter-btn filter-btn--critical" onclick="filterReports('critical')" id="filter-critical">Critical</button>
-                <button class="filter-btn filter-btn--high" onclick="filterReports('high')" id="filter-high">High</button>
-                <button class="filter-btn filter-btn--medium" onclick="filterReports('medium')" id="filter-medium">Medium</button>
+                <button class="filter-btn filter-btn--active" onclick="filterReports('all')"
+                    id="filter-all">All</button>
+                <button class="filter-btn filter-btn--critical" onclick="filterReports('critical')"
+                    id="filter-critical">Critical</button>
+                <button class="filter-btn filter-btn--high" onclick="filterReports('high')"
+                    id="filter-high">High</button>
+                <button class="filter-btn filter-btn--medium" onclick="filterReports('medium')"
+                    id="filter-medium">Medium</button>
             </div>
         </div>
 
         <!-- 📊 STATS BAR (clickable filters) -->
         <div class="stats-bar">
-            <div class="rpt-stat-card rpt-stat-card--active" id="stat-total" onclick="applyMainFilter('total')" title="Show all reports">
+            <div class="rpt-stat-card rpt-stat-card--active" id="stat-total" onclick="applyMainFilter('total')"
+                title="Show all reports">
                 <h3 id="totalReports">—</h3>
                 <p>Total Reports</p>
             </div>
-            <div class="rpt-stat-card rpt-stat-card--alert" id="stat-unassigned" onclick="applyMainFilter('unassigned')" title="Show unassigned only">
+            <div class="rpt-stat-card rpt-stat-card--alert" id="stat-unassigned" onclick="applyMainFilter('unassigned')"
+                title="Show unassigned only">
                 <h3 id="unassignedCount">—</h3>
                 <p>Unassigned</p>
             </div>
-            <div class="rpt-stat-card rpt-stat-card--ok" id="stat-assigned" onclick="applyMainFilter('assigned')" title="Show assigned only">
+            <div class="rpt-stat-card rpt-stat-card--ok" id="stat-assigned" onclick="applyMainFilter('assigned')"
+                title="Show assigned only">
                 <h3 id="assignedCount">—</h3>
                 <p>Assigned</p>
             </div>
@@ -86,4 +92,5 @@
     <script src="js/reports.js"></script>
 
 </body>
+
 </html>

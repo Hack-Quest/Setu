@@ -22,8 +22,7 @@
         <nav>
             <a href="index.html">Home</a>
             <a href="map.html">Map</a>
-            <a href="#" onclick="openNeedForm()">Report Need</a>
-            <button class="nav-run-btn" onclick="runMatching()">⚡ Run Matching</button>
+            <button class="nav-run-btn" onclick="runMatching()">Run Matching</button>
             <a href="login.html" class="nav-login-btn">Login</a>
         </nav>
     </header>
@@ -41,8 +40,10 @@
             <!-- Filter bar -->
             <div class="ops-filters">
                 <button class="filter-btn filter-btn--active" onclick="filterNGOs('all')" id="filter-all">All</button>
-                <button class="filter-btn filter-btn--ok" onclick="filterNGOs('verified')" id="filter-verified">Verified</button>
-                <button class="filter-btn filter-btn--medium" onclick="filterNGOs('unverified')" id="filter-unverified">Unverified</button>
+                <button class="filter-btn filter-btn--ok" onclick="filterNGOs('verified')"
+                    id="filter-verified">Verified</button>
+                <button class="filter-btn filter-btn--medium" onclick="filterNGOs('unverified')"
+                    id="filter-unverified">Unverified</button>
             </div>
         </div>
 
@@ -64,4 +65,5 @@
     <script src="js/ngos.js?v=3"></script>
 
 </body>
+
 </html>
