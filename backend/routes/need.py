@@ -63,6 +63,17 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         ai_result = process_need_text(data.description)
 
         category = ai_result["category"]
+        CATEGORY_NORMALIZATION = {
+            "collapse": "rescue",
+            "building collapse": "rescue",
+            "earthquake": "rescue",
+            "flood": "logistics",
+            "water shortage": "logistics",
+            "medical emergency": "medical",
+            "fire": "rescue",
+        }
+
+        category = CATEGORY_NORMALIZATION.get(category.lower(), category.lower())
         severity = ai_result["severity"]
         consistency = ai_result["consistency"]
 
