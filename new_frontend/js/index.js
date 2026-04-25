@@ -26,6 +26,15 @@ async function runMatching() {
         const res = await ApiService.runMatch();
         if (res.ok) {
             showToast("Matching completed successfully ✅", "success");
+            
+            // Store filter state
+            localStorage.setItem("reports_filter", "assigned");
+            
+            // Redirect after small delay
+            setTimeout(() => {
+                window.location.href = "reports.html";
+            }, 1000);
+            
         } else {
             showToast("Error running matching: " + (res.error || "Unknown error"), "error");
         }

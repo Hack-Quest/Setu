@@ -1,9 +1,9 @@
 /* js/reports.js */
 const API_BASE = window.SETU_API_BASE_URL || "";
 let allReports      = [];
-let currentMainFilter   = "total";    // "total" | "unassigned" | "assigned"
+let currentMainFilter   = localStorage.getItem("reports_filter") || "total";
+localStorage.removeItem("reports_filter"); // clear after use
 let currentSeverity     = "all";      // "all" | "critical" | "high" | "medium"
-
 
 // ── Data loading (API call UNCHANGED) ───────────────────────────────
 async function loadReports() {
@@ -22,18 +22,22 @@ async function loadReports() {
             return;
         }
 
-        const data = response.data || response;
+        const res = response.data || response;
 
-        console.log("TYPE:", typeof data);
-        console.log("IS ARRAY:", Array.isArray(data));
-        console.log("REPORTS FIELD:", data?.reports);
+        console.log("TYPE:", typeof res);
+        console.log("IS ARRAY:", Array.isArray(res));
+        console.log("REPORTS FIELD:", res?.reports);
+        console.log("DATA FIELD:", res?.data);
 
-        if (Array.isArray(data)) {
-            allReports = data;
-        } else if (data && Array.isArray(data.reports)) {
-            allReports = data.reports;
+        // ✅ Handle all formats safely
+        if (Array.isArray(res)) {
+            allReports = res;
+        } else if (res && Array.isArray(res.data)) {
+            allReports = res.data;
+        } else if (res && Array.isArray(res.reports)) {
+            allReports = res.reports;
         } else {
-            console.error("UNKNOWN DATA FORMAT:", data);
+            console.error("UNKNOWN DATA FORMAT:", res);
             allReports = [];
         }
 
@@ -43,7 +47,7 @@ async function loadReports() {
         }
 
         updateStats();
-        applyMainFilter("total");
+        applyMainFilter(currentMainFilter);
 
     } catch (err) {
         console.error("LOAD ERROR:", err);
@@ -142,9 +146,33 @@ function renderReports(reports) {
         const severity = (r.severity || "low").toLowerCase();
 
         // ── Smart field resolution ──
-        const title    = r.title || r.summary || r.summary_en || r.disaster_type || "Report";
-        const reporter = r.reporter_name || r.name || r.email || "Anonymous";
+        const title = (r.description || r.summary || r.disaster_type || "No description").slice(0, 60);
         const location = r.location || r.location_text || r.area || r.address || "";
+
+        // ── Clean Status Logic ──
+        const isAssigned = r.assigned === true || (r.status && r.status.toLowerCase() === "assigned");
+        const statusText = isAssigned ? "📌 ASSIGNED" : "📍 UNASSIGNED";
+
+        // ── Handle Volunteers Data ──
+        let volunteers = [];
+        if (Array.isArray(r.assigned_volunteers)) {
+            volunteers = r.assigned_volunteers;
+        } else if (Array.isArray(r.assigned_to)) {
+            volunteers = r.assigned_to;
+        } else if (r.assigned === true) {
+            volunteers = ["Assigned"]; // fallback
+        }
+        
+        const volunteerCount = volunteers.length;
+        
+        // ── Extract Names (Future Ready) ──
+        let volunteerNames = [];
+        if (volunteerCount > 0) {
+            volunteerNames = volunteers.map(v => {
+                if (typeof v === "string") return v;
+                return v.name || v.username || "Volunteer";
+            });
+        }
 
         // ── Tier badge (preserve existing logic) ──
         const tier = r.volunteer_tier || "";
@@ -159,15 +187,18 @@ function renderReports(reports) {
 
         item.innerHTML = `
             <div class="report-item-header">
-                <h3>${title} ${tierBadgeHTML}</h3>
+                <h3>${title}... ${tierBadgeHTML}</h3>
                 <span class="severity-pill ${severity}">${severity.toUpperCase()}</span>
             </div>
-            <p>${r.description || ""}</p>
+            <p class="desc">${r.description || ""}</p>
             <div class="report-item-meta">
-                <span>👤 ${reporter}</span>
                 ${location ? `<span>📍 ${location}</span>` : ""}
-                <span>⚠️ ${severity.toUpperCase()}</span>
-                <span>📌 ${(r.status || "OPEN").toUpperCase()}</span>
+                <span class="status">${statusText}</span>
+                ${
+                    isAssigned && volunteerCount > 0
+                    ? `<span class="volunteers">👥 ${volunteerCount} volunteer${volunteerCount > 1 ? "s" : ""} ${volunteerNames.length > 0 ? `(${volunteerNames.join(", ")})` : ""}</span>`
+                    : ""
+                }
             </div>
         `;
 
