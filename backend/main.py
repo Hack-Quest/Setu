@@ -89,7 +89,23 @@ def home():
 def health():
     return {"status": "ok", "database": "connected"}
 
-# 🔗 DISASTER WEBHOOK (Primary SOS entry point)
+
+@app.get("/config/public")
+def public_config():
+    google_maps_api_key = (
+        os.getenv("GOOGLE_MAPS_KEY", "").strip()
+        or os.getenv("GOOGLE_MAPS_API_KEY", "").strip()
+    )
+
+    if not google_maps_api_key:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Google Maps API key is not configured"}
+        )
+
+    return {"google_maps_api_key": google_maps_api_key}
+
+# 🔗 NEED WEBHOOK
 @app.post("/webhook")
 @limiter.limit("5/minute")
 async def webhook(request: Request, payload: Dict, background_tasks: BackgroundTasks):
@@ -103,28 +119,55 @@ async def webhook(request: Request, payload: Dict, background_tasks: BackgroundT
             "help_needed": payload.get("help_needed", "Not Specified"),
         }
         need_input = NeedInput(**mapped_data)
+        print("🚀 Routing to AI Engine...", flush=True)
         result = process_and_save_need(need_input, background_tasks)
-        return {"message": "SOS Report Saved", "data": result}
+        return {"message": "Webhook processed", "data": result}
+
     except Exception as e:
         return {"error": str(e)}
 
-# 🔗 ALIAS (Matches your 200 OK log path)
-@app.post("/webhook/ngo-register")
+# 🔗 VOLUNTEER WEBHOOK (Updated to capture Email)
+@app.post("/volunteer_webhook")
 @limiter.limit("5/minute")
 async def webhook_ngo_register_alias(request: Request, payload: Dict, background_tasks: BackgroundTasks):
     # If a form hits this accidentally, we still process it as an SOS/Need
     try:
-        mapped_data = {
-            "reporter_name": payload.get("reporter_name", payload.get("name", "Unknown")),
-            "reporter_phone": payload.get("reporter_phone", payload.get("phone", "0000000000")),
-            "description": payload.get("description", ""),
-            "location": payload.get("location", payload.get("address", "Unknown Location")),
-            "disaster_type": payload.get("disaster_type", "Not Specified"),
-            "help_needed": payload.get("help_needed", "Not Specified"),
+        coords = get_coordinates(payload.get("location", "")) or {"lat": 0, "lng": 0}
+
+        mapped_volunteer = {
+            "name": payload.get("volunteer_name", "Unknown"),
+            "email": payload.get("email", "no-email@setu.com"),  # ✅ Field added to fix the "test" email issue
+            "phone": payload.get("phone", "0000000000"),
+            "skills": (
+                [skill.strip().lower() for skill in payload.get("skills", "").split(",")]
+                if payload.get("skills")
+                else []
+            ),
+            "lat": coords["lat"],
+            "lng": coords["lng"],
+            "ngo_id": payload.get("ngo_id", None),
+            "available": True,
+            "active_assignments": 0
         }
-        need_input = NeedInput(**mapped_data)
-        result = process_and_save_need(need_input, background_tasks)
-        return {"message": "Legacy Alias processed", "data": result}
+
+        # NGO verification
+        if mapped_volunteer.get("ngo_id"):
+            ngo = get_ngo(mapped_volunteer["ngo_id"])
+            if ngo and ngo.get("verified"):
+                mapped_volunteer["ngo_verified"] = True
+
+        print(f"📥 Incoming Volunteer: {mapped_volunteer['email']}", flush=True)
+
+        doc_id = save_volunteer(mapped_volunteer)
+
+        # 🔥 Broadcast update via WebSocket
+        await manager.broadcast_json({
+            "type": "NEW_VOLUNTEER",
+            "data": mapped_volunteer
+        })
+
+        return {"message": "Volunteer registered", "id": doc_id}
+
     except Exception as e:
         return {"error": str(e)}
 

@@ -5,10 +5,11 @@
     <title>Setu Tactical Map</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-    <!-- Global CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+
     <link rel="stylesheet" href="css/styles.css">
 
     <style>
@@ -18,7 +19,6 @@
 
         #map {
             height: calc(100vh - 60px);
-            /* header adjust */
         }
 
         #status {
@@ -38,7 +38,6 @@
 
 <body>
 
-    <!-- 🔝 COMMON HEADER -->
     <header class="main-header">
         <div class="logo">SETU</div>
         <nav>
@@ -56,9 +55,12 @@
     <script src="js/common.js"></script>
     <script src="js/api.js"></script>
 
-    <script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
-        // 🔗 Google Form
+    <script>
+        const API_BASE = "http://127.0.0.1:8000";
+        const API = `${API_BASE}/dashboard/reports`;
+
         function openNeedForm() {
             window.open("https://forms.gle/YOUR_NEED_FORM", "_blank");
         }
@@ -72,7 +74,6 @@
             status.style.display = 'block';
         }
 
-        // 🎨 severity color
         function getColor(severity) {
             severity = (severity || '').toLowerCase();
             if (severity === 'critical') return "red";
@@ -81,28 +82,26 @@
             return "green";
         }
 
-        // 🗺️ INIT
         function initMap() {
+            // Default center, will be overridden by fitBounds later
             map = L.map('map').setView([20.5937, 78.9629], 5);
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
-                .addTo(map);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
             loadNeeds();
             setInterval(loadNeeds, 5000);
         }
 
-        // 🧹 CLEAR
         function clearAll() {
             overlays.forEach(item => map.removeLayer(item));
             overlays = [];
         }
 
-        // 🔄 LOAD DATA
         async function loadNeeds() {
             try {
-                const response = await ApiService.getReports();
-                if (!response.ok) throw new Error(response.error || "Failed to fetch reports");
+                const res = await fetch(API, {
+                    headers: { Authorization: "Bearer hackathon-secret" }
+                });
 
                 const raw = response.data;
                 const reports = raw.reports || raw;
@@ -110,8 +109,12 @@
                 clearAll();
                 const bounds = [];
 
-                reports.forEach(r => {
+                // 🔥 ADDED: Create a Cluster Group for SOS markers
+                const markersCluster = L.markerClusterGroup({
+                    maxClusterRadius: 50 // Kitne pass hone par merge honge (adjust if needed)
+                });
 
+                reports.forEach(r => {
                     if (!r.lat || !r.lng) return;
 
                     const lat = parseFloat(r.lat);
@@ -121,67 +124,53 @@
 
                     const isCritical = r.severity?.toLowerCase() === "critical";
 
-                    // 🔴 NEED
+                    // Create SOS Marker
                     const marker = L.circleMarker([lat, lng], {
                         radius: isCritical ? 12 : 8,
                         color: getColor(r.severity),
                         fillColor: getColor(r.severity),
                         fillOpacity: 0.9
-                    }).addTo(map);
+                    });
 
                     marker.bindPopup(`
-                <b>${r.disaster_type || 'Need'}</b><br>
-                ${r.description || ''}<br>
-                Severity: ${r.severity}
-            `);
+                        <b>${r.disaster_type || 'Need'}</b><br>
+                        ${r.description || ''}<br>
+                        Severity: ${r.severity}
+                    `);
 
-                    // 🔥 pulse
                     if (isCritical) {
                         let grow = true;
                         setInterval(() => {
-                            marker.setStyle({
-                                radius: grow ? 14 : 8
-                            });
+                            marker.setStyle({ radius: grow ? 14 : 8 });
                             grow = !grow;
                         }, 600);
                     }
 
-                    overlays.push(marker);
+                    // 🔥 ADDED: Add marker to Cluster instead of directly to Map
+                    markersCluster.addLayer(marker);
                     bounds.push([lat, lng]);
 
-                    // 🔵 volunteer + 🔗 line only when real coordinates exist
-                    const hasVolunteerCoords =
-                        r.volunteer_lat !== undefined &&
-                        r.volunteer_lat !== null &&
-                        r.volunteer_lat !== "" &&
-                        r.volunteer_lng !== undefined &&
-                        r.volunteer_lng !== null &&
-                        r.volunteer_lng !== "";
+                    // Volunteer mapping (Kept separate from cluster so lines don't break)
+                    let vLat = r.volunteer_lat ? parseFloat(r.volunteer_lat) : null;
+                    let vLng = r.volunteer_lng ? parseFloat(r.volunteer_lng) : null;
 
-                    if (hasVolunteerCoords) {
-                        const vLat = parseFloat(r.volunteer_lat);
-                        const vLng = parseFloat(r.volunteer_lng);
+                    if (vLat && vLng) {
+                        const volunteerMarker = L.circleMarker([vLat, vLng], {
+                            radius: 7, color: '#007bff', fillColor: '#007bff', fillOpacity: 0.9
+                        }).addTo(map);
+                        overlays.push(volunteerMarker);
+                        bounds.push([vLat, vLng]);
 
-                        if (!isNaN(vLat) && !isNaN(vLng)) {
-                            const volunteerMarker = L.circleMarker([vLat, vLng], {
-                                radius: 7,
-                                color: '#007bff',
-                                fillColor: '#007bff',
-                                fillOpacity: 0.9
-                            }).addTo(map);
-
-                            overlays.push(volunteerMarker);
-                            bounds.push([vLat, vLng]);
-
-                            const line = L.polyline([[lat, lng], [vLat, vLng]], {
-                                color: '#007bff',
-                                weight: 3
-                            }).addTo(map);
-
-                            overlays.push(line);
-                        }
+                        const line = L.polyline([[lat, lng], [vLat, vLng]], {
+                            color: '#007bff', weight: 3
+                        }).addTo(map);
+                        overlays.push(line);
                     }
                 });
+
+                // 🔥 ADDED: Add the whole cluster group to the map
+                map.addLayer(markersCluster);
+                overlays.push(markersCluster); // So it gets cleared on refresh
 
                 if (bounds.length > 0) {
                     map.fitBounds(bounds, { padding: [40, 40] });
@@ -189,15 +178,13 @@
 
             } catch (err) {
                 console.error("Map error:", err);
-                showStatus(err.message);
+                showStatus("Error loading map data");
             }
+            
         }
 
         initMap();
-
     </script>
-
-    <div id="toast-container"></div>
 </body>
 
 </html>
