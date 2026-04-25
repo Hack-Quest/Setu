@@ -155,12 +155,13 @@ function renderReports(reports) {
 
         // ── Handle Volunteers Data ──
         let volunteers = [];
-        if (Array.isArray(r.assigned_volunteers)) {
+        if (Array.isArray(r.assigned_volunteers) && r.assigned_volunteers.length > 0) {
             volunteers = r.assigned_volunteers;
-        } else if (Array.isArray(r.assigned_to)) {
+        } else if (Array.isArray(r.assigned_to) && r.assigned_to.length > 0) {
             volunteers = r.assigned_to;
-        } else if (r.assigned === true) {
-            volunteers = ["Assigned"]; // fallback
+        } else if (isAssigned) {
+            // 🔥 FORCE fallback (IMPORTANT)
+            volunteers = ["Volunteer"];
         }
         
         const volunteerCount = volunteers.length;
@@ -169,9 +170,9 @@ function renderReports(reports) {
         let volunteerNames = [];
         if (volunteerCount > 0) {
             volunteerNames = volunteers.map(v => {
-                if (typeof v === "string") return v;
-                return v.name || v.username || "Volunteer";
-            });
+                if (typeof v === "string") return v === "Volunteer" ? null : v;
+                return v.name || v.username || null;
+            }).filter(Boolean); // Filter out nulls so we don't show "(Volunteer)"
         }
 
         // ── Tier badge (preserve existing logic) ──

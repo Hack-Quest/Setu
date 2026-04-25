@@ -42,7 +42,8 @@ class VolunteerLoginInput(BaseModel):
 
 
 class NGOInput(BaseModel):
-    name: str
+    ngo_name: str
+    owner_name: str
     reg_number: str
     location: str = Field(default="", validation_alias=AliasChoices("location", "coverage_area"))
     lat: float = 0.0
@@ -52,6 +53,7 @@ class NGOInput(BaseModel):
     coverage_area: Optional[str] = None
     email: Optional[str] = None
     password: Optional[str] = None
+    description: Optional[str] = None
 
 
 class SendOTPInput(BaseModel):

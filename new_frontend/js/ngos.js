@@ -1,113 +1,110 @@
 /* js/ngos.js */
-(function () {
-    let allNGOs = [];
+const API_BASE = window.SETU_API_BASE_URL || "";
+let allNGOs = [];
+let currentMainFilter = "all"; // "all" | "verified" | "unverified"
 
-    // ── Render helpers ──────────────────────────────────────────────
-    function renderCard(n) {
-        const name     = n.name || n.ngo_name || n.organization || "Unknown NGO";
-        const type     = n.type || n.category || n.ngo_type || "NGO";
-        const region   = n.region || n.area || n.city || n.location || "";
-        const contact  = n.contact || n.email || n.phone || "";
-        const verified = n.verified || n.is_verified || false;
+// ── Data loading ───────────────────────────────────────────────
+async function loadNGOs() {
+    document.getElementById("reports-loading").style.display = "flex";
 
-        const verifiedBadge = verified
-            ? `<span class="tier-badge tier-1">✓ Verified</span>`
-            : "";
+    try {
+        const response = await ApiService.getNGOs();
 
-        return `
-            <div class="ngo-card">
-                <div class="ngo-card__icon">🏢</div>
-                <div class="ngo-card__name" title="${name}">${name}</div>
-                <div class="ngo-card__type">${type}</div>
-                <div class="ngo-card__meta">
-                    ${region  ? `<span>📍 ${region}</span>`  : ""}
-                    ${contact ? `<span>📬 ${contact}</span>` : ""}
-                </div>
-                ${verifiedBadge}
-            </div>
-        `;
-    }
-
-    function showGrid(data) {
-        document.getElementById("ngo-loading").style.display = "none";
-        if (!data || data.length === 0) {
-            document.getElementById("ngo-empty").style.display = "flex";
+        if (!response || (!response.data && !Array.isArray(response))) {
+            console.error("NO DATA FROM API");
+            allNGOs = [];
+            renderNGOs([]);
             return;
         }
-        const grid = document.getElementById("ngo-grid");
-        grid.style.display = "grid";
-        grid.innerHTML = data.map(renderCard).join("");
-        document.getElementById("ngo-total-badge").textContent =
-            `${data.length} NGO${data.length !== 1 ? "s" : ""}`;
-    }
 
-    function showError(msg, is404 = false) {
-        document.getElementById("ngo-loading").style.display = "none";
-        const err = document.getElementById("ngo-error");
-        err.style.display = "flex";
-        const friendlyMsg = is404
-            ? "⚠️ NGO data is not available yet — the backend endpoint is being deployed. Please try again shortly."
-            : "⚠️ " + (msg || "Unable to load NGOs.");
-        document.getElementById("ngo-error-msg").textContent = friendlyMsg;
-        if (!document.getElementById("ngo-retry-btn")) {
-            const btn = document.createElement("button");
-            btn.id = "ngo-retry-btn";
-            btn.textContent = "↻ Retry";
-            btn.style.cssText = "margin-top:12px;padding:8px 20px;background:#ff5c00;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;";
-            btn.onclick = () => {
-                err.style.display = "none";
-                document.getElementById("ngo-loading").style.display = "flex";
-                init();
-            };
-            err.appendChild(btn);
-        }
-    }
+        const data = response.data || response;
 
-    // ── Search filter ───────────────────────────────────────────────
-    function applySearch(query) {
-        const q = query.toLowerCase().trim();
-        const filtered = q
-            ? allNGOs.filter(n =>
-                JSON.stringify(n).toLowerCase().includes(q))
-            : allNGOs;
-
-        const grid  = document.getElementById("ngo-grid");
-        const empty = document.getElementById("ngo-empty");
-
-        if (filtered.length === 0) {
-            grid.style.display = "none";
-            empty.style.display = "flex";
+        // Normalize Data
+        if (Array.isArray(data)) {
+            allNGOs = data;
+        } else if (data && Array.isArray(data.ngos)) {
+            allNGOs = data.ngos;
+        } else if (data && Array.isArray(data.data)) {
+            allNGOs = data.data;
         } else {
-            empty.style.display = "none";
-            grid.style.display = "grid";
-            grid.innerHTML = filtered.map(renderCard).join("");
+            console.error("UNKNOWN DATA FORMAT:", data);
+            allNGOs = [];
         }
-        document.getElementById("ngo-total-badge").textContent =
-            `${filtered.length} NGO${filtered.length !== 1 ? "s" : ""}`;
+
+        filterNGOs("all");
+
+    } catch (err) {
+        console.error("LOAD ERROR:", err);
+        allNGOs = [];
+        renderNGOs([]);
+    } finally {
+        document.getElementById("reports-loading").style.display = "none";
     }
+}
 
-    // ── Bootstrap ───────────────────────────────────────────────────
-    async function init() {
-        try {
-            const res = await ApiService.getNGOs();
-            if (!res.ok) {
-                showError(res.error);
-                return;
-            }
-            allNGOs = Array.isArray(res.data)
-                ? res.data
-                : (res.data.ngos || res.data.data || []);
+// ── Filter logic ───────────────────────────────────────────────
+function filterNGOs(type) {
+    currentMainFilter = type;
 
-            showGrid(allNGOs);
-        } catch (err) {
-            showError(err.message);
-            console.error("ngos.js error:", err);
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-        init();
-        document.getElementById("ngo-search")
-            .addEventListener("input", e => applySearch(e.target.value));
+    // Update active state on buttons
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.classList.remove("filter-btn--active");
     });
-})();
+    const activeBtn = document.getElementById("filter-" + type);
+    if (activeBtn) activeBtn.classList.add("filter-btn--active");
+
+    if (type === "all") {
+        renderNGOs(allNGOs);
+    } else if (type === "verified") {
+        renderNGOs(allNGOs.filter(n => n.verified === true || String(n.verified).toLowerCase() === "true"));
+    } else {
+        renderNGOs(allNGOs.filter(n => !(n.verified === true || String(n.verified).toLowerCase() === "true")));
+    }
+}
+
+// ── Render — text-based list ─────────────────────────────────────────
+function renderNGOs(ngos) {
+    const container = document.getElementById("reportsList");
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (allNGOs.length === 0) {
+        container.innerHTML = `<p class="empty-text">📭 No NGOs available</p>`;
+        return;
+    }
+
+    if (ngos.length === 0) {
+        container.innerHTML = `<p class="empty-text">✅ No NGOs match the current filter.</p>`;
+        return;
+    }
+
+    ngos.forEach(ngo => {
+        // ── Prioritize NGO Name over Owner Name ──
+        const ngoName = ngo.ngo_name || ngo.organization_name || ngo.organization || ngo.name || "NGO";
+        
+        const description = ngo.description || ngo.type || ngo.category || ngo.ngo_type || "No description available";
+        const region = ngo.region || ngo.area || ngo.city || ngo.location || "";
+        const contact = ngo.contact || ngo.email || ngo.phone || "";
+        const isVerified = ngo.verified === true || String(ngo.verified).toLowerCase() === "true";
+
+        const item = document.createElement("div");
+        item.className = "report-item";
+
+        item.innerHTML = `
+            <div class="report-item-header">
+                <h3>${ngoName}</h3>
+                <span class="severity-pill ${isVerified ? 'low' : 'medium'}">${isVerified ? "🟢 VERIFIED" : "🟡 UNVERIFIED"}</span>
+            </div>
+            <p class="desc">${description}</p>
+            <div class="report-item-meta">
+                ${region ? `<span>📍 ${region}</span>` : ""}
+                ${contact ? `<span>📬 ${contact}</span>` : ""}
+                <span class="status">${isVerified ? "✅ Verified Organization" : "⚠️ Pending Verification"}</span>
+            </div>
+        `;
+
+        container.appendChild(item);
+    });
+}
+
+loadNGOs();

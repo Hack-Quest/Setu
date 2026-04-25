@@ -1,8 +1,10 @@
 body {
     margin: 0;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    background: #222831;
-    color: #DFD0B8;
+    background: radial-gradient(circle at 20% 30%, rgba(255,115,0,0.15), transparent 40%),
+                radial-gradient(circle at 80% 20%, rgba(255,115,0,0.1), transparent 40%),
+                #020617;
+    color: white;
 }
 
 /* 🔝 HEADER */
@@ -177,50 +179,74 @@ iframe {
 /* ========================= */
 /* 🔐 LOGIN PAGE STYLES */
 /* ========================= */
-.login-container {
+.login-wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 80vh;
 }
 
-.login-box {
-    background: #393E46;
+.login-card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
     padding: 30px;
-    border-radius: 12px;
-    width: 300px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    width: 380px;
+    margin: auto;
+    box-shadow: 0 0 40px rgba(255,115,0,0.15);
 }
 
-.login-box h2 {
+.login-card h2 {
+    color: #ff6a00;
+    text-shadow: 0 0 20px rgba(255,115,0,0.6);
     margin-bottom: 20px;
     text-align: center;
 }
 
-.login-box input,
-.login-box select {
+.login-card p.sub {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.login-card input,
+.login-card select {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: white;
+    border-radius: 10px;
+    padding: 12px;
     width: 100%;
-    padding: 10px;
     margin-bottom: 15px;
-    border-radius: 6px;
-    border: none;
     outline: none;
+    box-sizing: border-box;
 }
 
-.login-box button {
-    width: 100%;
-    padding: 10px;
-    background: #948979;
+.login-card input::placeholder {
+    color: rgba(255,255,255,0.5);
+}
+
+.login-card select option {
+    background: #020617;
+    color: white;
+}
+
+.login-card button {
+    background: linear-gradient(135deg, #ff6a00, #ff8c00);
     border: none;
-    border-radius: 6px;
-    cursor: pointer;
+    padding: 12px;
+    border-radius: 12px;
+    color: white;
     font-weight: bold;
-    transition: 0.3s;
+    cursor: pointer;
+    transition: 0.3s ease;
+    width: 100%;
+    margin-top: 10px;
 }
 
-.login-box button:hover {
-    background: #DFD0B8;
-    color: #222831;
+.login-card button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(255,115,0,0.6);
 }
 
 /* MOBILE */

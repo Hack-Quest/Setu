@@ -16,7 +16,7 @@ def list_ngos():
     try:
         ngos = get_all_ngos()
         # Only expose safe public fields
-        safe_fields = ["id", "name", "type", "location", "email",
+        safe_fields = ["id", "ngo_name", "owner_name", "description", "type", "location", "email",
                        "phone", "verified", "registered_at", "region"]
         sanitized = [
             {k: v for k, v in ngo.items() if k in safe_fields}

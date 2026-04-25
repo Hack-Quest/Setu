@@ -11,11 +11,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/list-page.css">
+    <link rel="stylesheet" href="css/reports.css">
 </head>
 
 <body>
 
+    <!-- 🔝 NAVBAR -->
     <header class="main-header">
         <div class="logo">SETU</div>
         <nav>
@@ -27,41 +28,34 @@
         </nav>
     </header>
 
-    <main class="list-page">
-        <div class="list-header">
-            <div>
-                <h1 class="list-title">🏢 NGOs</h1>
-                <p class="list-subtitle">All registered NGOs on the SETU network</p>
-            </div>
-            <div class="list-meta">
-                <span id="ngo-total-badge" class="count-badge">Loading…</span>
-            </div>
-        </div>
+    <!-- 📐 MAIN CONTAINER -->
+    <div class="reports-container">
 
-        <!-- Search bar -->
-        <div class="list-controls">
-            <input id="ngo-search" class="list-search" type="text" placeholder="Search by name, type, or region…">
+        <!-- Page header -->
+        <div class="ops-page-header">
+            <div>
+                <h1 class="ops-title">🏢 NGOs</h1>
+                <p class="ops-subtitle">Registered organizations helping in disaster response</p>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="ops-filters">
+                <button class="filter-btn filter-btn--active" onclick="filterNGOs('all')" id="filter-all">All</button>
+                <button class="filter-btn filter-btn--ok" onclick="filterNGOs('verified')" id="filter-verified">Verified</button>
+                <button class="filter-btn filter-btn--medium" onclick="filterNGOs('unverified')" id="filter-unverified">Unverified</button>
+            </div>
         </div>
 
         <!-- Loading state -->
-        <div id="ngo-loading" class="list-loading">
-            <div class="spinner"></div>
+        <div id="reports-loading" class="ops-loading">
+            <div class="ops-spinner"></div>
             <p>Fetching NGOs…</p>
         </div>
 
-        <!-- Error state -->
-        <div id="ngo-error" class="list-error" style="display:none;">
-            <p id="ngo-error-msg">⚠️ Unable to load NGOs.</p>
-        </div>
+        <!-- Report grid — single section -->
+        <div id="reportsList" class="report-list"></div>
 
-        <!-- Empty state -->
-        <div id="ngo-empty" class="list-empty" style="display:none;">
-            <p>No NGOs found.</p>
-        </div>
-
-        <!-- Grid -->
-        <div id="ngo-grid" class="ngo-grid" style="display:none;"></div>
-    </main>
+    </div>
 
     <div id="toast-container"></div>
 

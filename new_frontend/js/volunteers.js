@@ -1,116 +1,148 @@
 /* js/volunteers.js */
-(function () {
-    let allVolunteers = [];
+const API_BASE = window.SETU_API_BASE_URL || "";
+let allVolunteers = [];
+let currentMainFilter = "all"; // "all" | "available" | "busy"
 
-    // ── Render helpers ──────────────────────────────────────────────
-    function renderCard(v) {
-        // Gracefully handle varying API shapes
-        const name     = v.name || v.volunteer_name || v.full_name || "Unknown Volunteer";
-        const skill    = v.skill || v.skills || v.role || "Volunteer";
-        const location = v.location || v.area || v.city || "";
-        const phone    = v.phone || v.contact || "";
-        const tier     = v.tier || v.tier_level || null;
+// ── Data loading ───────────────────────────────────────────────
+async function loadVolunteers() {
+    document.getElementById("reports-loading").style.display = "flex";
 
-        const tierHtml = tier
-            ? `<span class="tier-badge tier-${tier}">Tier ${tier}</span>`
-            : "";
+    try {
+        const response = await ApiService.getVolunteers();
 
-        return `
-            <div class="vol-card">
-                <div class="vol-card__avatar">🤝</div>
-                <div class="vol-card__name" title="${name}">${name}</div>
-                <div class="vol-card__skill">${skill}</div>
-                <div class="vol-card__meta">
-                    ${location ? `<span>📍 ${location}</span>` : ""}
-                    ${phone    ? `<span>📞 ${phone}</span>`    : ""}
-                </div>
-                ${tierHtml}
-            </div>
-        `;
-    }
-
-    function showGrid(data) {
-        document.getElementById("vol-loading").style.display = "none";
-        if (!data || data.length === 0) {
-            document.getElementById("vol-empty").style.display = "flex";
+        if (!response || (!response.data && !Array.isArray(response))) {
+            console.error("NO DATA FROM API");
+            allVolunteers = [];
+            renderVolunteers([]);
             return;
         }
-        const grid = document.getElementById("vol-grid");
-        grid.style.display = "grid";
-        grid.innerHTML = data.map(renderCard).join("");
-        document.getElementById("vol-total-badge").textContent =
-            `${data.length} volunteer${data.length !== 1 ? "s" : ""}`;
-    }
 
-    function showError(msg, is404 = false) {
-        document.getElementById("vol-loading").style.display = "none";
-        const err = document.getElementById("vol-error");
-        err.style.display = "flex";
-        const friendlyMsg = is404
-            ? "⚠️ Volunteer data is not available yet — the backend endpoint is being deployed. Please try again shortly."
-            : "⚠️ " + (msg || "Unable to load volunteers.");
-        document.getElementById("vol-error-msg").textContent = friendlyMsg;
-        // Add retry button if not already present
-        if (!document.getElementById("vol-retry-btn")) {
-            const btn = document.createElement("button");
-            btn.id = "vol-retry-btn";
-            btn.textContent = "↻ Retry";
-            btn.style.cssText = "margin-top:12px;padding:8px 20px;background:#ff5c00;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;";
-            btn.onclick = () => {
-                err.style.display = "none";
-                document.getElementById("vol-loading").style.display = "flex";
-                init();
-            };
-            err.appendChild(btn);
-        }
-    }
+        const data = response.data || response;
 
-    // ── Search filter ───────────────────────────────────────────────
-    function applySearch(query) {
-        const q = query.toLowerCase().trim();
-        const filtered = q
-            ? allVolunteers.filter(v =>
-                JSON.stringify(v).toLowerCase().includes(q))
-            : allVolunteers;
-
-        const grid = document.getElementById("vol-grid");
-        const empty = document.getElementById("vol-empty");
-
-        if (filtered.length === 0) {
-            grid.style.display = "none";
-            empty.style.display = "flex";
+        // Normalize Data
+        if (Array.isArray(data)) {
+            allVolunteers = data;
+        } else if (data && Array.isArray(data.volunteers)) {
+            allVolunteers = data.volunteers;
+        } else if (data && Array.isArray(data.data)) {
+            allVolunteers = data.data;
         } else {
-            empty.style.display = "none";
-            grid.style.display = "grid";
-            grid.innerHTML = filtered.map(renderCard).join("");
+            console.error("UNKNOWN DATA FORMAT:", data);
+            allVolunteers = [];
         }
-        document.getElementById("vol-total-badge").textContent =
-            `${filtered.length} volunteer${filtered.length !== 1 ? "s" : ""}`;
+
+        updateStats();
+        applyMainFilter("all");
+
+    } catch (err) {
+        console.error("LOAD ERROR:", err);
+        allVolunteers = [];
+        renderVolunteers([]);
+    } finally {
+        document.getElementById("reports-loading").style.display = "none";
+    }
+}
+
+// ── Stats panel ──────────────────────────────────────────────────────
+function updateStats() {
+    const total = allVolunteers.length;
+    // Default available to true if not explicitly false to be safe, or check truthy
+    const available = allVolunteers.filter(v => v.available === true || String(v.available).toLowerCase() === "true").length;
+    const busy = total - available;
+
+    const el = id => document.getElementById(id);
+    if (el("totalVolunteers")) el("totalVolunteers").textContent = total;
+    if (el("availableCount"))  el("availableCount").textContent  = available;
+    if (el("busyCount"))       el("busyCount").textContent       = busy;
+}
+
+// ── Compute the set to show based on active filter ─────────────
+function getFilteredSet() {
+    let base = allVolunteers;
+
+    if (currentMainFilter === "available") {
+        base = base.filter(v => v.available === true || String(v.available).toLowerCase() === "true");
+    } else if (currentMainFilter === "busy") {
+        base = base.filter(v => !(v.available === true || String(v.available).toLowerCase() === "true"));
     }
 
-    // ── Bootstrap ───────────────────────────────────────────────────
-    async function init() {
-        try {
-            const res = await ApiService.getVolunteers();
-            if (!res.ok) {
-                showError(res.error);
-                return;
-            }
-            // API might return array directly or wrapped in a key
-            allVolunteers = Array.isArray(res.data)
-                ? res.data
-                : (res.data.volunteers || res.data.data || []);
+    return base;
+}
 
-            showGrid(allVolunteers);
-        } catch (err) {
-            showError(err.message);
-            console.error("volunteers.js error:", err);
-        }
-    }
+// ── Main filter (stat card clicks) ──────────────────────────────────
+function applyMainFilter(type) {
+    if (type === "total") type = "all";
+    currentMainFilter = type;
 
-    document.addEventListener("DOMContentLoaded", () => {
-        init();
-        document.getElementById("vol-search")
-            .addEventListener("input", e => applySearch(e.target.value));
+    // Update stat card active state
+    ["total", "available", "busy"].forEach(t => {
+        const card = document.getElementById("stat-" + t);
+        const matchType = type === "all" ? "total" : type;
+        if (card) card.classList.toggle("rpt-stat-card--active", t === matchType);
     });
-})();
+    
+    // Update filter buttons
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.classList.remove("filter-btn--active");
+    });
+    const activeBtn = document.getElementById("filter-" + type);
+    if (activeBtn) activeBtn.classList.add("filter-btn--active");
+
+    renderVolunteers(getFilteredSet());
+}
+
+// ── Secondary filter buttons (from HTML) ───────────────────────────
+function filterVolunteers(type) {
+    applyMainFilter(type);
+}
+
+// ── Render — text-based list ─────────────────────────────────────────
+function renderVolunteers(volunteers) {
+    const container = document.getElementById("reportsList");
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (allVolunteers.length === 0) {
+        container.innerHTML = `<p class="empty-text">📭 No volunteers available</p>`;
+        return;
+    }
+
+    if (volunteers.length === 0) {
+        container.innerHTML = `<p class="empty-text">✅ No volunteers match the current filter.</p>`;
+        return;
+    }
+
+    volunteers.forEach(v => {
+        const name = v.name || v.volunteer_name || v.full_name || "Unknown Volunteer";
+        const skill = v.skill || v.skills || v.role || "No skills listed";
+        const location = v.location || v.area || v.city || "";
+        const phone = v.phone || v.contact || "";
+        const tier = v.tier || v.tier_level || "";
+        const isAvailable = v.available === true || String(v.available).toLowerCase() === "true";
+
+        let badgeClass = "tier-badge";
+        if (String(tier).includes("1")) badgeClass += " tier-1";
+        else if (String(tier).includes("2")) badgeClass += " tier-2";
+        const tierBadgeHTML = tier ? `<span class="${badgeClass}">Tier ${String(tier).replace('Tier ', '')}</span>` : "";
+
+        const item = document.createElement("div");
+        item.className = "report-item";
+
+        item.innerHTML = `
+            <div class="report-item-header">
+                <h3>${name} ${tierBadgeHTML}</h3>
+                <span class="severity-pill ${isAvailable ? 'low' : 'critical'}">${isAvailable ? "🟢 AVAILABLE" : "🔴 BUSY"}</span>
+            </div>
+            <p class="desc">${skill}</p>
+            <div class="report-item-meta">
+                ${location ? `<span>📍 ${location}</span>` : ""}
+                ${phone ? `<span>📞 ${phone}</span>` : ""}
+                <span class="status">${isAvailable ? "✅ Ready to Deploy" : "⛔ Currently Unavailable"}</span>
+            </div>
+        `;
+
+        container.appendChild(item);
+    });
+}
+
+loadVolunteers();

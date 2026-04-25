@@ -11,11 +11,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/list-page.css">
+    <link rel="stylesheet" href="css/reports.css">
 </head>
 
 <body>
 
+    <!-- 🔝 NAVBAR -->
     <header class="main-header">
         <div class="logo">SETU</div>
         <nav>
@@ -27,41 +28,50 @@
         </nav>
     </header>
 
-    <main class="list-page">
-        <div class="list-header">
+    <!-- 📐 MAIN CONTAINER -->
+    <div class="reports-container">
+
+        <!-- Page header -->
+        <div class="ops-page-header">
             <div>
-                <h1 class="list-title">🤝 Volunteers</h1>
-                <p class="list-subtitle">All registered volunteers on the SETU network</p>
+                <h1 class="ops-title">🤝 Volunteers</h1>
+                <p class="ops-subtitle">All registered volunteers on the SETU network</p>
             </div>
-            <div class="list-meta">
-                <span id="vol-total-badge" class="count-badge">Loading…</span>
+
+            <!-- Filter bar -->
+            <div class="ops-filters">
+                <button class="filter-btn filter-btn--active" onclick="filterVolunteers('all')" id="filter-all">All</button>
+                <button class="filter-btn filter-btn--ok" onclick="filterVolunteers('available')" id="filter-available">Available</button>
+                <button class="filter-btn filter-btn--alert" onclick="filterVolunteers('busy')" id="filter-busy">Busy</button>
             </div>
         </div>
 
-        <!-- Search bar -->
-        <div class="list-controls">
-            <input id="vol-search" class="list-search" type="text" placeholder="Search by name, skill, or location…">
+        <!-- 📊 STATS BAR (clickable filters) -->
+        <div class="stats-bar">
+            <div class="rpt-stat-card rpt-stat-card--active" id="stat-total" onclick="applyMainFilter('total')" title="Show all volunteers">
+                <h3 id="totalVolunteers">—</h3>
+                <p>TOTAL VOLUNTEERS</p>
+            </div>
+            <div class="rpt-stat-card rpt-stat-card--ok" id="stat-available" onclick="applyMainFilter('available')" title="Show available only">
+                <h3 id="availableCount">—</h3>
+                <p>AVAILABLE</p>
+            </div>
+            <div class="rpt-stat-card rpt-stat-card--alert" id="stat-busy" onclick="applyMainFilter('busy')" title="Show busy only">
+                <h3 id="busyCount">—</h3>
+                <p>BUSY</p>
+            </div>
         </div>
 
         <!-- Loading state -->
-        <div id="vol-loading" class="list-loading">
-            <div class="spinner"></div>
+        <div id="reports-loading" class="ops-loading">
+            <div class="ops-spinner"></div>
             <p>Fetching volunteers…</p>
         </div>
 
-        <!-- Error state -->
-        <div id="vol-error" class="list-error" style="display:none;">
-            <p id="vol-error-msg">⚠️ Unable to load volunteers.</p>
-        </div>
+        <!-- Report grid — single section -->
+        <div id="reportsList" class="report-list"></div>
 
-        <!-- Empty state -->
-        <div id="vol-empty" class="list-empty" style="display:none;">
-            <p>No volunteers found.</p>
-        </div>
-
-        <!-- Grid -->
-        <div id="vol-grid" class="volunteer-grid" style="display:none;"></div>
-    </main>
+    </div>
 
     <div id="toast-container"></div>
 
