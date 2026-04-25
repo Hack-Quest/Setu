@@ -84,6 +84,12 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         # Geocode only if exact coords aren't provided
         if lat == 0.0 and lng == 0.0 and data.location_text.strip() and data.location_text != "Unknown Location":
             coords = get_coordinates(data.location_text)
+            
+            # Fallback: if the form was mapped backwards, the real address might be in the description under "Help:"
+            if (not coords or coords.get("lat") == 0) and "Help: " in data.description:
+                fallback_loc = data.description.split("Help: ")[-1].strip()
+                if fallback_loc and fallback_loc != "Not Specified":
+                    coords = get_coordinates(fallback_loc)
 
             # 🚨 HARD FAIL (MANDATORY)
             if not coords or coords.get("lat") == 0 or coords.get("lng") == 0:
