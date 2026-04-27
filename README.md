@@ -109,8 +109,6 @@ The repository is modularized into distinct backend, frontend, and database comp
 ## 🌐 Live Demo
 
 - 🌍 **Main App:** [https://setu-api-949977701091.asia-south1.run.app/](https://setu-api-949977701091.asia-south1.run.app/)  
-- 📊 **Dashboard:** `/dashboard`  
-- 🗺️ **Map View:** `/map`  
 
 ---
 
