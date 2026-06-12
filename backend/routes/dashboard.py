@@ -70,10 +70,7 @@ def get_reports_endpoint():
         
     print("TOTAL REPORTS RETURNED:", len(reports))
     
-    return {
-        "ok": True,
-        "data": reports
-    }
+    return reports
 
 @router.get("")
 def dashboard():

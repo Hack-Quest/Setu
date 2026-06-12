@@ -2,6 +2,15 @@ import requests
 import time
 import json
 import os
+import sys
+import io
+
+# Force UTF-8 stdout/stderr on Windows to prevent UnicodeEncodeError with emojis
+if sys.platform == "win32" and type(sys.stdout).__name__ == "TextIOWrapper":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+if sys.platform == "win32" and type(sys.stderr).__name__ == "TextIOWrapper":
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
 from dotenv import load_dotenv
 from database.ngos_db import verify_ngo
 

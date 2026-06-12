@@ -199,6 +199,8 @@ def match_needs():
                 "need_id": need_id,
                 "severity": severity,
                 "status": "pending",
+                "assigned_volunteer": "Unassigned",
+                "volunteer_tier": "None",
                 "reason": "No suitable volunteers found."
             })
             continue
@@ -220,6 +222,8 @@ def match_needs():
             "need_id": need_id,
             "severity": severity,
             "category": need_category,
+            "assigned_volunteer": assigned_list[0]["name"] if assigned_list else "Unassigned",
+            "volunteer_tier": "Tier 1 (NGO-Verified)" if selected[0][2].get("ngo_verified") else "Tier 2 (Community)",
             "assigned_volunteers": assigned_list,
             "status": "assigned",
             "count": len(assigned_list)
