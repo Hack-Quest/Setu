@@ -1,3 +1,4 @@
+import traceback
 from fastapi import APIRouter, Depends, BackgroundTasks
 from backend.models import NeedInput
 from backend.auth import verify_token
@@ -196,6 +197,7 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
         return final_data
 
     except Exception as e:
+        traceback.print_exc()
         return {"error": str(e)}
 
 

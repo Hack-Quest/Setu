@@ -1,3 +1,4 @@
+import traceback
 from fastapi import APIRouter, Depends, HTTPException
 from backend.auth import verify_token                    # ✅ Centralised auth
 from database.volunteers_db import save_volunteer, get_available_volunteers, get_all_volunteers, hash_password
@@ -34,6 +35,7 @@ def create_volunteer(data: VolunteerInput, token: str = Depends(verify_token)): 
     except HTTPException:
         raise
     except Exception as e:
+        traceback.print_exc()
         print(f"❌ Route Error: {e}")
         return {"error": str(e)}
 

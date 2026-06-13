@@ -1,3 +1,4 @@
+import logging
 from database.firestore_client import db
 from google.cloud.firestore_v1.base_query import FieldFilter
 from datetime import datetime, timezone, timedelta
@@ -39,7 +40,13 @@ def verify_otp_in_db(email: str, otp: str) -> bool:
                 print(f"⚠️ OTP for {email} expired.")
                 return False
         except ValueError:
-            pass
+            # Log the bad timestamp so it's visible in Cloud Run logs;
+            # treat a malformed expiry as expired to fail safe.
+            logging.warning(
+                f"OTP for {email} has a malformed expires_at value: {expires_at_str!r}. "
+                "Treating as expired."
+            )
+            return False
             
     # Valid OTP, delete it so it cannot be reused
     doc_ref.delete()

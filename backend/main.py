@@ -1,5 +1,6 @@
 import sys
 import io
+import traceback
 
 # Force UTF-8 stdout/stderr on Windows to prevent UnicodeEncodeError with emojis
 if sys.platform == "win32" and type(sys.stdout).__name__ == "TextIOWrapper":
@@ -150,6 +151,7 @@ async def webhook(request: Request, payload: Dict, background_tasks: BackgroundT
         return {"message": "Webhook processed", "data": result}
 
     except Exception as e:
+        traceback.print_exc()
         return {"error": str(e)}
 
 # 🔗 VOLUNTEER WEBHOOK (Updated to capture Email)
@@ -192,6 +194,7 @@ async def webhook_ngo_register_alias(request: Request, payload: Dict, background
         return {"message": "Volunteer registered", "id": doc_id}
 
     except Exception as e:
+        traceback.print_exc()
         return {"error": str(e)}
 
 # 📦 Include all specialized routers
