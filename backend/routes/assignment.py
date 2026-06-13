@@ -7,6 +7,7 @@ router = APIRouter(prefix="/assignment")
 @router.post("/volunteer/{need_id}")
 def accept_need(
     need_id: str,
+    volunteer_id: str = None,
     token: str = Depends(verify_token)
 ):
     """
@@ -17,16 +18,16 @@ def accept_need(
     from database.assignments_db import save_assignment 
     
     # Get volunteer UID from the verified Firebase token
-    volunteer_id = token.get("uid") 
-    if not volunteer_id:
-         raise HTTPException(status_code=401, detail="User ID (UID) missing from token.")
+    resolved_volunteer_id = token.get("uid") if isinstance(token, dict) else volunteer_id
+    if not resolved_volunteer_id:
+         raise HTTPException(status_code=400, detail="volunteer_id is required.")
     
     try:
-        assignment_id = save_assignment(need_id, volunteer_id)
+        assignment_id = save_assignment(need_id, resolved_volunteer_id)
         return {
             "status": "assigned",
             "assignment_id": assignment_id,
-            "message": f"Volunteer {volunteer_id} is now handling Need {need_id}"
+            "message": f"Volunteer {resolved_volunteer_id} is now handling Need {need_id}"
         }
     except Exception as e:
         # Log the error for Cloud Run debugging

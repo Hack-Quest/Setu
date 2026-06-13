@@ -1,7 +1,7 @@
 import json
 import os
 from dotenv import load_dotenv
-import google as genai
+from google import genai
 from ai_processing.prompts import build_prompt, VALID_CATEGORIES, VALID_SEVERITIES
 
 # Load from shared config folder
