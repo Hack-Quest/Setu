@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SETU Emergency Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-tertiary-container": "#ffede6",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9d9e5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-container": "#e0e3e5",
+                        "text-muted": "#64748B",
+                        "secondary-fixed": "#e0e3e5",
+                        "surface-container-low": "#f3f3fe",
+                        "on-secondary-fixed-variant": "#444749",
+                        "outline": "#737686",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-container": "#626567",
+                        "surface-bright": "#faf8ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#191b23",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-variant": "#e1e2ed",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#943700",
+                        "safety-green": "#22C55E",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#b4c5ff",
+                        "surface": "#faf8ff",
+                        "text-main": "#1E293B",
+                        "critical-red": "#EF4444",
+                        "tertiary-container": "#bc4800",
+                        "surface-container": "#ededf9",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "inverse-on-surface": "#f0f0fb",
+                        "border-gray": "#E2E8F0",
+                        "inverse-surface": "#2e3039",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c3c6d7",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-highest": "#e1e2ed",
+                        "primary": "#004ac6",
+                        "surface-container-high": "#e7e7f3",
+                        "on-background": "#191b23",
+                        "primary-container": "#2563eb",
+                        "secondary": "#5c5f61",
+                        "background": "#faf8ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "2rem",
+                        "margin-mobile": "1rem",
+                        "stack-md": "1rem",
+                        "gutter": "1.5rem",
+                        "container-max": "1280px",
+                        "margin-desktop": "2.5rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .animate-pulse-subtle {
+            animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-subtle {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .report-feed-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .report-feed-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+
+<body class="bg-background font-body-md text-on-surface">
+    <header class="fixed top-0 w-full bg-surface-bright border-b border-border-gray h-16 z-50">
+        <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-full">
+            <div class="flex items-center gap-stack-md">
+                <span onclick="window.location.href='landing.html'" class="font-headline-md text-headline-md font-bold text-surface-tint cursor-pointer">SETU</span>
+                <nav class="hidden md:flex gap-gutter items-center ml-8">
+                    <a class="text-primary font-bold border-b-2 border-primary pb-1 font-label-md text-label-md"
+                        href="emergency_dashboard.html">Dashboard</a>
+                    <a class="text-on-surface-variant hover:text-primary transition-colors duration-200 font-label-md text-label-md"
+                        href="about.html">Science of SETU</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-stack-sm">
+                <button onclick="window.location.href='login.html'"
+                    class="px-4 py-2 border border-primary text-primary rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-all">NGO
+                    Login</button>
+                <button onclick="openVolunteerForm()"
+                    class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:opacity-90 transition-all">Volunteer
+                    Signup</button>
+            </div>
+        </div>
+    </header>
+    <!-- SideNavBar (Active: Overview) -->
+    <aside
+        class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-surface-container-lowest border-r border-border-gray py-stack-md px-4 flex flex-col gap-y-2 z-40 hidden lg:flex">
+        <div class="mb-stack-lg px-2">
+            <div class="flex items-center gap-stack-sm mb-2">
+                <div
+                    class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+                    <img alt="ERU Logo" class="w-full h-full object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPdzOuf-zcFlybfM2bvHKdUxvURxUkaqXGtsX2kLoABkgN3PR17qXpOKxLhzafWZgIv_8pFQ2PjL8i_0BzA6axyT0FYSSKyceOi1CRpliP-Ctz8taKeVF3GWl8ry-X58gUTHw_l9A2R1bMc-aa-00FkU242-SH0QVdu-fRbPUy6zx38m42PA0epcyVKwOLok408MqBmaz0QL78q-D7WK8eeOm-yB57J0nWLKBYj8zLOQIh3aK7Il7IdufUffixXbwBVCm6gNJomCU" />
+                </div>
+                <div>
+                    <h2 class="font-label-md text-label-md font-bold text-on-surface">NGO Dashboard</h2>
+                    <p class="text-[10px] text-text-muted uppercase tracking-wider">Emergency Response Unit</p>
+                </div>
+            </div>
+        </div>
+        <a class="flex items-center gap-stack-sm px-4 py-3 text-primary font-bold bg-surface-container rounded-lg transition-all transform active:scale-95"
+            href="#">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+            <span class="font-label-md text-label-md">Overview</span>
+        </a>
+        <a class="flex items-center gap-stack-sm px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+            href="#">
+            <span class="material-symbols-outlined">assignment</span>
+            <span class="font-label-md text-label-md">Assignments</span>
+        </a>
+        <a class="flex items-center gap-stack-sm px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+            href="#">
+            <span class="material-symbols-outlined">group</span>
+            <span class="font-label-md text-label-md">Team</span>
+        </a>
+        <a class="flex items-center gap-stack-sm px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+            href="#">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="font-label-md text-label-md">Settings</span>
+        </a>
+        <div class="mt-auto p-4 bg-surface-container-low rounded-xl border border-outline-variant">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-label-sm font-label-sm text-on-surface-variant">Live Status</span>
+                <span id="ws-indicator" class="px-2 py-0.5 rounded bg-safety-green/10 text-safety-green text-[10px] font-bold border border-safety-green/20">LIVE</span>
+            </div>
+            <p class="text-[11px] text-text-muted">WebSocket Connected: Zone 4</p>
+        </div>
+    </aside>
+    <!-- Main Content Canvas -->
+    <main class="lg:ml-64 pt-16 min-h-screen bg-background">
+        <div class="p-6 max-w-[1600px] mx-auto">
+            <!-- Dashboard Header & Filters -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-stack-md mb-8">
+                <div>
+                    <h1 class="font-headline-lg text-headline-lg text-on-surface mb-1">Response Command</h1>
+                    <p class="text-text-muted font-body-md">Real-time situational awareness and resource coordination.
+                    </p>
+                </div>
+                <div
+                    class="flex flex-wrap gap-stack-sm bg-surface-container-lowest p-2 rounded-xl border border-border-gray">
+                    <div class="flex gap-1">
+                        <button data-filter="all"
+                            class="px-3 py-1.5 rounded-lg bg-primary text-on-primary text-label-sm font-label-sm">All
+                            Levels</button>
+                        <button data-filter="critical"
+                            class="px-3 py-1.5 rounded-lg hover:bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm">Critical</button>
+                        <button data-filter="medical"
+                            class="px-3 py-1.5 rounded-lg hover:bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm">Medical</button>
+                    </div>
+                    <div class="w-[1px] h-8 bg-border-gray self-center"></div>
+                    <button
+                        class="flex items-center gap-1 px-3 py-1.5 text-on-surface-variant hover:bg-surface-container-low rounded-lg text-label-sm font-label-sm">
+                        <span class="material-symbols-outlined text-[18px]">filter_list</span>
+                        Advanced Filters
+                    </button>
+                </div>
+            </div>
+            <!-- Bento Layout -->
+            <div class="grid grid-cols-12 gap-gutter">
+                <!-- Map Section (Col 1-8) -->
+                <div
+                    class="col-span-12 lg:col-span-8 h-[600px] relative rounded-2xl overflow-hidden border border-border-gray bg-surface-container-lowest">
+                    <div class="absolute top-4 left-4 z-10 flex gap-2">
+                        <div
+                            class="bg-surface-container-lowest/90 backdrop-blur-md px-4 py-2 rounded-full border border-border-gray flex items-center gap-3 shadow-sm">
+                            <span class="flex items-center gap-1.5 text-label-sm font-label-sm"><span
+                                    class="w-3 h-3 rounded-full bg-critical-red"></span> Critical</span>
+                            <span class="flex items-center gap-1.5 text-label-sm font-label-sm"><span
+                                    class="w-3 h-3 rounded-full bg-tertiary"></span> High</span>
+                            <span class="flex items-center gap-1.5 text-label-sm font-label-sm"><span
+                                    class="w-3 h-3 rounded-full bg-primary-container"></span> Mid</span>
+                        </div>
+                    </div>
+                    <div class="w-full h-full bg-surface-dim relative" data-location="Coastal City Emergency Zone"
+                        style="">
+                        <!-- Placeholder for Map Visualization -->
+                        <img class="w-full h-full object-cover"
+                            data-alt="A sophisticated satellite-style digital map interface displaying an urban coastal region with glowing, semi-transparent heat map overlays and sharp geometric markers. The aesthetic is clean and professional, using a light mode palette with soft grays and bright whites. High-contrast severity markers in pulsing red, vibrant orange, and trust blue are scattered across the terrain, indicating active emergency response zones with absolute precision and clarity."
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcZht_8Lp_TsssBi6KABXpFHbUSBU4xk9nvWcQe3E241LzQ1r2jjn-VO3FwlfmKaZgYmv03Y-fHXGDRTqFxKvE_CwIGTipwxXYlaphZTf5FO9kI0bE064G7tpIzYb3rNAZq6mMyW_zALctVkY4p6Dl6tkTc0SXswOpQdydCuSr5zUPIxebSwLuJxFl74SwcE3MSwiwfN5Vu5LVO-9ADU72CHUicH79EtzJRyyKwfA1b71yPDlFQxuQBvepm80YMAl4xkpkL8KYAVo" />
+                        <!-- Map Marker Overlays -->
+                        <div class="absolute top-[30%] left-[45%] group cursor-pointer">
+                            <div
+                                class="w-12 h-12 bg-critical-red/20 rounded-full flex items-center justify-center animate-pulse">
+                                <div class="w-4 h-4 bg-critical-red rounded-full border-2 border-white shadow-lg"></div>
+                            </div>
+                            <div
+                                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white p-3 rounded-xl shadow-xl border border-border-gray opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <span class="block text-label-sm font-label-sm text-critical-red mb-1">CRITICAL: Flood
+                                    Surge</span>
+                                <p class="text-[11px] text-text-muted mb-2">Sector 7A, Marina District. Urgent
+                                    evacuation required.</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] font-bold text-safety-green">98% TRUST</span>
+                                    <span class="text-[10px] text-text-muted">2m ago</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute top-[60%] left-[20%] group cursor-pointer">
+                            <div
+                                class="w-10 h-10 bg-primary-container/20 rounded-full flex items-center justify-center animate-pulse-subtle">
+                                <div class="w-4 h-4 bg-primary-container rounded-full border-2 border-white shadow-lg">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Live Feed Section (Col 9-12) -->
+                <div class="col-span-12 lg:col-span-4 flex flex-col gap-gutter">
+                    <div
+                        class="bg-surface-container-lowest border border-border-gray rounded-2xl flex flex-col h-[600px]">
+                        <div class="p-6 border-b border-border-gray flex items-center justify-between">
+                            <h3 class="font-headline-md text-headline-md text-on-surface">Live Feed</h3>
+                            <span
+                                class="px-2 py-0.5 rounded-full bg-safety-green/10 text-safety-green text-[10px] font-bold border border-safety-green/20">LIVE</span>
+                        </div>
+                        <div id="live-feed-container" class="flex-1 overflow-y-auto p-4 space-y-4 report-feed-container">
+                            <!-- Report Item 1 (Critical) -->
+                            <div
+                                class="bg-surface-bright border border-border-gray p-gutter rounded-xl hover:border-primary-container transition-all group">
+                                <div class="flex justify-between items-start mb-stack-sm">
+                                    <span
+                                        class="px-2 py-0.5 rounded bg-critical-red text-on-primary text-[10px] font-bold">CRITICAL</span>
+                                    <span class="text-[11px] text-text-muted">Just Now</span>
+                                </div>
+                                <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Building Collapse
+                                    Risk</h4>
+                                <p class="text-body-md text-on-surface-variant text-[13px] mb-4">Multiple residents
+                                    trapped in West Side complex after structural failure. Rescue teams dispatched.</p>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <div
+                                            class="w-8 h-8 rounded-full border-2 border-safety-green p-0.5 flex items-center justify-center">
+                                            <span class="text-[10px] font-bold text-safety-green">94</span>
+                                        </div>
+                                        <span class="text-label-sm font-label-sm text-text-muted">Trust Score</span>
+                                    </div>
+                                    <button class="text-primary font-bold text-label-sm hover:underline">View
+                                        Intel</button>
+                                </div>
+                            </div>
+                            <!-- Report Item 2 (High) -->
+                            <div
+                                class="bg-surface-bright border border-border-gray p-gutter rounded-xl hover:border-primary-container transition-all">
+                                <div class="flex justify-between items-start mb-stack-sm">
+                                    <span
+                                        class="px-2 py-0.5 rounded bg-tertiary text-on-primary text-[10px] font-bold">HIGH
+                                        SEVERITY</span>
+                                    <span class="text-[11px] text-text-muted">12m ago</span>
+                                </div>
+                                <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Medical Supplies
+                                    Needed</h4>
+                                <p class="text-body-md text-on-surface-variant text-[13px] mb-4">Urgent request for
+                                    insulin and bandages at Central Field Hospital. Supply line blocked by rubble.</p>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <div
+                                            class="w-8 h-8 rounded-full border-2 border-safety-green p-0.5 flex items-center justify-center">
+                                            <span class="text-[10px] font-bold text-safety-green">82</span>
+                                        </div>
+                                        <span class="text-label-sm font-label-sm text-text-muted">Trust Score</span>
+                                    </div>
+                                    <button class="text-primary font-bold text-label-sm hover:underline">Assign
+                                        Team</button>
+                                </div>
+                            </div>
+                            <!-- Report Item 3 (Medium) -->
+                            <div
+                                class="bg-surface-bright border border-border-gray p-gutter rounded-xl hover:border-primary-container transition-all opacity-80">
+                                <div class="flex justify-between items-start mb-stack-sm">
+                                    <span
+                                        class="px-2 py-0.5 rounded bg-primary-container text-on-primary text-[10px] font-bold">LOGISTICS</span>
+                                    <span class="text-[11px] text-text-muted">45m ago</span>
+                                </div>
+                                <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Power Grid
+                                    Interruption</h4>
+                                <p class="text-body-md text-on-surface-variant text-[13px] mb-4">Substation 4
+                                    flickering. May affect communication relays in District B.</p>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <div
+                                            class="w-8 h-8 rounded-full border-2 border-primary-fixed-dim p-0.5 flex items-center justify-center">
+                                            <span class="text-[10px] font-bold text-primary">61</span>
+                                        </div>
+                                        <span class="text-label-sm font-label-sm text-text-muted">Trust Score</span>
+                                    </div>
+                                    <button
+                                        class="text-primary font-bold text-label-sm hover:underline">Monitor</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Statistics Summary Row -->
+                <div class="col-span-12 grid grid-cols-1 md:grid-cols-4 gap-gutter mb-stack-lg">
+                    <div class="bg-surface-container-lowest border border-border-gray p-6 rounded-2xl">
+                        <div class="flex justify-between mb-4">
+                            <span
+                                class="material-symbols-outlined text-critical-red bg-error-container/20 p-2 rounded-lg">report</span>
+                            <span class="text-safety-green font-bold text-label-sm">+12% vs last hr</span>
+                        </div>
+                        <h5 class="text-text-muted font-label-md text-label-md mb-1">Active Emergencies</h5>
+                        <p id="stat-active-emergencies" class="font-display-lg text-[32px] font-bold text-on-surface">142</p>
+                    </div>
+                    <div class="bg-surface-container-lowest border border-border-gray p-6 rounded-2xl">
+                        <div class="flex justify-between mb-4">
+                            <span
+                                class="material-symbols-outlined text-primary bg-primary-container/10 p-2 rounded-lg">volunteer_activism</span>
+                            <span class="text-text-muted font-bold text-label-sm">Steady</span>
+                        </div>
+                        <h5 class="text-text-muted font-label-md text-label-md mb-1">Available Volunteers</h5>
+                        <p id="stat-available-volunteers" class="font-display-lg text-[32px] font-bold text-on-surface">854</p>
+                    </div>
+                    <div class="bg-surface-container-lowest border border-border-gray p-6 rounded-2xl">
+                        <div class="flex justify-between mb-4">
+                            <span
+                                class="material-symbols-outlined text-tertiary bg-tertiary-fixed/30 p-2 rounded-lg">verified_user</span>
+                            <span class="text-safety-green font-bold text-label-sm">High Reliability</span>
+                        </div>
+                        <h5 class="text-text-muted font-label-md text-label-md mb-1">Avg. Trust Score</h5>
+                        <p id="stat-avg-trust" class="font-display-lg text-[32px] font-bold text-on-surface">89.4</p>
+                    </div>
+                    <div class="bg-surface-container-lowest border border-border-gray p-6 rounded-2xl">
+                        <div class="flex justify-between mb-4">
+                            <span
+                                class="material-symbols-outlined text-safety-green bg-safety-green/10 p-2 rounded-lg">check_circle</span>
+                            <span class="text-safety-green font-bold text-label-sm">+214 today</span>
+                        </div>
+                        <h5 class="text-text-muted font-label-md text-label-md mb-1">Resolved Reports</h5>
+                        <p id="stat-resolved-reports" class="font-display-lg text-[32px] font-bold text-on-surface">1.2k</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer
+        class="w-full py-8 bg-surface-container-low border-t border-border-gray mt-stack-lg lg:ml-64 lg:w-[calc(100%-16rem)]">
+        <div
+            class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto gap-stack-md">
+            <div class="flex flex-col items-center md:items-start">
+                <span class="font-headline-md text-headline-md text-primary font-bold">SETU</span>
+                <p class="text-text-muted font-label-sm text-label-sm mt-1">© 2024 SETU Emergency Systems</p>
+            </div>
+            <div class="flex gap-gutter">
+                <a class="text-text-muted hover:text-primary transition-colors font-label-sm text-label-sm"
+                    href="#">Contact</a>
+                <a class="text-text-muted hover:text-primary transition-colors font-label-sm text-label-sm"
+                    href="#">Privacy</a>
+                <a class="text-text-muted hover:text-primary transition-colors font-label-sm text-label-sm"
+                    href="#">Documentation</a>
+            </div>
+        </div>
+    </footer>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/emergency_dashboard.js"></script>
+</body>
+
+</html>

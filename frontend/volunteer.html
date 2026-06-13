@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SETU | Volunteer Portal</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-tertiary-container": "#ffede6",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9d9e5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-container": "#e0e3e5",
+                        "text-muted": "#64748B",
+                        "secondary-fixed": "#e0e3e5",
+                        "surface-container-low": "#f3f3fe",
+                        "on-secondary-fixed-variant": "#444749",
+                        "outline": "#737686",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-container": "#626567",
+                        "surface-bright": "#faf8ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#191b23",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-variant": "#e1e2ed",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#943700",
+                        "safety-green": "#22C55E",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#b4c5ff",
+                        "surface": "#faf8ff",
+                        "text-main": "#1E293B",
+                        "critical-red": "#EF4444",
+                        "tertiary-container": "#bc4800",
+                        "surface-container": "#ededf9",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "inverse-on-surface": "#f0f0fb",
+                        "border-gray": "#E2E8F0",
+                        "inverse-surface": "#2e3039",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c3c6d7",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-highest": "#e1e2ed",
+                        "primary": "#004ac6",
+                        "surface-container-high": "#e7e7f3",
+                        "on-background": "#191b23",
+                        "primary-container": "#2563eb",
+                        "secondary": "#5c5f61",
+                        "background": "#faf8ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "2rem",
+                        "margin-mobile": "1rem",
+                        "stack-md": "1rem",
+                        "gutter": "1.5rem",
+                        "container-max": "1280px",
+                        "margin-desktop": "2.5rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .duty-toggle:checked~.duty-bg {
+            background-color: #22C55E;
+        }
+
+        .duty-toggle:checked~.duty-dot {
+            transform: translateX(1.25rem);
+        }
+
+        .map-container {
+            min-height: 400px;
+        }
+    </style>
+</head>
+
+<body class="bg-background text-on-background min-h-screen">
+    <!-- TopNavBar -->
+    <header class="fixed top-0 w-full bg-surface-bright border-b border-border-gray z-50">
+        <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-16">
+            <div class="flex items-center gap-stack-md">
+                <span onclick="window.location.href='landing.html'" class="font-headline-md text-headline-md font-bold text-surface-tint cursor-pointer">SETU</span>
+                <nav class="hidden md:flex gap-gutter items-center">
+                    <a class="font-label-md text-label-md text-primary font-bold border-b-2 border-primary pb-1"
+                        href="emergency_dashboard.html">Dashboard</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="about.html">Science of SETU</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="volunteer-name" class="font-label-md text-label-md text-text-main font-bold">Volunteer</span>
+                <button id="logoutBtn"
+                    class="hidden md:block px-4 py-2 font-label-md text-label-md bg-surface-container text-primary rounded-lg transition-all hover:bg-surface-container-low">Logout</button>
+                <div
+                    class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden border border-border-gray">
+                    <img alt="Profile" class="w-full h-full object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-paK-GvyMDWq2jvepn_rrLG8kSFbI6pmzI34LGAjudT8VO5pd2ABYQQ-kaUTm3ohLzhy9PyJsAWDhrgkeSsLNSpYqa_3ITyiWTrSv_3a1q1pcsIof7pm0KrnWGtzxYoTsxeClfru9nmLIaj1fGPTOm5n6F7it5T6zdpV1EBSViWiq2JNWgcs3-fO60jVR9rbmRHc7UiZGU-MTJqzRM_B1C4fsPS8-Kd-2DQmMtX-1CPDvOu8lnATGT03nhfCh-H3xGb1ukSnqa6I" />
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- SideNavBar (Desktop Only) -->
+    <aside
+        class="fixed left-0 top-16 h-full w-64 bg-surface-container-lowest border-r border-border-gray py-stack-md px-4 gap-y-2 hidden md:flex flex-col">
+        <div class="mb-stack-lg px-2">
+            <h3 class="font-headline-md text-headline-md font-bold text-primary">Volunteer Portal</h3>
+            <p class="text-on-surface-variant font-label-sm text-label-sm">Field Responder Unit</p>
+        </div>
+        <a class="flex items-center gap-3 px-3 py-2 text-primary font-bold bg-surface-container rounded-lg group transition-all active:scale-95"
+            href="#">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="font-label-md text-label-md">Overview</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all active:scale-95"
+            href="#">
+            <span class="material-symbols-outlined">assignment</span>
+            <span class="font-label-md text-label-md">Assignments</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all active:scale-95"
+            href="#">
+            <span class="material-symbols-outlined">group</span>
+            <span class="font-label-md text-label-md">Team</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all active:scale-95"
+            href="#">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="font-label-md text-label-md">Settings</span>
+        </a>
+        <div class="mt-auto p-4 bg-surface-container-low rounded-xl border border-border-gray">
+            <p class="font-label-sm text-label-sm text-text-muted mb-2">Trust Score</p>
+            <div class="flex items-center gap-2">
+                <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
+                    <div id="trust-score-bar" class="bg-safety-green h-full w-[88%]"></div>
+                </div>
+                <span class="font-label-md text-label-md font-bold text-safety-green">88</span>
+            </div>
+        </div>
+    </aside>
+    <!-- Main Content Canvas -->
+    <main class="md:ml-64 pt-20 pb-24 md:pb-8 px-margin-mobile md:px-margin-desktop max-w-screen-xl">
+        <!-- On-Duty Toggle Section -->
+        <section
+            class="mb-stack-lg flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-surface-container-lowest border border-border-gray rounded-xl">
+            <div>
+                <h2 id="volunteer-greeting" class="font-headline-md text-headline-md text-on-surface">Good Morning, Alex</h2>
+                <p class="text-on-surface-variant font-body-md text-body-md">Ready to support your community today?</p>
+            </div>
+            <div class="flex items-center gap-4 bg-surface-container-low p-3 rounded-lg border border-border-gray">
+                <span id="dutyLabel" class="font-label-md text-label-md font-bold text-on-surface">You are On-Duty</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input id="dutyToggle" checked="" class="sr-only peer duty-toggle" type="checkbox" />
+                    <div
+                        class="w-11 h-6 bg-secondary-container rounded-full peer duty-bg transition-colors duration-300">
+                    </div>
+                    <div
+                        class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-300 duty-dot">
+                    </div>
+                </label>
+            </div>
+        </section>
+        <!-- Bento Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+            <!-- Active Mission Card (Primary Focus) -->
+            <div class="lg:col-span-8 flex flex-col gap-gutter">
+                <section id="active-mission-section"
+                    class="bg-surface-container-lowest border border-border-gray rounded-xl overflow-hidden shadow-sm">
+                    <div class="p-6 border-b border-border-gray flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span class="p-2 bg-error-container text-error rounded-lg">
+                                <span class="material-symbols-outlined"
+                                    style="font-variation-settings: 'FILL' 1;">emergency</span>
+                            </span>
+                            <div>
+                                <h3 class="font-headline-md text-headline-md">Active Mission</h3>
+                                <p class="text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+                                    ID: NEED-4092-X</p>
+                            </div>
+                        </div>
+                        <span
+                            class="px-3 py-1 bg-error text-white font-label-sm text-label-sm rounded-full animate-pulse">CRITICAL
+                            SEVERITY</span>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-stack-lg">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="font-label-sm text-label-sm text-text-muted block mb-1">LOCATION</label>
+                                <p class="font-body-lg text-body-lg font-semibold flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary">location_on</span>
+                                    124 Maple Avenue, Downtown Sector
+                                </p>
+                            </div>
+                            <div>
+                                <label class="font-label-sm text-label-sm text-text-muted block mb-1">TASK
+                                    DESCRIPTION</label>
+                                <p class="font-body-md text-body-md text-on-surface-variant">
+                                    Flash flooding reported in basement level. Assist with elderly evacuation and
+                                    coordinate with local EMS unit 4.
+                                </p>
+                            </div>
+                            <div class="pt-4 flex gap-3">
+                                <button
+                                    class="flex-1 bg-primary text-white font-label-md text-label-md py-3 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined">directions</span>
+                                    Navigate
+                                </button>
+                                <button
+                                    class="flex-1 border border-safety-green text-safety-green font-label-md text-label-md py-3 rounded-lg hover:bg-safety-green hover:text-white transition-all flex items-center justify-center gap-2"
+                                    id="markResolvedBtn">
+                                    <span class="material-symbols-outlined">check_circle</span>
+                                    Mark as Resolved
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Map Preview -->
+                        <div
+                            class="relative rounded-xl overflow-hidden border border-border-gray bg-surface-variant h-64 md:h-full min-h-[250px]">
+                            <img alt="Map of mission area" class="w-full h-full object-cover grayscale-[20%] opacity-80"
+                                data-alt="A clean, minimalist digital map view of a city grid in light mode aesthetic. The map features subtle blue and gray tones with a prominent bright blue navigation path leading to a pulsing red emergency marker at a specific building. The style is technical and reliable, with clear street labels and high contrast for rapid legibility during an emergency response."
+                                data-location="New York City"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqp1C96R3ydsbJKADXB8v2PaTcKXTFi_RQECizAkpPwKuP6onqjoTnd2Jy_P6loQXPiI-YvvZeirdt514-9WWOwrM4tighLmh9Gxfbi5g336-0p4VdcodL5kvWR5HPcceR-_LKA4z96TPKX47hS8f-7izL3kTc1GEu1cMSPPtnsJuORjSqKpQ8haGN6_VkSFjKBgd0M3L0U_sf2tgFVbazSdFpfuuDZzegrStrVoVAobpNtxZZRBh8cWofQ-HFDNFEzNSY66druEc" />
+                            <div
+                                class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none">
+                            </div>
+                            <div
+                                class="absolute top-4 right-4 bg-white p-2 rounded-lg shadow-lg border border-border-gray">
+                                <span class="material-symbols-outlined text-primary">my_location</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <!-- Stats & Profile Side -->
+            <div class="lg:col-span-4 flex flex-col gap-gutter">
+                <!-- Personal Stats -->
+                <section class="bg-surface-container-lowest border border-border-gray rounded-xl p-6 shadow-sm">
+                    <h3 class="font-headline-md text-headline-md mb-6">Personal Performance</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-surface-container-low rounded-xl border border-border-gray text-center">
+                            <span class="material-symbols-outlined text-primary mb-2 text-3xl">task_alt</span>
+                            <p id="stat-missions-completed" class="font-display-lg text-display-lg block">142</p>
+                            <p class="font-label-sm text-label-sm text-text-muted">Missions Completed</p>
+                        </div>
+                        <div class="p-4 bg-surface-container-low rounded-xl border border-border-gray text-center">
+                            <span class="material-symbols-outlined text-safety-green mb-2 text-3xl"
+                                style="font-variation-settings: 'FILL' 1;">verified</span>
+                            <p id="stat-trust-score" class="font-display-lg text-display-lg block">88</p>
+                            <p class="font-label-sm text-label-sm text-text-muted">Trust Score</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 p-4 bg-surface-bright rounded-xl border border-dashed border-outline-variant">
+                        <p class="font-label-md text-label-md text-on-surface-variant flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-sm">stars</span>
+                            Top 5% of responders this month
+                        </p>
+                    </div>
+                </section>
+                <!-- Notifications/Updates -->
+                <section class="bg-surface-container-lowest border border-border-gray rounded-xl p-6 shadow-sm flex-1">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-headline-md text-headline-md">Broadcasts</h3>
+                        <span class="flex h-2 w-2 relative">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-safety-green opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-safety-green"></span>
+                        </span>
+                    </div>
+                    <div class="space-y-4">
+                        <div
+                            class="flex gap-4 items-start p-3 hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer">
+                            <div
+                                class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-primary">info</span>
+                            </div>
+                            <div>
+                                <p class="font-label-md text-label-md font-semibold">Weather Alert: Severe Rain</p>
+                                <p class="font-label-sm text-label-sm text-text-muted">2 hours ago</p>
+                            </div>
+                        </div>
+                        <div
+                            class="flex gap-4 items-start p-3 hover:bg-surface-container-low rounded-lg transition-colors cursor-pointer">
+                            <div
+                                class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-secondary">update</span>
+                            </div>
+                            <div>
+                                <p class="font-label-md text-label-md font-semibold">Inventory Restock at Hub B</p>
+                                <p class="font-label-sm text-label-sm text-text-muted">5 hours ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer class="w-full py-8 bg-surface-container-low border-t border-border-gray mt-12 md:ml-64">
+        <div
+            class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto gap-4">
+            <div class="flex items-center gap-2">
+                <span class="font-headline-md text-headline-md text-primary font-bold">SETU</span>
+                <span class="text-text-muted font-label-sm text-label-sm">| Emergency Systems</span>
+            </div>
+            <div class="flex gap-gutter">
+                <a class="font-label-sm text-label-sm text-text-muted hover:text-primary transition-colors"
+                    href="#">Contact</a>
+                <a class="font-label-sm text-label-sm text-text-muted hover:text-primary transition-colors"
+                    href="#">Privacy</a>
+                <a class="font-label-sm text-label-sm text-text-muted hover:text-primary transition-colors"
+                    href="#">Documentation</a>
+            </div>
+            <p class="font-label-sm text-label-sm text-text-muted">© 2024 SETU Emergency Systems</p>
+        </div>
+    </footer>
+    <!-- Mobile Navigation Shell (Bottom Bar) -->
+    <nav
+        class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-border-gray px-margin-mobile py-2 flex justify-around items-center z-50">
+        <a class="flex flex-col items-center gap-1 text-primary" href="#">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+            <span class="text-[10px] font-bold">Overview</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+            <span class="material-symbols-outlined">assignment</span>
+            <span class="text-[10px]">Tasks</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+            <span class="material-symbols-outlined">group</span>
+            <span class="text-[10px]">Team</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="text-[10px]">Profile</span>
+        </a>
+    </nav>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/volunteer.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SETU NGO Dashboard | Emergency Response Unit</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-tertiary-container": "#ffede6",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9d9e5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-container": "#e0e3e5",
+                        "text-muted": "#64748B",
+                        "secondary-fixed": "#e0e3e5",
+                        "surface-container-low": "#f3f3fe",
+                        "on-secondary-fixed-variant": "#444749",
+                        "outline": "#737686",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-container": "#626567",
+                        "surface-bright": "#faf8ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#191b23",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-variant": "#e1e2ed",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#943700",
+                        "safety-green": "#22C55E",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#b4c5ff",
+                        "surface": "#faf8ff",
+                        "text-main": "#1E293B",
+                        "critical-red": "#EF4444",
+                        "tertiary-container": "#bc4800",
+                        "surface-container": "#ededf9",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "inverse-on-surface": "#f0f0fb",
+                        "border-gray": "#E2E8F0",
+                        "inverse-surface": "#2e3039",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c3c6d7",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-highest": "#e1e2ed",
+                        "primary": "#004ac6",
+                        "surface-container-high": "#e7e7f3",
+                        "on-background": "#191b23",
+                        "primary-container": "#2563eb",
+                        "secondary": "#5c5f61",
+                        "background": "#faf8ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "2rem",
+                        "margin-mobile": "1rem",
+                        "stack-md": "1rem",
+                        "gutter": "1.5rem",
+                        "container-max": "1280px",
+                        "margin-desktop": "2.5rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background text-on-surface">
+    <!-- Top Navigation Anchor -->
+    <header class="fixed top-0 w-full bg-surface-bright border-b border-border-gray h-16 z-50">
+        <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-full">
+            <div class="flex items-center gap-x-4">
+                <span onclick="window.location.href='landing.html'" class="font-headline-md text-headline-md font-bold text-surface-tint cursor-pointer">SETU</span>
+                <span class="h-6 w-px bg-border-gray hidden md:block"></span>
+                <nav class="hidden md:flex gap-x-6 font-label-md text-label-md">
+                    <a class="text-primary font-bold border-b-2 border-primary pb-1" href="emergency_dashboard.html">Dashboard</a>
+                    <a class="text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="about.html">Science of SETU</a>
+                </nav>
+            </div>
+            <div class="flex gap-x-4 items-center">
+                <span id="ngo-name-display" class="font-label-md text-label-md text-text-main font-bold">NGO Admin</span>
+                <button id="logoutBtn"
+                    class="border border-primary text-primary font-label-md px-6 py-2 rounded-lg hover:bg-surface-container-low transition-all">Logout</button>
+            </div>
+        </div>
+    </header>
+    <!-- Sidebar Navigation -->
+    <aside
+        class="fixed left-0 top-16 h-full w-64 bg-surface-container-lowest border-r border-border-gray py-stack-md px-4 flex flex-col gap-y-2 hidden md:flex">
+        <div class="mb-8 px-2">
+            <h2 class="font-headline-md text-headline-md font-bold text-primary">NGO Dashboard</h2>
+            <p id="ngo-org-name" class="font-label-sm text-label-sm text-on-surface-variant">Emergency Response Unit</p>
+        </div>
+        <nav class="flex flex-col gap-y-1">
+            <a class="flex items-center gap-x-3 px-4 py-3 text-primary font-bold bg-surface-container rounded-lg group transition-all scale-95"
+                href="#">
+                <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                <span class="font-label-md text-label-md">Overview</span>
+            </a>
+            <a class="flex items-center gap-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+                href="#">
+                <span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+                <span class="font-label-md text-label-md">Assignments</span>
+            </a>
+            <a class="flex items-center gap-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+                href="#">
+                <span class="material-symbols-outlined" data-icon="group">group</span>
+                <span class="font-label-md text-label-md">Team</span>
+            </a>
+            <a class="flex items-center gap-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+                href="#">
+                <span class="material-symbols-outlined" data-icon="settings">settings</span>
+                <span class="font-label-md text-label-md">Settings</span>
+            </a>
+        </nav>
+        <div class="mt-auto p-4 bg-surface-container-low rounded-xl">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-2 h-2 rounded-full bg-safety-green animate-pulse"></div>
+                <span
+                    class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-on-surface-variant">Live
+                    System Status</span>
+            </div>
+            <p id="healthStatus" class="font-label-sm text-label-sm text-text-muted leading-relaxed">Checking backend status...</p>
+        </div>
+    </aside>
+    <!-- Main Content Canvas -->
+    <main class="md:pl-64 pt-16 min-h-screen bg-background">
+        <div class="max-w-container-max mx-auto p-margin-desktop space-y-stack-lg">
+            <!-- Header Section -->
+            <div class="flex justify-between items-end">
+                <div class="space-y-1">
+                    <h1 class="font-headline-lg text-headline-lg text-text-main">Operational Overview</h1>
+                    <p class="text-body-md font-body-md text-text-muted">Real-time coordination for emergency
+                        humanitarian response.</p>
+                </div>
+            </div>
+            
+            <!-- Action Bar -->
+            <div class="flex flex-wrap items-center gap-4 p-4 bg-surface-container-lowest border border-border-gray rounded-xl shadow-sm">
+                <button id="runMatchBtn" class="bg-primary text-on-primary px-5 py-2.5 rounded-lg font-label-md text-label-md hover:opacity-90 transition-all font-bold">
+                    🚀 Run Matching Engine
+                </button>
+                <label class="bg-surface-container border border-border-gray hover:bg-surface-container-low text-primary px-5 py-2.5 rounded-lg font-label-md text-label-md cursor-pointer transition-all font-bold">
+                    📂 Bulk Upload Volunteers
+                    <input type="file" id="excelInput" accept=".xlsx,.xls" class="hidden">
+                </label>
+                <span id="uploadStatus" class="text-label-sm font-semibold text-text-muted"></span>
+            </div>
+            <!-- Bento Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div
+                    class="md:col-span-1 bg-surface-container-lowest border border-border-gray p-6 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-surface-container rounded-lg">
+                            <span class="material-symbols-outlined text-primary"
+                                data-icon="verified_user">verified_user</span>
+                        </div>
+                        <span class="text-safety-green font-label-sm text-label-sm">+12%</span>
+                    </div>
+                    <h3 class="font-label-md text-label-md text-text-muted mb-1">Verified Volunteers</h3>
+                    <p id="stat-verified-volunteers" class="font-headline-md text-headline-md text-text-main">1,284</p>
+                </div>
+                <div
+                    class="md:col-span-1 bg-surface-container-lowest border border-border-gray p-6 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-surface-container rounded-lg">
+                            <span class="material-symbols-outlined text-primary"
+                                data-icon="rocket_launch">rocket_launch</span>
+                        </div>
+                        <span class="text-primary font-label-sm text-label-sm">Live</span>
+                    </div>
+                    <h3 class="font-label-md text-label-md text-text-muted mb-1">Active Missions</h3>
+                    <p id="stat-active-missions" class="font-headline-md text-headline-md text-text-main">42</p>
+                </div>
+                <div
+                    class="md:col-span-1 bg-surface-container-lowest border border-border-gray p-6 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-surface-container rounded-lg">
+                            <span class="material-symbols-outlined text-primary" data-icon="timer">timer</span>
+                        </div>
+                        <span class="text-safety-green font-label-sm text-label-sm">-4m</span>
+                    </div>
+                    <h3 class="font-label-md text-label-md text-text-muted mb-1">Avg Response Time</h3>
+                    <p id="stat-verified-professionals" class="font-headline-md text-headline-md text-text-main">14.2m</p>
+                </div>
+                <div
+                    class="md:col-span-1 bg-surface-container-lowest border border-border-gray p-6 rounded-xl shadow-sm">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-surface-container rounded-lg">
+                            <span class="material-symbols-outlined text-primary" data-icon="favorite">favorite</span>
+                        </div>
+                        <span class="text-safety-green font-label-sm text-label-sm">High</span>
+                    </div>
+                    <h3 class="font-label-md text-label-md text-text-muted mb-1">Impact Score</h3>
+                    <p id="stat-open-reports" class="font-headline-md text-headline-md text-text-main">8.9/10</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Main Assignments Column -->
+                <div class="lg:col-span-8 space-y-6">
+                    <section
+                        class="bg-surface-container-lowest border border-border-gray rounded-xl overflow-hidden shadow-sm">
+                        <div class="p-6 border-b border-border-gray flex justify-between items-center">
+                            <h2 class="font-headline-md text-headline-md text-text-main">Active Assignments</h2>
+                            <span
+                                class="bg-surface-container text-on-surface-variant px-3 py-1 rounded-full font-label-sm text-label-sm">12
+                                Urgent Reports</span>
+                        </div>
+                        <div id="assignments-list" class="divide-y divide-border-gray">
+                            <!-- Assignment Card -->
+                            <div class="p-6 hover:bg-surface-container-low transition-colors group">
+                                <div class="flex items-start gap-4">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <span
+                                            class="material-symbols-outlined text-critical-red p-2 bg-error-container rounded-full"
+                                            data-icon="warning">warning</span>
+                                    </div>
+                                    <div class="flex-grow">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h4 class="font-body-lg font-bold text-text-main">Structural Instability
+                                                    - Ward 7</h4>
+                                                <p class="text-label-sm text-text-muted">Reported 12 minutes ago •
+                                                    Sector B-4</p>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="px-3 py-1 bg-critical-red text-on-primary font-label-sm text-label-sm rounded-lg">Critical
+                                                    Severity</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between mt-4">
+                                            <div class="flex -space-x-2">
+                                                <img class="w-8 h-8 rounded-full border-2 border-surface-container-lowest"
+                                                    data-alt="A close-up professional headshot of a diverse volunteer in a minimalist studio setting. The lighting is soft and even, highlighting a friendly and reliable expression. The background is a clean, neutral grey to maintain a calm and professional NGO atmosphere."
+                                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhamcsJDEndEe-C6YAkKyzSfYfZKV2WkP646dhm5WuyBX_bXzn85M493oSI8aw2zUjbyeZLqNW1Zhm0mpwYIjvhu2AjGGhx5MxS9V7fpf-H8NTrodtAP2q33D5VErVhtEwi7bqbPq4vnDM_y_RTPgABznUAvNddJn2eaPTRUlMYR24Lnm7D1EAkTg09VRvAMx-16v_u6DuP_4v4S9KEMnxZluryZ86qDf9x9coZttNFdx_M5yeDpGc-XqzFy5L6-mxuZeFvlqEvuo" />
+                                                <img class="w-8 h-8 rounded-full border-2 border-surface-container-lowest"
+                                                    data-alt="A high-quality portrait of a focused rescue coordinator in a professional environment. The lighting is crisp and modern, emphasizing clarity and dedication. The visual style is minimalist and clean, using a calm color palette of soft whites and deep blues for a professional corporate feel."
+                                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8nnM8eqkoBR9ng4Wt_Nyq8y5sjIIgbgA4zwPA3m83a_rAsDXMIPqFVBo_ahgTeSU-j9UAP69kLIFbwQudQNCJ_BRwQ09hyRkttCXcFmjql8hwSmdAYQL7PJAmICpRagzLD7rhXIwF2neulBY8ndLUqiQbo-PP2vbyndWt398meGp8U8cmGEZAtOXc8jwUhwsuqR7-nlb_4JXpUwLd9Y3ynkwpnEb8tSlDeVGygFkS-JTMmMLIgDH2y2hxI43klaf13M6QLNc-CCc" />
+                                                <div
+                                                    class="w-8 h-8 rounded-full bg-surface-container-highest border-2 border-surface-container-lowest flex items-center justify-center text-[10px] font-bold">
+                                                    +2</div>
+                                            </div>
+                                            <div class="flex gap-3">
+                                                <button
+                                                    class="text-primary font-label-md text-label-md hover:underline">View
+                                                    Details</button>
+                                                <button
+                                                    class="bg-primary text-on-primary px-4 py-1.5 rounded-lg font-label-md text-label-md hover:opacity-90">Manage
+                                                    Dispatch</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Assignment Card 2 -->
+                            <div class="p-6 hover:bg-surface-container-low transition-colors group">
+                                <div class="flex items-start gap-4">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <span
+                                            class="material-symbols-outlined text-primary p-2 bg-surface-container rounded-full"
+                                            data-icon="medical_services">medical_services</span>
+                                    </div>
+                                    <div class="flex-grow">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h4 class="font-body-lg font-bold text-text-main">First Aid Supply
+                                                    Depletion - Hub Central</h4>
+                                                <p class="text-label-sm text-text-muted">Reported 24 minutes ago • North
+                                                    Perimeter</p>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="px-3 py-1 bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm rounded-lg">Moderate</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center justify-between mt-4">
+                                            <div class="flex items-center gap-3">
+                                                <div
+                                                    class="flex items-center gap-1.5 px-2 py-1 bg-surface-container-low border border-border-gray rounded-md">
+                                                    <span class="w-2 h-2 rounded-full bg-safety-green"></span>
+                                                    <span class="text-label-sm text-text-muted">3 Volunteers
+                                                        Matched</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-3">
+                                                <button
+                                                    class="text-primary font-label-md text-label-md hover:underline">View
+                                                    Details</button>
+                                                <button
+                                                    class="bg-primary text-on-primary px-4 py-1.5 rounded-lg font-label-md text-label-md hover:opacity-90">Dispatch
+                                                    Now</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                <!-- Managed Volunteers Sidebar -->
+                <div class="lg:col-span-4 space-y-6">
+                    <section
+                        class="bg-surface-container-lowest border border-border-gray rounded-xl overflow-hidden shadow-sm h-full">
+                        <div class="p-6 border-b border-border-gray">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="font-headline-md text-headline-md text-text-main">Team Status</h2>
+                                <button class="text-primary hover:bg-surface-container rounded-full p-1 transition-all">
+                                    <span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <input
+                                    class="w-full bg-surface-container-lowest border border-border-gray rounded-lg pl-10 pr-4 py-2 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                                    placeholder="Search team members..." type="text" />
+                                <span
+                                    class="material-symbols-outlined absolute left-3 top-2.5 text-text-muted text-body-md"
+                                    data-icon="search">search</span>
+                            </div>
+                        </div>
+                        <div id="team-list" class="p-4 space-y-2 max-h-[600px] overflow-y-auto">
+                            <!-- Volunteer Item -->
+                            <div
+                                class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low border border-transparent hover:border-border-gray transition-all">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative">
+                                        <img class="w-10 h-10 rounded-full object-cover"
+                                            data-alt="A portrait of a reliable humanitarian worker in a bright, modern setting. The style is professional and clean, emphasizing a calm and focused atmosphere. The color palette includes soft white backgrounds and high-contrast blue accents, reflecting a reliable NGO visual identity."
+                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAA8uudqvK220i_mVKNEOBCwl4m2DfLSXquKi_6ZsHYiq7fKGuXLbexBvtSRVxm8b0cJLjug4IFGhPNQYdhXpvkb9mW-oNGBZXcu8--i5rg27R4SUozPlukaEA_-8RpYO5sZWPov8mgAy7T1XdmGQDPUvu999nlYDPM_TFIgH0z_HitprPh964GXvVC3jI1v8XJ16pjHMzDv-xcgUNpyEzKRnPy1iIQgfnGpY4Ab2jxbfkYM_g2Ay4h2x0os98N_Gw_uUJp9vjvO64" />
+                                        <div
+                                            class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-safety-green border-2 border-surface-container-lowest rounded-full">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="font-label-md text-label-md text-text-main font-bold">David Chen</p>
+                                        <p class="text-[12px] text-text-muted">EMT-B • 2.4km away</p>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-safety-green font-label-sm text-label-sm bg-green-50 px-2 py-0.5 rounded">Available</span>
+                            </div>
+                            <!-- Volunteer Item -->
+                            <div
+                                class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low border border-transparent hover:border-border-gray transition-all">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative">
+                                        <img class="w-10 h-10 rounded-full object-cover"
+                                            data-alt="A high-quality portrait of a female aid volunteer in a professional humanitarian workspace. The lighting is natural and bright, creating a serene and calm mood. The aesthetic is corporate minimalist, using a clean color scheme with professional blue and white tones to convey reliability."
+                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKo9zjpWd7lx3tS58YfypHUl3tM7uGewdRy9Ub-nI_UtSbbgIrRQ8udnff-yK63J4vh7q3B4yxtrCY6uI9SrZP2BkspZTGep59oNJ5nDx451w8eZShvlUp4Cco6OBSKe8blR44itXbd2W5akWL-Hmw_0MdI54xpA4ZXc0E17m89OrJ8clwyE9djQgbX8Thk9C3cpKQ2AEp_tK_qGV4WOZKuI2c3D4GZHrFasw8wL4T-Q3_yEoGBnY5DEpvgm4hu8ZdcZo3COpNIQ0" />
+                                        <div
+                                            class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-primary border-2 border-surface-container-lowest rounded-full">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="font-label-md text-label-md text-text-main font-bold">Sarah Miller</p>
+                                        <p class="text-[12px] text-text-muted">Logistics • On-mission</p>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-primary font-label-sm text-label-sm bg-blue-50 px-2 py-0.5 rounded">Engaged</span>
+                            </div>
+                            <!-- Volunteer Item -->
+                            <div
+                                class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low border border-transparent hover:border-border-gray transition-all">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative">
+                                        <img class="w-10 h-10 rounded-full object-cover"
+                                            data-alt="A portrait of a male rescue technician in a crisp, modern professional setting. The image is bright and high-key, emphasizing technical reliability and a calm, approachable presence. The style is strictly minimalist, adhering to a sophisticated corporate NGO aesthetic with clean lines and balanced lighting."
+                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAg5XAzYtS6stk7Vm8BCRDabKxr7f6P133QeUQbrAaZ-HuivdR3AmazZLtlcxxQoAlqf66E_xke7wd_cIVNvrjhcmINzf4ycjaZtAoFE7tlDIb2C1I0Q83ZbikVJbAyueqbkrDGgIsgfS1MW0LKsIWXbxZ6vhjUp3KqTBXtr9HaMQ6NTI3qnT0X9e1sR49lLXAsXgeNYVKpY5xEYqTfuPCA2Vsl-XR66sMeRZnK_SD2XTqPQn4FGqq1LX-XIzDZUbGUZ-WJVU4YQBg" />
+                                        <div
+                                            class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-safety-green border-2 border-surface-container-lowest rounded-full">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="font-label-md text-label-md text-text-main font-bold">James Wilson</p>
+                                        <p class="text-[12px] text-text-muted">Search &amp; Rescue • 0.8km away</p>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-safety-green font-label-sm text-label-sm bg-green-50 px-2 py-0.5 rounded">Available</span>
+                            </div>
+                            <!-- More items could follow... -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+            <!-- Footer Section -->
+            <footer class="w-full py-8 border-t border-border-gray bg-surface-container-low mt-stack-lg">
+                <div
+                    class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto">
+                    <div class="flex flex-col md:flex-row items-center gap-6 mb-4 md:mb-0">
+                        <span class="font-headline-md text-headline-md text-primary">SETU</span>
+                        <p class="font-label-sm text-label-sm text-text-muted">© 2024 SETU Emergency Systems</p>
+                    </div>
+                    <div class="flex gap-x-8 font-label-sm text-label-sm">
+                        <a class="text-text-muted hover:text-primary transition-colors" href="#">Contact</a>
+                        <a class="text-text-muted hover:text-primary transition-colors" href="#">Privacy</a>
+                        <a class="text-text-muted hover:text-primary transition-colors" href="#">Documentation</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </main>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ngo.js"></script>
+</body>
+
+</html>

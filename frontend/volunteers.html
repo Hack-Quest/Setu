@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SETU | Volunteers Directory</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-tertiary-container": "#ffede6",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9d9e5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-container": "#e0e3e5",
+                        "text-muted": "#64748B",
+                        "secondary-fixed": "#e0e3e5",
+                        "surface-container-low": "#f3f3fe",
+                        "on-secondary-fixed-variant": "#444749",
+                        "outline": "#737686",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-container": "#626567",
+                        "surface-bright": "#faf8ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#191b23",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-variant": "#e1e2ed",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#943700",
+                        "safety-green": "#22C55E",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#b4c5ff",
+                        "surface": "#faf8ff",
+                        "text-main": "#1E293B",
+                        "critical-red": "#EF4444",
+                        "tertiary-container": "#bc4800",
+                        "surface-container": "#ededf9",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "inverse-on-surface": "#f0f0fb",
+                        "border-gray": "#E2E8F0",
+                        "inverse-surface": "#2e3039",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c3c6d7",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-highest": "#e1e2ed",
+                        "primary": "#004ac6",
+                        "surface-container-high": "#e7e7f3",
+                        "on-background": "#191b23",
+                        "primary-container": "#2563eb",
+                        "secondary": "#5c5f61",
+                        "background": "#faf8ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "2rem",
+                        "margin-mobile": "1rem",
+                        "stack-md": "1rem",
+                        "gutter": "1.5rem",
+                        "container-max": "1280px",
+                        "margin-desktop": "2.5rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #faf8ff;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at top right, rgba(0, 83, 219, 0.05), transparent), radial-gradient(circle at bottom left, rgba(0, 83, 219, 0.02), transparent);
+        }
+    </style>
+</head>
+
+<body class="text-on-background min-h-screen flex flex-col justify-between hero-gradient">
+    <!-- Top Navigation Bar -->
+    <header class="fixed top-0 w-full bg-surface-bright border-b border-border-gray h-16 z-50">
+        <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-full">
+            <div class="flex items-center gap-8">
+                <span class="font-headline-md text-headline-md font-bold text-surface-tint cursor-pointer" onclick="window.location.href='landing.html'">SETU</span>
+                <nav class="hidden md:flex gap-6 items-center">
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="landing.html">Home</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="map.html">Map</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="about.html">Science of SETU</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.href='login.html'"
+                    class="font-label-md text-label-md bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition-all">Login</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow pt-28 pb-16 px-4 md:px-margin-desktop max-w-container-max mx-auto w-full">
+        <!-- Page Header & Filters -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+            <div>
+                <h1 class="font-headline-lg text-headline-lg text-text-main font-bold flex items-center gap-2">🤝 Volunteers</h1>
+                <p class="text-text-muted font-body-md mt-1">All registered volunteers and field responders on the SETU network.</p>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="flex bg-surface-container-lowest p-1.5 rounded-xl border border-border-gray gap-1 w-fit self-start md:self-end">
+                <button id="filter-all" onclick="filterVolunteers('all')"
+                    class="filter-btn filter-btn--active px-4 py-2 rounded-lg text-label-sm font-bold bg-primary text-on-primary transition-all">All</button>
+                <button id="filter-available" onclick="filterVolunteers('available')"
+                    class="filter-btn px-4 py-2 rounded-lg text-label-sm font-bold hover:bg-surface-container-low text-on-surface-variant transition-all">Available</button>
+                <button id="filter-busy" onclick="filterVolunteers('busy')"
+                    class="filter-btn px-4 py-2 rounded-lg text-label-sm font-bold hover:bg-surface-container-low text-on-surface-variant transition-all">Busy</button>
+            </div>
+        </div>
+
+        <!-- Stats strip cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div id="stat-total" onclick="applyMainFilter('total')" class="glass-card p-6 rounded-2xl border-l-4 border-l-primary cursor-pointer hover:shadow-md transition-all">
+                <h3 id="totalVolunteers" class="font-display-lg text-3xl font-bold text-text-main">—</h3>
+                <p class="text-label-sm text-text-muted font-bold mt-1">TOTAL VOLUNTEERS</p>
+            </div>
+            <div id="stat-available" onclick="applyMainFilter('available')" class="glass-card p-6 rounded-2xl border-l-4 border-l-safety-green cursor-pointer hover:shadow-md transition-all">
+                <h3 id="availableCount" class="font-display-lg text-3xl font-bold text-text-main">—</h3>
+                <p class="text-label-sm text-text-muted font-bold mt-1">AVAILABLE RESPONDERS</p>
+            </div>
+            <div id="stat-busy" onclick="applyMainFilter('busy')" class="glass-card p-6 rounded-2xl border-l-4 border-l-critical-red cursor-pointer hover:shadow-md transition-all">
+                <h3 id="busyCount" class="font-display-lg text-3xl font-bold text-text-main">—</h3>
+                <p class="text-label-sm text-text-muted font-bold mt-1">ENGAGED / BUSY</p>
+            </div>
+        </div>
+
+        <!-- Loading state -->
+        <div id="reports-loading" class="flex flex-col items-center justify-center py-20 gap-3">
+            <div class="w-10 h-10 border-4 border-primary-fixed-dim border-t-primary rounded-full animate-spin"></div>
+            <p class="text-text-muted text-label-md">Fetching volunteers database...</p>
+        </div>
+
+        <!-- Empty / List Results Grid -->
+        <div id="reportsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Volunteer Cards will be loaded dynamically -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface-container-low border-t border-border-gray py-8">
+        <div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto gap-4 font-label-sm text-label-sm text-text-muted">
+            <div>
+                <span class="font-headline-md text-headline-md text-primary font-bold">SETU</span>
+                <p class="inline-block ml-2">© 2024 SETU Emergency Systems</p>
+            </div>
+            <div class="flex gap-6">
+                <a href="landing.html" class="hover:text-primary transition-colors">Home</a>
+                <a href="about.html" class="hover:text-primary transition-colors">Science of SETU</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/volunteers.js"></script>
+</body>
+
+</html>

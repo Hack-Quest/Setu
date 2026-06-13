@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SETU | Secure Portal Login</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-tertiary-container": "#ffede6",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9d9e5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-container": "#e0e3e5",
+                        "text-muted": "#64748B",
+                        "secondary-fixed": "#e0e3e5",
+                        "surface-container-low": "#f3f3fe",
+                        "on-secondary-fixed-variant": "#444749",
+                        "outline": "#737686",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-container": "#626567",
+                        "surface-bright": "#faf8ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#191b23",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-variant": "#e1e2ed",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#943700",
+                        "safety-green": "#22C55E",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#b4c5ff",
+                        "surface": "#faf8ff",
+                        "text-main": "#1E293B",
+                        "critical-red": "#EF4444",
+                        "tertiary-container": "#bc4800",
+                        "surface-container": "#ededf9",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "inverse-on-surface": "#f0f0fb",
+                        "border-gray": "#E2E8F0",
+                        "inverse-surface": "#2e3039",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c3c6d7",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-highest": "#e1e2ed",
+                        "primary": "#004ac6",
+                        "surface-container-high": "#e7e7f3",
+                        "on-background": "#191b23",
+                        "primary-container": "#2563eb",
+                        "secondary": "#5c5f61",
+                        "background": "#faf8ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "2rem",
+                        "margin-mobile": "1rem",
+                        "stack-md": "1rem",
+                        "gutter": "1.5rem",
+                        "container-max": "1280px",
+                        "margin-desktop": "2.5rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #faf8ff;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at top right, rgba(0, 83, 219, 0.05), transparent), radial-gradient(circle at bottom left, rgba(0, 83, 219, 0.02), transparent);
+        }
+    </style>
+</head>
+
+<body class="text-on-background min-h-screen flex flex-col justify-between hero-gradient">
+    <!-- Top Navigation Bar -->
+    <header class="fixed top-0 w-full bg-surface-bright border-b border-border-gray z-50">
+        <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-16">
+            <div class="flex items-center gap-8">
+                <span class="font-headline-md text-headline-md font-bold text-surface-tint cursor-pointer" onclick="window.location.href='landing.html'">SETU</span>
+                <nav class="hidden md:flex gap-6 items-center">
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="landing.html">Home</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="about.html">Science of SETU</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="openVolunteerForm()"
+                    class="font-label-md text-label-md bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition-all">Volunteer
+                    Signup</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Login Card -->
+    <main class="flex-grow pt-32 pb-16 flex items-center justify-center px-margin-mobile">
+        <div class="glass-card w-full max-w-md p-8 rounded-2xl shadow-xl flex flex-col gap-6">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-primary-fixed rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-primary text-2xl">lock</span>
+                </div>
+                <h2 class="font-headline-md text-headline-md text-text-main font-bold">Secure Portal Login</h2>
+                <p class="text-label-md text-text-muted mt-1">Access your dashboard via secure email verification.</p>
+            </div>
+
+            <!-- Role Selection -->
+            <div class="flex flex-col gap-2">
+                <label for="role" class="text-label-sm font-bold text-text-muted">SELECT PORTAL ROLE</label>
+                <select id="role" class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                    <option value="volunteer">Volunteer Responder</option>
+                    <option value="ngo">NGO Administrator</option>
+                </select>
+            </div>
+
+            <!-- Email Input -->
+            <div class="flex flex-col gap-2">
+                <label for="email" class="text-label-sm font-bold text-text-muted">EMAIL ADDRESS</label>
+                <input type="email" id="email" placeholder="Enter your email (e.g. name@domain.com)" class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+            </div>
+
+            <!-- Send OTP Button -->
+            <button id="sendBtn" class="w-full bg-primary text-white font-label-md py-3.5 rounded-lg hover:opacity-90 transition-opacity font-bold">
+                Send Verification OTP
+            </button>
+
+            <!-- OTP Verification Section -->
+            <div id="otp-section" style="display: none;" class="flex flex-col gap-4 pt-4 border-t border-border-gray">
+                <div class="flex flex-col gap-2">
+                    <label for="otp" class="text-label-sm font-bold text-text-muted">ENTER OTP CODE</label>
+                    <input type="text" id="otp" placeholder="Enter 6-digit code" class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-center tracking-widest font-bold">
+                </div>
+                <button id="verifyBtn" class="w-full bg-safety-green text-white font-label-md py-3.5 rounded-lg hover:opacity-90 transition-opacity font-bold">
+                    Verify &amp; Login
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface-container-low border-t border-border-gray py-8">
+        <div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto gap-4 font-label-sm text-label-sm text-text-muted">
+            <div>
+                <span class="font-headline-md text-headline-md text-primary font-bold">SETU</span>
+                <p class="inline-block ml-2">© 2024 SETU Emergency Systems</p>
+            </div>
+            <div class="flex gap-6">
+                <a href="landing.html" class="hover:text-primary transition-colors">Home</a>
+                <a href="about.html" class="hover:text-primary transition-colors">Science of SETU</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/login.js"></script>
+</body>
+
+</html>

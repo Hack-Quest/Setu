@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>The Science of SETU | Trust &amp; Reliability</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid #E2E8F0;
+        }
+
+        .scrolling-text {
+            white-space: nowrap;
+            animation: scroll 20s linear infinite;
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-tertiary-container": "#ffede6",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9d9e5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-container": "#e0e3e5",
+                        "text-muted": "#64748B",
+                        "secondary-fixed": "#e0e3e5",
+                        "surface-container-low": "#f3f3fe",
+                        "on-secondary-fixed-variant": "#444749",
+                        "outline": "#737686",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-container": "#626567",
+                        "surface-bright": "#faf8ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#191b23",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-variant": "#e1e2ed",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#943700",
+                        "safety-green": "#22C55E",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#b4c5ff",
+                        "surface": "#faf8ff",
+                        "text-main": "#1E293B",
+                        "critical-red": "#EF4444",
+                        "tertiary-container": "#bc4800",
+                        "surface-container": "#ededf9",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "inverse-on-surface": "#f0f0fb",
+                        "border-gray": "#E2E8F0",
+                        "inverse-surface": "#2e3039",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c3c6d7",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-highest": "#e1e2ed",
+                        "primary": "#004ac6",
+                        "surface-container-high": "#e7e7f3",
+                        "on-background": "#191b23",
+                        "primary-container": "#2563eb",
+                        "secondary": "#5c5f61",
+                        "background": "#faf8ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "2rem",
+                        "margin-mobile": "1rem",
+                        "stack-md": "1rem",
+                        "gutter": "1.5rem",
+                        "container-max": "1280px",
+                        "margin-desktop": "2.5rem",
+                        "stack-sm": "0.5rem"
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-surface font-body-md text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+    <!-- Top Navigation Bar -->
+    <header
+        class="fixed top-0 w-full z-50 bg-surface-bright dark:bg-surface-dim border-b border-border-gray dark:border-outline-variant h-16">
+        <nav class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-full">
+            <div onclick="window.location.href='landing.html'" class="font-headline-md text-headline-md font-bold text-surface-tint dark:text-primary-fixed cursor-pointer">SETU
+            </div>
+            <div class="hidden md:flex gap-x-8 items-center">
+                <a class="font-label-md text-label-md text-on-surface-variant dark:text-on-surface hover:text-primary transition-colors duration-200"
+                    href="emergency_dashboard.html">Dashboard</a>
+                <a class="font-label-md text-label-md text-primary font-bold border-b-2 border-primary pb-1"
+                    href="about.html">Science of SETU</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.href='login.html'"
+                    class="bg-surface-container-low text-primary font-label-md text-label-md px-4 py-2 rounded-lg border border-border-gray hover:bg-surface-container-high transition-all">NGO
+                    Login</button>
+                <button onclick="openVolunteerForm()"
+                    class="bg-primary text-on-primary font-label-md text-label-md px-6 py-2 rounded-lg hover:opacity-90 active:scale-95 transition-all">Volunteer
+                    Signup</button>
+            </div>
+        </nav>
+    </header>
+    <main class="pt-32 pb-20 px-4 md:px-margin-desktop max-w-container-max mx-auto">
+        <!-- Hero Section -->
+        <section class="mb-stack-lg text-center max-w-3xl mx-auto">
+            <h1 class="font-display-lg text-display-lg text-primary mb-stack-sm">The Science of SETU</h1>
+            <p class="font-body-lg text-body-lg text-text-muted">An institutional framework for emergency data
+                verification, utilizing a state-of-the-art dual-LLM pipeline to transform chaotic signals into
+                actionable response coordinates.</p>
+        </section>
+        <!-- Bento Grid: Core Technologies -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter mb-20">
+            <!-- AI Classification Card -->
+            <div
+                class="md:col-span-8 bg-surface-container-lowest border border-border-gray p-8 rounded-xl relative overflow-hidden shadow-sm">
+                <div class="relative z-10">
+                    <span
+                        class="inline-block bg-primary-container text-on-primary-container font-label-sm text-label-sm px-3 py-1 rounded-full mb-4">ENGINE
+                        ARCHITECTURE</span>
+                    <h2 class="font-headline-lg text-headline-lg text-text-main mb-4">Gemini + Groq Pipeline</h2>
+                    <p class="text-text-muted mb-6 max-w-lg">Our classification engine leverages Google Gemini's deep
+                        contextual understanding paired with Groq’s LPU technology for ultra-low latency inference. This
+                        dual approach ensures even the most nuanced reports are categorized within milliseconds.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+                        <div class="p-4 bg-surface-container-low rounded-lg border border-border-gray">
+                            <span class="material-symbols-outlined text-primary mb-2">psychology</span>
+                            <h4 class="font-label-md text-label-md font-bold mb-1">Contextual Gemini</h4>
+                            <p class="text-label-sm text-text-muted">Analyzes complex imagery and multi-lingual voice
+                                reports for high-level semantic intent.</p>
+                        </div>
+                        <div class="p-4 bg-surface-container-low rounded-lg border border-border-gray">
+                            <span class="material-symbols-outlined text-primary mb-2">bolt</span>
+                            <h4 class="font-label-md text-label-md font-bold mb-1">High-Speed Groq</h4>
+                            <p class="text-label-sm text-text-muted">Powers the rapid-fire classification of thousands
+                                of concurrent text streams during crisis peaks.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute top-0 right-0 w-1/3 h-full opacity-10 pointer-events-none">
+                    <img alt="" class="object-cover w-full h-full"
+                        data-alt="A futuristic network diagram showing glowing blue lines of data connectivity and artificial intelligence nodes on a clean white background. The lighting is soft and corporate, matching a light-mode aesthetic with high clarity and minimalist technological flair. The scene represents rapid data processing and high-tech connectivity in an institutional setting."
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMstZSh_l4Jcbm5ynLYlBP0_V4ZLV20V0Fgj1Ysq_NKu46GnpZJKn_oWS2EP9pSZG3IVTLH9Mvpy2Ghk6JL53UQFmG8y5mqIMsSO90AOZNviDXZkbdw6MLkU0Mr65DmhpW64kwPz0-quwlOALq-2vaBIJs-vp4OQO0vc2OOwhyoc961YWmufLdCAlisDGSombroXcZPMx53k4VWs4JOFLjAOgpbKiHDFyXAaYniBKBPSI21tGwrY5DN48CcYaas82BNwqsJh1jd6M" />
+                </div>
+            </div>
+            <!-- Trust Score Breakdown -->
+            <div
+                class="md:col-span-4 bg-surface-container-lowest border border-border-gray p-8 rounded-xl flex flex-col justify-between shadow-sm">
+                <div>
+                    <h3 class="font-headline-md text-headline-md text-text-main mb-2">Trust Scoring</h3>
+                    <p class="text-label-md text-text-muted mb-6">Our 0-100 logic determines report priority.</p>
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-full border-4 border-safety-green flex items-center justify-center font-bold text-safety-green">
+                                95</div>
+                            <div>
+                                <h4 class="font-label-md text-label-md font-bold">Verified Direct</h4>
+                                <p class="text-label-sm text-text-muted">Multi-sensor corroboration.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-full border-4 border-surface-dim flex items-center justify-center font-bold text-text-muted">
+                                42</div>
+                            <div>
+                                <h4 class="font-label-md text-label-md font-bold">Unconfirmed</h4>
+                                <p class="text-label-sm text-text-muted">Single source, no geofence.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-full border-4 border-critical-red flex items-center justify-center font-bold text-critical-red">
+                                08</div>
+                            <div>
+                                <h4 class="font-label-md text-label-md font-bold">Risk Flag</h4>
+                                <p class="text-label-sm text-text-muted">High anomaly, potential noise.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button
+                    class="mt-8 w-full py-3 bg-surface-container text-primary font-bold rounded-lg border border-border-gray hover:bg-surface-container-high transition-all">Download
+                    Protocol PDF</button>
+            </div>
+        </div>
+        <!-- Section: Geocoding & Corroboration -->
+        <section class="mb-20">
+            <div class="flex flex-col lg:flex-row gap-12 items-center">
+                <div class="flex-1 space-y-6">
+                    <h2 class="font-headline-lg text-headline-lg text-text-main">Precision Geocoding &amp; Social
+                        Corroboration</h2>
+                    <p class="font-body-md text-body-md text-text-muted leading-relaxed">
+                        Every report is cross-referenced against a geographic knowledge graph. We don't just find
+                        coordinates; we validate locations against local infrastructure maps and real-time social media
+                        density.
+                    </p>
+                    <ul class="space-y-4">
+                        <li class="flex gap-4">
+                            <span class="material-symbols-outlined text-safety-green">verified</span>
+                            <div>
+                                <strong class="text-text-main block">Cross-Channel Verification</strong>
+                                <span class="text-label-md text-text-muted">Matches SMS reports with local public-sphere
+                                    chatter to confirm event scale.</span>
+                            </div>
+                        </li>
+                        <li class="flex gap-4">
+                            <span class="material-symbols-outlined text-safety-green">location_on</span>
+                            <div>
+                                <strong class="text-text-main block">Inverse Geofencing</strong>
+                                <span class="text-label-md text-text-muted">Triangulates report density to pinpoint the
+                                    epicenter of resource needs.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div
+                    class="flex-1 w-full bg-surface-container border border-border-gray rounded-xl overflow-hidden aspect-video relative">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent z-10 pointer-events-none">
+                    </div>
+                    <img alt="Mapping" class="w-full h-full object-cover"
+                        data-alt="A highly detailed and minimalist digital map display showing a cluster of pulsing blue and green dots over an urban grid. The map is presented on a sleek interface with thin borders and soft typography overlays. The aesthetic is clean, professional, and reliable, conveying a sense of high-precision technological monitoring in a calm environment."
+                        data-location="Tokyo"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSDpZCPYhYrCaiStNFCtC-DWLm6lNt2-V-AT0DOzZJtFWmjAQZK6oAgKVf1aEuGvDb5arpxmqk0taHNg5QuXJEDmDC2Zqij6_fCK0Up9fWFJydJA_gfTBq-hIz7pLxRmSYToXdtfrHxjrHWkCiNQ2MLVrr_C_9W_lHLOuCz9xT4WXjICSfHFI9sxS6Aern_9MjY718FTuom75UvLtaoDLe1lkLTbtW3nfErBv9u6ZLjUVHoUcq0GdCUMdTFM1QZYqXLCMauLi8EwM" />
+                    <div class="absolute bottom-4 left-4 z-20 glass-card p-3 rounded-lg flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-safety-green animate-pulse"></div>
+                        <span class="text-label-sm font-bold text-text-main uppercase tracking-wider">Live Accuracy:
+                            99.8%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Trust Features Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="p-8 bg-surface-container-lowest border border-border-gray rounded-xl shadow-sm text-center">
+                <div class="w-16 h-16 bg-primary-fixed rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-symbols-outlined text-primary scale-125">lock</span>
+                </div>
+                <h3 class="font-headline-md text-headline-md text-text-main mb-3">Privacy First</h3>
+                <p class="text-label-md text-text-muted">Anonymization is baked into the pipeline. PII (Personally
+                    Identifiable Information) is scrubbed before LLM processing.</p>
+            </div>
+            <div class="p-8 bg-surface-container-lowest border border-border-gray rounded-xl shadow-sm text-center">
+                <div class="w-16 h-16 bg-primary-fixed rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-symbols-outlined text-primary scale-125">analytics</span>
+                </div>
+                <h3 class="font-headline-md text-headline-md text-text-main mb-3">Audit Logs</h3>
+                <p class="text-label-md text-text-muted">Every trust score decision is logged and traceable, allowing
+                    NGOs to review the rationale behind triage assignments.</p>
+            </div>
+            <div class="p-8 bg-surface-container-lowest border border-border-gray rounded-xl shadow-sm text-center">
+                <div class="w-16 h-16 bg-primary-fixed rounded-full flex items-center justify-center mx-auto mb-6">
+                    <span class="material-symbols-outlined text-primary scale-125">groups</span>
+                </div>
+                <h3 class="font-headline-md text-headline-md text-text-main mb-3">Community Led</h3>
+                <p class="text-label-md text-text-muted">Our algorithms are trained on data provided by global response
+                    experts to reduce bias and ensure cultural relevance.</p>
+            </div>
+        </section>
+        <!-- Stats Counter Section -->
+        <section class="mt-20 py-16 border-y border-border-gray flex flex-wrap justify-center gap-12 md:gap-24">
+            <div class="text-center">
+                <div class="font-display-lg text-display-lg text-primary">2.4ms</div>
+                <div class="font-label-md text-label-md text-text-muted uppercase tracking-widest">Avg Inference Speed
+                </div>
+            </div>
+            <div class="text-center">
+                <div class="font-display-lg text-display-lg text-primary">150k+</div>
+                <div class="font-label-md text-label-md text-text-muted uppercase tracking-widest">Reports Validated
+                </div>
+            </div>
+            <div class="text-center">
+                <div class="font-display-lg text-display-lg text-primary">40+</div>
+                <div class="font-label-md text-label-md text-text-muted uppercase tracking-widest">Partner NGOs</div>
+            </div>
+            <div class="text-center">
+                <div class="font-display-lg text-display-lg text-primary">99.9%</div>
+                <div class="font-label-md text-label-md text-text-muted uppercase tracking-widest">Uptime Reliability
+                </div>
+            </div>
+        </section>
+        <!-- Call to Action -->
+        <section
+            class="mt-20 bg-primary-container p-12 rounded-2xl text-center text-on-primary-container relative overflow-hidden">
+            <div class="relative z-10">
+                <h2 class="font-headline-lg text-headline-lg mb-4">Ready to Integrate?</h2>
+                <p class="text-body-lg mb-8 max-w-2xl mx-auto opacity-90">Partner with SETU to bring institutional-grade
+                    emergency intelligence to your response unit.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
+                        class="bg-surface-container-lowest text-primary font-bold py-4 px-10 rounded-lg hover:shadow-lg transition-all">Request
+                        API Access</button>
+                    <button
+                        class="bg-primary border border-on-primary-container text-on-primary font-bold py-4 px-10 rounded-lg hover:bg-primary-container/20 transition-all">Schedule
+                        Demo</button>
+                </div>
+            </div>
+            <!-- Decorative background elements -->
+            <div
+                class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-96 h-96 bg-on-tertiary-container/10 rounded-full blur-3xl">
+            </div>
+            <div
+                class="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-96 h-96 bg-on-primary-container/5 rounded-full blur-3xl">
+            </div>
+        </section>
+    </main>
+    <!-- Footer -->
+    <footer
+        class="bg-surface-container-low dark:bg-surface-dim border-t border-border-gray dark:border-outline-variant w-full py-8">
+        <div
+            class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto font-label-sm text-label-sm">
+            <div class="flex items-center gap-2 mb-4 md:mb-0">
+                <span class="font-headline-md text-headline-md text-primary font-bold">SETU</span>
+                <span class="text-text-muted dark:text-on-secondary-fixed-variant">| Emergency Systems</span>
+            </div>
+            <div class="flex gap-8 mb-4 md:mb-0">
+                <a class="text-text-muted dark:text-on-secondary-fixed-variant hover:text-primary transition-colors"
+                    href="#">Documentation</a>
+                <a class="text-text-muted dark:text-on-secondary-fixed-variant hover:text-primary transition-colors"
+                    href="#">Privacy Policy</a>
+                <a class="text-text-muted dark:text-on-secondary-fixed-variant hover:text-primary transition-colors"
+                    href="#">Contact</a>
+            </div>
+            <div class="text-text-muted dark:text-on-secondary-fixed-variant">
+                © 2024 SETU Emergency Systems
+            </div>
+        </div>
+    </footer>
+    <!-- Side Navigation for Dashboard context (if applicable - here as reference to Shared Components) -->
+    <!-- Hidden by default on informational about page, but script added for responsiveness check -->
+    <aside
+        class="hidden md:flex flex-col fixed left-0 top-16 h-full w-64 bg-surface-container-lowest dark:bg-inverse-surface border-r border-border-gray dark:border-outline-variant py-stack-md px-4 gap-y-2 translate-x-[-100%] transition-transform duration-300"
+        id="sideNav">
+        <div class="mb-8 px-2">
+            <div class="font-label-md text-label-md font-bold text-primary">NGO Dashboard</div>
+            <div class="text-label-sm text-text-muted">Emergency Response Unit</div>
+        </div>
+        <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+            href="#">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="font-label-md text-label-md">Overview</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+            href="#">
+            <span class="material-symbols-outlined">assignment</span>
+            <span class="font-label-md text-label-md">Assignments</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+            href="#">
+            <span class="material-symbols-outlined">group</span>
+            <span class="font-label-md text-label-md">Team</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-low rounded-lg transition-all"
+            href="#">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="font-label-md text-label-md">Settings</span>
+        </a>
+    </aside>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        // Micro-interactions and simple state management
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hover effect logic for cards could go here if more complex than CSS
+        });
+    </script>
+</body>
+
+</html>

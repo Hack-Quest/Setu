@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SETU | Connecting Needs to Help with AI Precision</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-tertiary-container": "#ffede6",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9d9e5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-container": "#e0e3e5",
+                        "text-muted": "#64748B",
+                        "secondary-fixed": "#e0e3e5",
+                        "surface-container-low": "#f3f3fe",
+                        "on-secondary-fixed-variant": "#444749",
+                        "outline": "#737686",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-container": "#626567",
+                        "surface-bright": "#faf8ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#191b23",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-variant": "#e1e2ed",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#943700",
+                        "safety-green": "#22C55E",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#b4c5ff",
+                        "surface": "#faf8ff",
+                        "text-main": "#1E293B",
+                        "critical-red": "#EF4444",
+                        "tertiary-container": "#bc4800",
+                        "surface-container": "#ededf9",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "inverse-on-surface": "#f0f0fb",
+                        "border-gray": "#E2E8F0",
+                        "inverse-surface": "#2e3039",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c3c6d7",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-highest": "#e1e2ed",
+                        "primary": "#004ac6",
+                        "surface-container-high": "#e7e7f3",
+                        "on-background": "#191b23",
+                        "primary-container": "#2563eb",
+                        "secondary": "#5c5f61",
+                        "background": "#faf8ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "2rem",
+                        "margin-mobile": "1rem",
+                        "stack-md": "1rem",
+                        "gutter": "1.5rem",
+                        "container-max": "1280px",
+                        "margin-desktop": "2.5rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #faf8ff;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at top right, rgba(0, 83, 219, 0.05), transparent), radial-gradient(circle at bottom left, rgba(0, 83, 219, 0.02), transparent);
+        }
+    </style>
+</head>
+
+<body class="text-on-background">
+    <!-- Top Navigation Bar -->
+    <header
+        class="fixed top-0 w-full bg-surface-bright dark:bg-surface-dim border-b border-border-gray dark:border-outline-variant z-50">
+        <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-16">
+            <div class="flex items-center gap-8">
+                <span onclick="window.location.href='landing.html'"
+                    class="font-headline-md text-headline-md font-bold text-surface-tint dark:text-primary-fixed cursor-pointer">SETU</span>
+                <nav class="hidden md:flex gap-6 items-center">
+                    <a class="font-label-md text-label-md text-on-surface-variant dark:text-on-surface hover:text-primary transition-colors duration-200"
+                        href="emergency_dashboard.html">Dashboard</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant dark:text-on-surface hover:text-primary transition-colors duration-200"
+                        href="about.html">Science of SETU</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.href='login.html'"
+                    class="font-label-md text-label-md text-primary border border-primary px-4 py-2 rounded-lg hover:bg-surface-container transition-all">NGO
+                    Login</button>
+                <button onclick="openVolunteerForm()"
+                    class="font-label-md text-label-md bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition-all">Volunteer
+                    Signup</button>
+            </div>
+        </div>
+    </header>
+    <main class="pt-16">
+        <!-- Hero Section -->
+        <section class="relative min-h-[870px] flex items-center overflow-hidden hero-gradient">
+            <div
+                class="px-margin-desktop max-w-container-max mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-gutter items-center relative z-10">
+                <div class="lg:col-span-7 flex flex-col gap-stack-lg">
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-low text-primary border border-border-gray w-fit">
+                        <span class="material-symbols-outlined text-[18px]">verified</span>
+                        <span class="font-label-sm text-label-sm uppercase tracking-wider">AI-Powered Disaster
+                            Response</span>
+                    </div>
+                    <h1 class="font-display-lg text-display-lg text-text-main max-w-2xl leading-tight">
+                        Connecting Needs to Help with <span class="text-surface-tint">AI Precision.</span>
+                    </h1>
+                    <p class="font-body-lg text-body-lg text-text-muted max-w-xl">
+                        SETU bridges the gap between those in distress and relief organizations. Our intelligence engine
+                        classifies emergencies in real-time, ensuring resources reach where they are most critical.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                        <button onclick="openNeedForm()"
+                            class="bg-critical-red text-white px-8 py-4 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-lg shadow-red-100">
+                            <span class="material-symbols-outlined">report</span>
+                            Report an Emergency
+                        </button>
+                        <button onclick="openVolunteerForm()"
+                            class="bg-primary text-white px-8 py-4 rounded-lg font-label-md text-label-md flex items-center justify-center gap-2 hover:opacity-90 transition-all">
+                            <span class="material-symbols-outlined">volunteer_activism</span>
+                            Register as Volunteer
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-6 mt-8">
+                        <div class="flex -space-x-3">
+                            <img class="w-12 h-12 rounded-full border-2 border-white object-cover"
+                                data-alt="Close-up professional portrait of a male emergency response coordinator wearing a headset, in a brightly lit modern office environment. The style is clean and high-contrast, conveying a sense of focus and reliability within a professional light-mode aesthetic with subtle blue accents."
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGGHRBrHkgA2NSPwtbV36u_KN8IFkbzyHFuFm9WcUbKCCLh-sbRFaqIsYnzWj3gzbpE8olTET-IM0NW7_fThQIcuwaxxp9aKF--jRKsCctnW9MO_uWb8IyGGDx2d0DHl57ZwU_msTENyR1x0E-eqTFFXr6VTfmfISeVadQmcxnV6_TU__vYQz3sl3nac2lK6PmxdZC_qlb0nbb7okP-L7wCBoE339SyX_csRLkA6rxDPWCJdD-3b_-JljLDcEp2rMKhNBL-8ftAe0" />
+                            <img class="w-12 h-12 rounded-full border-2 border-white object-cover"
+                                data-alt="Headshot of a female volunteer coordinator smiling warmly, set against a soft-focus background of a humanitarian logistics center. The lighting is natural and airy, adhering to a minimalist professional design language with a serene and reliable atmosphere."
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUUly11wVvECQGH1rD-aZilLDoXUZYsHtuCNuPBC0DmtRXC7Kjr9Y28NlW7rmVRu__ByHFWxmKpq9Nk2jpGNqaZSCKY8jOL3w1X5gQQ2omjI5-DPH4rmvfJD597IMaJF7A-VIgc4xXyod135n4IxYF9kMyaz8ly3AQ1ZFh6T0ueX0-juAJK6LWa1qC4AfWW5BMQxq9odnXamIrd05foaFwcijdH8lFPJYzX3r-HOZ3bP0HeI3vwX64anNjjQnRSQH-XE96iqEgdOo" />
+                            <img class="w-12 h-12 rounded-full border-2 border-white object-cover"
+                                data-alt="A focused male relief worker looking at a screen in a control room. High-key lighting and clean lines define the professional aesthetic, emphasizing technical precision and calm authority in an emergency response setting."
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTwpBsgMEKWUFB5I7QFeEVrHmBWxo9CzNTDXUN_-cGaz3wbAxgrLejFFp0KscHsKWl55M4iWr9Ii9Oe87ufTSPU8E-tKGeUfe-U1sXX-zRiAMW3dyaWd4YTsJgEOUQiMhJRidVmwB_3WsPSJfNpBiZVoPTZza_uYLUrgpVLbt-rgTzzuZS1_d2kBPQ6Vq2tTFvY50IrPWcNwCbtB8O3rVgq23XnFBzBTpIo0xe1H7gdBqBNMQJZT0t2h5w_kxk4LaMzO_82PAz7GM" />
+                        </div>
+                        <p class="font-label-sm text-label-sm text-text-muted">Trusted by <span
+                                class="font-bold text-text-main">500+</span> Relief Organizations</p>
+                    </div>
+                </div>
+                <div class="lg:col-span-5 hidden lg:block relative">
+                    <div
+                        class="relative w-full aspect-square rounded-[2rem] overflow-hidden shadow-2xl border-4 border-white">
+                        <img class="w-full h-full object-cover"
+                            data-alt="A high-tech emergency operations center with multiple large screens displaying maps and data visualizations. The room is modern, with clean white surfaces and blue glowing data points, capturing a professional and reliable atmosphere for high-stakes coordination."
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCHZf305v2IW0lWtTuuSKDkNwL19WuFcz_Uq9Z13tv4CMj0SE1He1uZRcjuOiFJIPkTf7nYrd9R7aFDuGGmSfJtzjcdXiPNSdUdSRMmJFOuiT2fUIbukzGbT_vmKCerevy0Z9Y-VCA3_C8-A77-ebR-_rV_Jev9rku4hNKIw6viOAt5QI-GiQnq3n6dJWuvh-utzSRIwSFQuo4FoAGVUwW8seheKtUOPQ5E6TmsDG0EG3nIY4GlHFXrCYlkpwjO5GXSFz1g96VpkW4" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                        <div class="absolute bottom-6 left-6 right-6 glass-card p-4 rounded-xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-label-sm text-label-sm text-primary">Live Triage Feed</span>
+                                <span class="flex h-2 w-2 rounded-full bg-safety-green animate-pulse"></span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="h-2 bg-surface-container rounded-full w-3/4"></div>
+                                <div class="h-2 bg-surface-container rounded-full w-1/2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Live Stats Section -->
+        <section class="py-24 bg-surface-container-low">
+            <div class="px-margin-desktop max-w-container-max mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+                    <div class="glass-card p-stack-lg rounded-xl flex flex-col items-center text-center">
+                        <span class="material-symbols-outlined text-primary text-4xl mb-4">emergency</span>
+                        <h3 class="font-display-lg text-[40px] text-text-main mb-1" id="stat-needs">1,284</h3>
+                        <p class="font-label-md text-label-md text-text-muted">Open Urgent Needs</p>
+                    </div>
+                    <div class="glass-card p-stack-lg rounded-xl flex flex-col items-center text-center">
+                        <span class="material-symbols-outlined text-safety-green text-4xl mb-4">groups</span>
+                        <h3 class="font-display-lg text-[40px] text-text-main mb-1" id="stat-volunteers">42,500</h3>
+                        <p class="font-label-md text-label-md text-text-muted">Active Volunteers</p>
+                    </div>
+                    <div class="glass-card p-stack-lg rounded-xl flex flex-col items-center text-center">
+                        <span class="material-symbols-outlined text-surface-tint text-4xl mb-4">handshake</span>
+                        <h3 class="font-display-lg text-[40px] text-text-main mb-1" id="stat-ngos">86</h3>
+                        <p class="font-label-md text-label-md text-text-muted">Partnered NGOs</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- How It Works (Bento Grid) -->
+        <section class="py-24 px-margin-desktop max-w-container-max mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="font-headline-lg text-headline-lg text-text-main mb-4">Precision in Crisis Management</h2>
+                <p class="font-body-md text-body-md text-text-muted max-w-2xl mx-auto">SETU uses advanced natural
+                    language processing and computer vision to filter, categorize, and verify aid requests instantly.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter h-auto md:h-[600px]">
+                <!-- AI Classification -->
+                <div
+                    class="md:col-span-8 bg-white border border-border-gray rounded-xl p-8 flex flex-col justify-between overflow-hidden relative group">
+                    <div class="relative z-10">
+                        <span
+                            class="bg-primary/10 text-primary px-3 py-1 rounded-full font-label-sm text-label-sm mb-4 inline-block">Step
+                            01</span>
+                        <h3 class="font-headline-md text-headline-md text-text-main mb-4">Instant AI Classification</h3>
+                        <p class="font-body-md text-body-md text-text-muted max-w-md">Our neural network parses raw
+                            reports from SMS, social media, and direct calls to identify the severity level and required
+                            resources within seconds.</p>
+                    </div>
+                    <div class="mt-8 relative z-10">
+                        <div class="flex gap-2">
+                            <span
+                                class="px-3 py-1 bg-red-100 text-critical-red rounded-full text-xs font-bold uppercase tracking-tighter">Medical
+                                Emergency</span>
+                            <span
+                                class="px-3 py-1 bg-blue-100 text-primary rounded-full text-xs font-bold uppercase tracking-tighter">Flood
+                                Relief</span>
+                        </div>
+                    </div>
+                    <!-- Abstract Visualization Placeholder -->
+                    <div
+                        class="absolute -right-20 -bottom-20 w-80 h-80 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <span class="material-symbols-outlined text-[300px] text-primary">analytics</span>
+                    </div>
+                </div>
+                <!-- Trust Scoring -->
+                <div
+                    class="md:col-span-4 bg-surface-container text-white rounded-xl p-8 flex flex-col justify-between overflow-hidden relative border border-border-gray">
+                    <div class="relative z-10">
+                        <span
+                            class="bg-white/20 text-text-main px-3 py-1 rounded-full font-label-sm text-label-sm mb-4 inline-block">Step
+                            02</span>
+                        <h3 class="font-headline-md text-headline-md text-text-main mb-4">Trust Scoring</h3>
+                        <p class="font-body-md text-body-md text-text-muted">A verification score (0-100) is assigned to
+                            every request based on location history, photo metadata, and community cross-referencing.
+                        </p>
+                    </div>
+                    <div class="mt-8 flex justify-center items-center">
+                        <div
+                            class="w-32 h-32 rounded-full border-8 border-safety-green flex items-center justify-center relative shadow-lg shadow-green-100">
+                            <span class="font-display-lg text-headline-lg text-text-main">92</span>
+                            <span
+                                class="absolute -top-1 right-2 text-safety-green material-symbols-outlined text-sm">check_circle</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- NGO Dispatch -->
+                <div
+                    class="md:col-span-12 bg-surface-bright border border-border-gray rounded-xl p-8 flex items-center justify-between">
+                    <div class="flex flex-col md:flex-row items-center gap-8 w-full">
+                        <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-white text-3xl">route</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-headline-md text-headline-md text-text-main">Intelligent Dispatch</h3>
+                            <p class="font-body-md text-body-md text-text-muted">The platform matches verified needs
+                                with the nearest NGO capable of handling that specific category of aid.</p>
+                        </div>
+                        <button
+                            class="bg-white border border-border-gray px-6 py-3 rounded-lg font-label-md text-label-md text-primary hover:bg-surface-container transition-all shrink-0">View
+                            Integration Docs</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- NGO Call to Action -->
+        <section class="py-24">
+            <div class="px-margin-desktop max-w-container-max mx-auto">
+                <div
+                    class="bg-surface-tint rounded-[2rem] p-12 md:p-20 text-white relative overflow-hidden flex flex-col md:flex-row items-center gap-12">
+                    <div class="absolute inset-0 opacity-10">
+                        <div
+                            class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+                        </div>
+                    </div>
+                    <div class="relative z-10 flex-1">
+                        <h2 class="font-display-lg text-headline-lg md:text-display-lg mb-6 leading-tight">Empower your
+                            NGO with AI Logistics.</h2>
+                        <p class="font-body-lg text-body-lg opacity-90 mb-8 max-w-lg">
+                            Join the SETU network to receive real-time, verified emergency leads. Reduce response times
+                            by up to 40% with our automated triage system.
+                        </p>
+                        <div class="flex flex-wrap gap-4">
+                            <button onclick="openNGOForm()"
+                                class="bg-white text-primary px-8 py-4 rounded-lg font-label-md text-label-md hover:bg-surface-container transition-all">Partner
+                                with Us</button>
+                            <button
+                                class="bg-primary-container text-white px-8 py-4 rounded-lg font-label-md text-label-md border border-white/30 hover:bg-white/10 transition-all">Download
+                                NGO Kit</button>
+                        </div>
+                    </div>
+                    <div class="relative z-10 w-full max-w-md hidden md:block">
+                        <img class="rounded-2xl shadow-2xl rotate-2"
+                            data-alt="A clean, professional scene of a tablet screen showing a disaster response dashboard with green checkmarks and a blue map. The tablet is held by a volunteer wearing a high-visibility vest in a calm, orderly warehouse environment. The image uses soft, bright lighting to maintain a professional and reliable tone."
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWSTjkjJpEQoVXbncmxXtmsmJqO1FGexGs7kZFsBb78R9AsvpPfogyRWI0WJMA_oYpMtxrswVFZJR3FZNle-tXVthnYmHY-0jU2daMSVKRBzmqXIYGiQXp92mABUc4FInoBX0PirDGJSwXUndD_FplP0dE3L-092ez8WWQ1-1h-Cr7say6nxBrf-EX1c_uH8lY_fz_QAIcXbKejY07OwTJ3ztCeokOqUFCNlNUSEIMbr8uimfCJ0RG5lUWR30IlE6GbAoiHTbM1AA" />
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <!-- Footer -->
+    <footer
+        class="bg-surface-container-low dark:bg-surface-dim border-t border-border-gray dark:border-outline-variant py-12">
+        <div
+            class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto gap-8">
+            <div class="flex flex-col gap-2">
+                <span class="font-headline-md text-headline-md text-primary font-bold">SETU</span>
+                <p class="font-label-sm text-label-sm text-text-muted">© 2024 SETU Emergency Systems</p>
+            </div>
+            <nav class="flex gap-8">
+                <a class="font-label-sm text-label-sm text-text-muted hover:text-primary transition-colors"
+                    href="#">Contact</a>
+                <a class="font-label-sm text-label-sm text-text-muted hover:text-primary transition-colors"
+                    href="#">Privacy</a>
+                <a class="font-label-sm text-label-sm text-text-muted hover:text-primary transition-colors"
+                    href="#">Documentation</a>
+            </nav>
+            <div class="flex gap-4">
+                <a class="text-text-muted hover:text-primary" href="#"><span
+                        class="material-symbols-outlined">public</span></a>
+                <a class="text-text-muted hover:text-primary" href="#"><span
+                        class="material-symbols-outlined">terminal</span></a>
+            </div>
+        </div>
+    </footer>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        // Micro-interaction for stat counting
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const value = Math.floor(progress * (end - start) + start);
+                obj.innerHTML = value.toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        window.onload = async () => {
+            const needs = document.getElementById('stat-needs');
+            const vol = document.getElementById('stat-volunteers');
+            const ngos = document.getElementById('stat-ngos');
+
+            // Set dynamic values from API if possible, else use visual fallbacks
+            try {
+                const res = await ApiService.getStats();
+                if (res.ok && res.data) {
+                    const activeNeeds = res.data.total_reports || 0;
+                    const activeVolunteers = res.data.total_volunteers || 0;
+                    const activeNgos = res.data.total_ngos || 0;
+
+                    animateValue(needs, 0, activeNeeds, 1500);
+                    animateValue(vol, 0, activeVolunteers, 1500);
+                    animateValue(ngos, 0, activeNgos, 1500);
+                    return;
+                }
+            } catch (err) {
+                console.warn("Could not load dynamic stats, using fallbacks:", err);
+            }
+
+            animateValue(needs, 1000, 1284, 1500);
+            animateValue(vol, 41000, 42500, 1500);
+            animateValue(ngos, 0, 86, 1500);
+        };
+    </script>
+</body>
+
+</html>

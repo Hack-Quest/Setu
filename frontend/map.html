@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SETU | Tactical Map</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-tertiary-container": "#ffede6",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9d9e5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-container": "#e0e3e5",
+                        "text-muted": "#64748B",
+                        "secondary-fixed": "#e0e3e5",
+                        "surface-container-low": "#f3f3fe",
+                        "on-secondary-fixed-variant": "#444749",
+                        "outline": "#737686",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-container": "#626567",
+                        "surface-bright": "#faf8ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#191b23",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-variant": "#e1e2ed",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#943700",
+                        "safety-green": "#22C55E",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#b4c5ff",
+                        "surface": "#faf8ff",
+                        "text-main": "#1E293B",
+                        "critical-red": "#EF4444",
+                        "tertiary-container": "#bc4800",
+                        "surface-container": "#ededf9",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "inverse-on-surface": "#f0f0fb",
+                        "border-gray": "#E2E8F0",
+                        "inverse-surface": "#2e3039",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c3c6d7",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-highest": "#e1e2ed",
+                        "primary": "#004ac6",
+                        "surface-container-high": "#e7e7f3",
+                        "on-background": "#191b23",
+                        "primary-container": "#2563eb",
+                        "secondary": "#5c5f61",
+                        "background": "#faf8ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "2rem",
+                        "margin-mobile": "1rem",
+                        "stack-md": "1rem",
+                        "gutter": "1.5rem",
+                        "container-max": "1280px",
+                        "margin-desktop": "2.5rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #faf8ff;
+        }
+
+        #map {
+            height: calc(100vh - 64px);
+            width: 100%;
+            z-index: 10;
+        }
+
+        .leaflet-container {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="text-on-background min-h-screen flex flex-col justify-between">
+    <!-- Top Navigation Bar -->
+    <header class="fixed top-0 w-full bg-surface-bright border-b border-border-gray h-16 z-50">
+        <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-full">
+            <div class="flex items-center gap-8">
+                <span class="font-headline-md text-headline-md font-bold text-surface-tint cursor-pointer" onclick="window.location.href='landing.html'">SETU</span>
+                <nav class="hidden md:flex gap-6 items-center">
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="landing.html">Home</a>
+                    <a class="font-label-md text-label-md text-primary font-bold border-b-2 border-primary pb-1"
+                        href="map.html">Map</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="about.html">Science of SETU</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <button id="runMatchBtn" onclick="runMatching()"
+                    class="font-label-md text-label-md border border-primary text-primary px-4 py-2 rounded-lg hover:bg-surface-container-low transition-all">Run Matching</button>
+                <button onclick="window.location.href='login.html'"
+                    class="font-label-md text-label-md bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition-all">Login</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Map Area -->
+    <main class="flex-grow pt-16 relative">
+        <div id="map"></div>
+        <div id="status" class="absolute top-20 left-4 z-40 bg-slate-900/90 text-white px-4 py-3 rounded-xl shadow-lg border border-slate-700/50 text-label-sm font-medium hidden flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-safety-green animate-pulse"></span>
+            <span id="status-text">Loading map data...</span>
+        </div>
+    </main>
+
+    <!-- Leaflet & MarkerCluster JS CDN -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+    <!-- SETU Service Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+
+    <script>
+        let map;
+        let overlays = [];
+
+        function showStatus(message, show = true) {
+            const status = document.getElementById('status');
+            const txt = document.getElementById('status-text');
+            if (txt) txt.textContent = message;
+            if (status) status.classList.toggle('hidden', !show);
+        }
+
+        function getColor(severity) {
+            severity = (severity || '').toLowerCase();
+            if (severity === 'critical') return "#ef4444"; // critical red
+            if (severity === 'high') return "#ea580c";     // high orange
+            if (severity === 'medium') return "#ca8a04";   // medium yellow
+            return "#16a34a";                              // low green
+        }
+
+        function initMap() {
+            // Default center, will be overridden by fitBounds later
+            map = L.map('map').setView([20.5937, 78.9629], 5);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            loadNeeds();
+            setInterval(loadNeeds, 10000);
+        }
+
+        function clearAll() {
+            overlays.forEach(item => map.removeLayer(item));
+            overlays = [];
+        }
+
+        async function loadNeeds() {
+            showStatus("Fetching latest disaster reports...");
+            try {
+                const response = await ApiService.getReports();
+                if (!response.ok) throw new Error(response.error);
+
+                const raw = response.data;
+                const reports = Array.isArray(raw) ? raw :
+                                Array.isArray(raw?.reports) ? raw.reports :
+                                Array.isArray(raw?.data) ? raw.data : [];
+
+                clearAll();
+                const bounds = [];
+
+                // Create a Cluster Group for SOS markers
+                const markersCluster = L.markerClusterGroup({
+                    maxClusterRadius: 50
+                });
+
+                reports.forEach(r => {
+                    if (!r.lat || !r.lng) return;
+
+                    const lat = parseFloat(r.lat);
+                    const lng = parseFloat(r.lng);
+
+                    if (isNaN(lat) || isNaN(lng)) return;
+
+                    const severity = r.severity || 'low';
+                    const isCritical = severity.toLowerCase() === "critical";
+
+                    // Create SOS Circle Marker
+                    const marker = L.circleMarker([lat, lng], {
+                        radius: isCritical ? 12 : 8,
+                        color: getColor(severity),
+                        fillColor: getColor(severity),
+                        fillOpacity: 0.9,
+                        weight: 2
+                    });
+
+                    marker.bindPopup(`
+                        <div class="p-2 flex flex-col gap-1">
+                            <div class="flex justify-between items-center gap-2">
+                                <b class="text-sm text-slate-800">${r.disaster_type || 'Need'}</b>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase" style="background-color: ${getColor(severity)}">${severity}</span>
+                            </div>
+                            <p class="text-xs text-slate-600 my-1">${r.description || 'No description available.'}</p>
+                            <div class="text-[10px] text-slate-400">Reporter: ${r.reporter_name || 'Unknown'}</div>
+                        </div>
+                    `);
+
+                    if (isCritical) {
+                        let grow = true;
+                        const pulseInterval = setInterval(() => {
+                            if (!map.hasLayer(markersCluster)) {
+                                clearInterval(pulseInterval);
+                                return;
+                            }
+                            marker.setStyle({ radius: grow ? 14 : 8 });
+                            grow = !grow;
+                        }, 600);
+                    }
+
+                    markersCluster.addLayer(marker);
+                    bounds.push([lat, lng]);
+
+                    // Volunteer mapping
+                    let vLat = r.volunteer_lat ? parseFloat(r.volunteer_lat) : null;
+                    let vLng = r.volunteer_lng ? parseFloat(r.volunteer_lng) : null;
+
+                    if (vLat && vLng && !isNaN(vLat) && !isNaN(vLng)) {
+                        const volunteerMarker = L.circleMarker([vLat, vLng], {
+                            radius: 7,
+                            color: '#0053db',
+                            fillColor: '#0053db',
+                            fillOpacity: 0.9,
+                            weight: 1
+                        }).addTo(map);
+
+                        volunteerMarker.bindPopup(`
+                            <div class="p-1">
+                                <b class="text-xs text-slate-800">Volunteer Assigned</b>
+                                <div class="text-[10px] text-slate-500">Name: ${r.volunteer_name || 'Assigned'}</div>
+                            </div>
+                        `);
+
+                        overlays.push(volunteerMarker);
+                        bounds.push([vLat, vLng]);
+
+                        const line = L.polyline([[lat, lng], [vLat, vLng]], {
+                            color: '#0053db',
+                            weight: 3,
+                            dashArray: '5, 5'
+                        }).addTo(map);
+                        overlays.push(line);
+                    }
+                });
+
+                map.addLayer(markersCluster);
+                overlays.push(markersCluster);
+
+                if (bounds.length > 0) {
+                    map.fitBounds(bounds, { padding: [40, 40] });
+                }
+                showStatus("Map updated", false);
+
+            } catch (err) {
+                console.error("Map error:", err);
+                showStatus("Error syncing tactical map data");
+            }
+        }
+
+        async function runMatching() {
+            const btn = document.getElementById('runMatchBtn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Matching...'; }
+            
+            showStatus("Running matching engine...");
+            const response = await ApiService.runMatch();
+            if (btn) { btn.disabled = false; btn.textContent = 'Run Matching'; }
+
+            if (response.ok) {
+                showToast("Matching execution completed!", "success");
+                loadNeeds();
+            } else {
+                showToast(response.error || "Failed to trigger matching.", "error");
+                showStatus("Ready", false);
+            }
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+
+</html>

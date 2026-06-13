@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+google-genai
+python-dotenv
+requests
+slowapi
+bcrypt
+firebase-admin
+googlemaps
+passlib[bcrypt]
+pytest
