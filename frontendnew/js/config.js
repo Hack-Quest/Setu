@@ -5,7 +5,13 @@
 // Change this one value to point at staging / production.
 // ============================================================
 
-window.SETU_API_BASE_URL = "http://127.0.0.1:8000";
+window.SETU_API_BASE_URL = (function () {
+    var origin = window.location.origin;
+    if (!origin || origin === "null" || origin === "file://") {
+        return "http://127.0.0.1:8000";
+    }
+    return origin;
+})();
 
 // Google Forms deep-links (kept in sync with new_frontend)
 window.SETU_NEED_FORM_URL    = "https://docs.google.com/forms/d/e/1FAIpQLSfpOTtIUbv4g216ME419DG_BqF_PCS1chJ0es47HRbkznNA1g/viewform";
