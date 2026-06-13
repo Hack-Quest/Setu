@@ -118,7 +118,7 @@ def find_best_volunteer(need: dict, all_volunteers: list) -> dict | None:
 # Main match route — global priority ordering
 # ---------------------------------------------------------------------------
 @router.get("")
-def match_needs():
+def match_needs(token: str = Depends(verify_token)):
     """
     Runs the global priority matching pass:
     1. Sort all open needs by severity (critical first).
@@ -163,6 +163,18 @@ def match_needs():
             v for v in all_volunteers
             if v.get("id") not in assigned_volunteer_ids
         ]
+
+        if is_sensitive:
+            tier1_pool = [v for v in available_pool if v.get("ngo_verified") is True]
+            if not tier1_pool:
+                matches.append({
+                    "need_id": need_id,
+                    "severity": severity,
+                    "status": "Manual Escalation Required",
+                    "reason": "Sensitive category requires Tier 1 NGO verification."
+                })
+                continue
+            available_pool = tier1_pool
         # 🔥 MULTI-VOLUNTEER LOGIC (CORRECT PLACEMENT)
 
         MAX_VOLUNTEERS_PER_NEED = 3

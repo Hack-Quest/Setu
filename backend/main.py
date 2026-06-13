@@ -90,8 +90,13 @@ async def websocket_endpoint(websocket: WebSocket):
         manager.disconnect(websocket)
 
 # 🏠 Health Checks
+from fastapi.responses import FileResponse
+
 @app.get("/")
-def home():
+def home(request: Request):
+    if "text/html" in request.headers.get("accept", ""):
+        if os.path.exists("frontendnew/landing.html"):
+            return FileResponse("frontendnew/landing.html")
     return {"message": "Setu Backend Active", "env": "Cloud Run"}
 
 @app.get("/health")
@@ -203,3 +208,6 @@ app.include_router(dashboard_router)
 app.include_router(assignment_router)
 app.include_router(ngo_router)
 app.include_router(stats_router)
+
+from fastapi.staticfiles import StaticFiles
+app.mount("/", StaticFiles(directory="frontendnew", html=True), name="static")
