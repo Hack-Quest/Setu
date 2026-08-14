@@ -118,14 +118,22 @@ def find_best_volunteer(need: dict, all_volunteers: list) -> dict | None:
 # Main match route — global priority ordering
 # ---------------------------------------------------------------------------
 @router.get("")
-def match_needs(token: str = Depends(verify_token)):
+def match_needs(token: dict = Depends(verify_token)):
     """
     Runs the global priority matching pass:
     1. Sort all open needs by severity (critical first).
     2. Assign the best available volunteer to each need in order.
     3. Track used volunteers so no volunteer is double-dispatched.
     """
+    if isinstance(token, dict):
+        if token.get("role") not in ["system", "ngo"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: only NGOs or system administrators can trigger matching"
+            )
+            
     open_needs = get_open_needs()
+
 
     # Sort needs by severity weight (descending) for global priority dispatch
     open_needs.sort(
@@ -236,14 +244,22 @@ def match_needs(token: str = Depends(verify_token)):
 # Debug endpoint — for demo transparency
 # ---------------------------------------------------------------------------
 @router.get("/debug/{need_id}")
-def debug_match(need_id: str, token: str = Depends(verify_token)):
+def debug_match(need_id: str, token: dict = Depends(verify_token)):
     """
     Returns a full score breakdown for every available volunteer against a
     specific need. Use this to explain matching decisions during the demo.
     """
+    if isinstance(token, dict):
+        if token.get("role") not in ["system", "ngo"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: only NGOs or system administrators can view match debug breakdowns"
+            )
+
     need = get_need_by_id(need_id)
     if not need:
         raise HTTPException(status_code=404, detail=f"Need '{need_id}' not found.")
+
 
     all_volunteers = get_available_volunteers()
     breakdown = []

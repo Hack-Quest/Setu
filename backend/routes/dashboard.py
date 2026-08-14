@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from backend.auth import verify_token
 
 from database.needs_db import get_open_needs, get_all_needs
 from database.volunteers_db import get_available_volunteers, get_all_volunteers
@@ -9,7 +10,8 @@ router = APIRouter(prefix="/dashboard")
 
 
 @router.get("/reports")
-def get_reports_endpoint():
+def get_reports_endpoint(token: dict = Depends(verify_token)):
+
     docs = get_all_needs()
     reports = []
     
@@ -75,7 +77,8 @@ def get_reports_endpoint():
     return reports
 
 @router.get("")
-def dashboard():
+def dashboard(token: dict = Depends(verify_token)):
+
 
     needs = get_open_needs()
     vols = get_available_volunteers()

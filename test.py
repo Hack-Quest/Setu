@@ -248,13 +248,15 @@ class TestSetuIntegration(unittest.TestCase):
         if not GlobalState.ngo_id:
             self.skipTest("NGO ID not created")
             
-        resp = requests.get(f"{BASE_URL}/ngo/{GlobalState.ngo_id}/dashboard")
+        headers = {"Authorization": f"Bearer {SECRET_TOKEN}"}
+        resp = requests.get(f"{BASE_URL}/ngo/{GlobalState.ngo_id}/dashboard", headers=headers)
         self.assertEqual(resp.status_code, 200)
         self.assertIn("ngo", resp.json())
         
     def test_14_global_dashboard(self):
         """[NORMAL] Fetch global platform dashboard aggregates"""
-        resp = requests.get(f"{BASE_URL}/dashboard")
+        headers = {"Authorization": f"Bearer {SECRET_TOKEN}"}
+        resp = requests.get(f"{BASE_URL}/dashboard", headers=headers)
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertIn("total_needs", data)
@@ -262,9 +264,11 @@ class TestSetuIntegration(unittest.TestCase):
 
     def test_15_dashboard_reports_list(self):
         """[NORMAL] Fetch detailed report map listing"""
-        resp = requests.get(f"{BASE_URL}/dashboard/reports")
+        headers = {"Authorization": f"Bearer {SECRET_TOKEN}"}
+        resp = requests.get(f"{BASE_URL}/dashboard/reports", headers=headers)
         self.assertEqual(resp.status_code, 200)
         self.assertIsInstance(resp.json(), list)
+
 
 
 if __name__ == '__main__':

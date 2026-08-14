@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.post("/volunteer")
-def create_volunteer(data: VolunteerInput, token: str = Depends(verify_token)):  # ✅ Auth guard
+def create_volunteer(data: VolunteerInput, token: dict = Depends(verify_token)):  # ✅ Auth guard
     try:
         volunteer_dict = data.model_dump() if hasattr(data, "model_dump") else data.dict()
 
@@ -19,7 +19,31 @@ def create_volunteer(data: VolunteerInput, token: str = Depends(verify_token)): 
 
         # 🔒 SECURITY: Strip privileged tiered fields — only an authenticated NGO may set these.
         # A volunteer registering themselves must not be able to self-promote their tier.
-        volunteer_dict.pop("ngo_id", None)
+        if isinstance(token, dict):
+            role = token.get("role")
+            uid = token.get("uid")
+            if role == "ngo":
+                # Force volunteer's NGO ID to be the authenticated NGO's ID
+                volunteer_dict["ngo_id"] = uid
+                # Verify if the NGO itself is verified in PostgreSQL
+                ngo = get_ngo(uid)
+                volunteer_dict["ngo_verified"] = bool(ngo and ngo.get("verified"))
+            elif role == "system":
+                # For system/tests, preserve the submitted NGO ID if verified
+                ngo_id = volunteer_dict.get("ngo_id")
+                if ngo_id:
+                    ngo = get_ngo(ngo_id)
+                    volunteer_dict["ngo_verified"] = bool(ngo and ngo.get("verified"))
+                else:
+                    volunteer_dict["ngo_verified"] = False
+            else:
+                # Regular volunteer cannot self-verify or self-associate
+                volunteer_dict.pop("ngo_id", None)
+                volunteer_dict["ngo_verified"] = False
+        else:
+            volunteer_dict.pop("ngo_id", None)
+            volunteer_dict["ngo_verified"] = False
+
         volunteer_dict.pop("credential_tags", None)
 
         # Geocoding and location handling is now centralized in save_volunteer()
@@ -44,7 +68,7 @@ def create_volunteer(data: VolunteerInput, token: str = Depends(verify_token)): 
 
 
 @router.get("/volunteers")
-def list_volunteers():
+def list_volunteers(token: dict = Depends(verify_token)):
     """Public endpoint — returns all registered volunteers."""
     try:
         volunteers = get_all_volunteers()
@@ -60,4 +84,5 @@ def list_volunteers():
     except Exception as e:
         print(f"❌ list_volunteers error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 

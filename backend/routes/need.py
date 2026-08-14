@@ -206,6 +206,6 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
 def create_need(
     data: NeedInput,
     background_tasks: BackgroundTasks,
-    token: str = Depends(verify_token),
+    token: dict = Depends(verify_token),
 ):
-    return process_and_save_need(data, background_tasks)
+    return process_and_save_need(data, background_tasks)

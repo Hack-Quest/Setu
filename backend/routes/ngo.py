@@ -98,8 +98,24 @@ def get_ngo_details(ngo_id: str):
 
 
 @router.get("/{ngo_id}/dashboard")
-def get_ngo_dashboard(ngo_id: str):
+def get_ngo_dashboard(ngo_id: str, token: dict = Depends(verify_token)):
     ngo = get_ngo(ngo_id)
+    
+    if isinstance(token, dict):
+        role = token.get("role")
+        uid = token.get("uid")
+        if role == "ngo" and uid != ngo_id:
+            raise HTTPException(status_code=403, detail="Access denied: cannot view another NGO's dashboard")
+        elif role == "volunteer":
+            # Check if volunteer is affiliated with this NGO
+            with get_db_cursor(commit=False) as cur:
+                cur.execute("SELECT ngo_id FROM volunteers WHERE id = %s", (uid,))
+                row = cur.fetchone()
+            if not row or row.get("ngo_id") != ngo_id:
+                raise HTTPException(status_code=403, detail="Access denied: not affiliated with this NGO")
+        elif role not in ["system", "ngo", "volunteer"]:
+            raise HTTPException(status_code=403, detail="Access denied: unauthorized role")
+
     if not ngo:
         raise HTTPException(status_code=404, detail="NGO not found")
 

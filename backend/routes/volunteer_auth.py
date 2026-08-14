@@ -1,14 +1,22 @@
 from fastapi import APIRouter, HTTPException
 from backend.models import VolunteerRegisterInput, VolunteerLoginInput, SendOTPInput, VerifyOTPInput
 from database.volunteers_db import register_volunteer_auth, login_volunteer
-from backend.auth import SECRET_TOKEN
+from backend.auth import generate_token, SECRET_TOKEN
 import random
+import threading
+from datetime import datetime, timezone, timedelta
 from backend.email_utils import send_otp_email
 from database.otp_db import save_otp, verify_otp_in_db
 from database.ngos_db import get_ngo_by_email
 from database.postgres_client import get_db_cursor
 
 router = APIRouter()
+
+# Thread-safe in-memory tracking for rate limiting and attempt caps
+_lock = threading.Lock()
+_verify_attempts = {}  # email -> {"count": int, "blocked_until": datetime}
+_last_sent = {}        # email -> last_sent_datetime
+
 
 @router.post("/register")
 def register_volunteer(data: VolunteerRegisterInput):
@@ -26,10 +34,11 @@ def register_volunteer(data: VolunteerRegisterInput):
         if "error" in result:
             raise HTTPException(status_code=400, detail=result["error"])
         
+        jwt_token = generate_token(result["volunteer_id"], "volunteer", data.email.strip().lower())
         return {
             "message": "Volunteer registered successfully",
             "volunteer_id": result["volunteer_id"],
-            "token": SECRET_TOKEN
+            "token": jwt_token
         }
     except HTTPException:
         raise
@@ -45,12 +54,13 @@ def login_volunteer_endpoint(data: VolunteerLoginInput):
         if "error" in result:
             raise HTTPException(status_code=401, detail=result["error"])
         
+        jwt_token = generate_token(result["volunteer_id"], "volunteer", data.email.strip().lower())
         return {
             "message": "Login successful",
             "volunteer_id": result["volunteer_id"],
             "name": result["name"],
             "email": result["email"],
-            "token": SECRET_TOKEN
+            "token": jwt_token
         }
     except HTTPException:
         raise
@@ -60,15 +70,32 @@ def login_volunteer_endpoint(data: VolunteerLoginInput):
 @router.post("/send-otp")
 def send_otp_endpoint(data: SendOTPInput):
     """Generate and send an OTP to the user's email."""
+    email = data.email.strip().lower()
+    
+    # 1. Enforce send rate limiting (60 seconds resend cooldown)
+    now = datetime.now(timezone.utc)
+    with _lock:
+        last_sent_time = _last_sent.get(email)
+        if last_sent_time and (now - last_sent_time) < timedelta(seconds=60):
+            wait_seconds = int(60 - (now - last_sent_time).total_seconds())
+            raise HTTPException(
+                status_code=429,
+                detail=f"Please wait {wait_seconds} seconds before requesting another OTP."
+            )
+        _last_sent[email] = now
+        
+        # Reset attempt counter when a new OTP is requested/sent
+        if email in _verify_attempts:
+            _verify_attempts[email] = {"count": 0, "blocked_until": None}
+            
     # Generate 6-digit OTP
     otp = str(random.randint(100000, 999999))
     
     # Save OTP to database
-    save_otp(data.email, otp)
+    save_otp(email, otp)
     
     # Send email
-
-    success = send_otp_email(data.email, otp)
+    success = send_otp_email(email, otp)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to send OTP email")
         
@@ -79,20 +106,59 @@ def verify_otp_endpoint(data: VerifyOTPInput):
     """Verify OTP and determine user role for login."""
     try:
         print("VERIFY OTP INPUT:", data.model_dump() if hasattr(data, "model_dump") else data.dict())
-        
-        is_valid = verify_otp_in_db(data.email, data.otp)
-        if not is_valid:
-            raise HTTPException(status_code=401, detail="Invalid or expired OTP")
-            
         email = data.email.strip().lower()
+        otp = data.otp.strip()
         
+        now = datetime.now(timezone.utc)
+        
+        # 1. Check if email is currently blocked
+        with _lock:
+            record = _verify_attempts.get(email)
+            if record and record.get("blocked_until") and now < record["blocked_until"]:
+                block_remaining = int((record["blocked_until"] - now).total_seconds())
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Account temporarily locked. Please request a new OTP in {block_remaining} seconds."
+                )
+        
+        # 2. Verify OTP in database
+        is_valid = verify_otp_in_db(email, otp)
+        if not is_valid:
+            with _lock:
+                record = _verify_attempts.setdefault(email, {"count": 0, "blocked_until": None})
+                record["count"] += 1
+                attempts_left = 5 - record["count"]
+                
+                if record["count"] >= 5:
+                    record["blocked_until"] = now + timedelta(minutes=15)
+                    # Force delete/invalidate OTP in database
+                    with get_db_cursor(commit=True) as cur:
+                        cur.execute("DELETE FROM otps WHERE email = %s", (email,))
+                    
+                    raise HTTPException(
+                        status_code=429,
+                        detail="Too many failed attempts. OTP has been invalidated. Please request a new OTP."
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=401,
+                        detail=f"Invalid or expired OTP. {attempts_left} attempts remaining."
+                    )
+                    
+        # On success, clear verification attempts
+        with _lock:
+            if email in _verify_attempts:
+                _verify_attempts.pop(email)
+                
+        # Determine role and return signed JWT
         # Check if NGO
         ngo = get_ngo_by_email(email)
         if ngo:
             ngo_name = ngo.get("ngo_name") or ngo.get("organization_name") or ngo.get("organization") or "Unnamed NGO"
             owner_name = ngo.get("owner_name") or ngo.get("name") or "Owner"
+            jwt_token = generate_token(ngo["id"], "ngo", email)
             return {
-                "token": SECRET_TOKEN,
+                "token": jwt_token,
                 "role": "ngo",
                 "id": ngo["id"],
                 "ngo_name": ngo_name,
@@ -101,6 +167,8 @@ def verify_otp_endpoint(data: VerifyOTPInput):
                 "verified": ngo.get("verified", False),
                 "description": ngo.get("description", "")
             }
+            
+        # Check if Volunteer
         # 🔍 Fetch volunteer from volunteers_auth table
         with get_db_cursor(commit=False) as cur:
             cur.execute("SELECT id FROM volunteers_auth WHERE email = %s", (email,))
@@ -131,8 +199,9 @@ def verify_otp_endpoint(data: VerifyOTPInput):
                 "message": "Email not registered as a volunteer. Please register first."
             }
 
+        jwt_token = generate_token(volunteer_id, "volunteer", email)
         return {
-            "token": SECRET_TOKEN,
+            "token": jwt_token,
             "role": "volunteer",
             "id": volunteer_id,
             "volunteer_id": volunteer_id,
@@ -144,3 +213,4 @@ def verify_otp_endpoint(data: VerifyOTPInput):
     except Exception as e:
         print("VERIFY OTP ERROR:", str(e))
         raise HTTPException(status_code=500, detail="Internal server error")
+

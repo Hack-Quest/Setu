@@ -175,14 +175,12 @@ async def webhook_ngo_register_alias(request: Request, payload: Dict, background
             "location": payload.get("location", ""),
             "ngo_id": payload.get("ngo_id", None),
             "available": True,
-            "active_assignments": 0
+            "active_assignments": 0,
+            # 🔒 SECURITY: Public webhook NEVER auto-verifies as Tier 1.
+            # Even if a valid ngo_id is supplied, the volunteer starts as Tier 2.
+            # An authenticated NGO must separately verify their volunteers.
+            "ngo_verified": False
         }
-
-        # NGO verification
-        if mapped_volunteer.get("ngo_id"):
-            ngo = get_ngo(mapped_volunteer["ngo_id"])
-            if ngo and ngo.get("verified"):
-                mapped_volunteer["ngo_verified"] = True
 
         print(f"📥 Incoming Volunteer: {mapped_volunteer['email']}", flush=True)
 
