@@ -334,24 +334,121 @@ class TestMatchRoutes:
         assert resp.status_code == 200
         assert resp.json()["total_matches_made"] == 0
 
-    def test_run_matcher_with_successful_tiered_match(self, client):
+    def test_incompatible_volunteer_skills_not_matched(self, client):
+        """Incompatible volunteer skills should NOT be matched merely because they are close."""
         open_needs = [
-            {"id": "n1", "category": "rescue", "lat": 28.6, "lng": 77.2, "status": "open", "trust_score": 80}
+            {"id": "n-med", "category": "medical", "severity": "high", "lat": 28.6, "lng": 77.2, "status": "open", "trust_score": 90}
         ]
-        # Tier 1 volunteer has same coordinates
+        # Volunteer is nearby (same coords) but has cooking skills, NOT medical
         volunteers = [
-            {"id": "vol-t1", "ngo_id": "ngo-1", "skills": ["rescue"], "lat": 28.6, "lng": 77.2, "available": True, "ngo_verified": True}
+            {"id": "vol-cook", "name": "Chef Kumar", "skills": ["cooking", "food"], "lat": 28.6, "lng": 77.2, "available": True, "ngo_verified": True}
+        ]
+        with patch("backend.routes.match.get_open_needs", return_value=open_needs), \
+             patch("backend.routes.match.get_available_volunteers", return_value=volunteers):
+            resp = client.get("/match", headers=AUTH_HEADERS)
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total_matches_made"] == 0
+        assert data["matches"][0]["status"] == "Manual Escalation Required" or data["matches"][0]["assigned_volunteer"] == "Unassigned"
+
+    def test_compatible_volunteer_skills_matched(self, client):
+        """Compatible volunteer skills should be matched successfully."""
+        open_needs = [
+            {"id": "n-food", "category": "supplies", "help_needed": "food", "severity": "medium", "lat": 28.6, "lng": 77.2, "status": "open", "trust_score": 90}
+        ]
+        volunteers = [
+            {"id": "vol-dist", "name": "Food Distributor", "skills": ["food", "ration", "distribution"], "lat": 28.61, "lng": 77.21, "available": True, "ngo_verified": False}
         ]
         with patch("backend.routes.match.get_open_needs", return_value=open_needs), \
              patch("backend.routes.match.get_available_volunteers", return_value=volunteers), \
-             patch("backend.routes.match.save_assignment", return_value="a-t1"):
-            
+             patch("backend.routes.match.save_assignment", return_value="a-food-1"):
             resp = client.get("/match", headers=AUTH_HEADERS)
-    
+
         assert resp.status_code == 200
-        assert resp.json()["total_matches_made"] == 1
-        assert len(resp.json()["matches"]) == 1
-        assert resp.json()["matches"][0]["status"] == "assigned"
+        data = resp.json()
+        assert data["total_matches_made"] == 1
+        assert data["matches"][0]["status"] == "assigned"
+        assert data["matches"][0]["assigned_volunteer"] == "Food Distributor"
+
+    def test_unavailable_volunteer_not_matched(self, client):
+        """Unavailable volunteers must not be selected."""
+        open_needs = [
+            {"id": "n-supplies", "category": "supplies", "severity": "medium", "lat": 28.6, "lng": 77.2, "status": "open", "trust_score": 90}
+        ]
+        volunteers = [
+            {"id": "vol-busy", "name": "Busy Vol", "skills": ["supplies"], "lat": 28.6, "lng": 77.2, "available": False, "active_assignments": 3}
+        ]
+        with patch("backend.routes.match.get_open_needs", return_value=open_needs), \
+             patch("backend.routes.match.get_available_volunteers", return_value=volunteers):
+            resp = client.get("/match", headers=AUTH_HEADERS)
+
+        assert resp.status_code == 200
+        assert resp.json()["total_matches_made"] == 0
+
+    def test_sensitive_case_tier2_volunteer_blocked(self, client):
+        """Sensitive cases (medical/rescue) MUST NOT be assigned to unverified Tier 2 volunteers."""
+        open_needs = [
+            {"id": "n-rescue", "category": "rescue", "severity": "critical", "lat": 28.6, "lng": 77.2, "status": "open", "trust_score": 95}
+        ]
+        # Tier 2 community volunteer with rescue skills
+        volunteers = [
+            {"id": "vol-t2", "name": "Community Rescuer", "skills": ["rescue"], "lat": 28.6, "lng": 77.2, "available": True, "ngo_verified": False}
+        ]
+        with patch("backend.routes.match.get_open_needs", return_value=open_needs), \
+             patch("backend.routes.match.get_available_volunteers", return_value=volunteers):
+            resp = client.get("/match", headers=AUTH_HEADERS)
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total_matches_made"] == 0
+        assert data["matches"][0]["status"] == "Manual Escalation Required"
+        assert "Tier 1" in data["matches"][0]["reason"]
+
+    def test_sensitive_case_tier1_volunteer_matched(self, client):
+        """Sensitive cases must be assigned to verified Tier 1 volunteers."""
+        open_needs = [
+            {"id": "n-med-crit", "category": "medical", "severity": "critical", "lat": 28.6, "lng": 77.2, "status": "open", "trust_score": 95}
+        ]
+        volunteers = [
+            {"id": "vol-t1-doc", "name": "Dr. Awasthi", "skills": ["medical", "first-aid"], "lat": 28.61, "lng": 77.21, "available": True, "ngo_verified": True}
+        ]
+        with patch("backend.routes.match.get_open_needs", return_value=open_needs), \
+             patch("backend.routes.match.get_available_volunteers", return_value=volunteers), \
+             patch("backend.routes.match.save_assignment", return_value="a-med-1"):
+            resp = client.get("/match", headers=AUTH_HEADERS)
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total_matches_made"] == 1
+        assert data["matches"][0]["volunteer_tier"] == "Tier 1 (NGO-Verified)"
+
+    def test_uncertain_category_fails_safely_to_tier1(self, client):
+        """When AI classification produces 'Not Specified' or uncertain result, fail safely to Tier 1."""
+        open_needs = [
+            {
+                "id": "n-uncertain",
+                "category": "Not Specified",
+                "help_needed": "Not Specified",
+                "description": "Building collapse 4 people trapped bleeding",
+                "severity": "critical",
+                "lat": 28.6,
+                "lng": 77.2,
+                "status": "open",
+                "trust_score": 90
+            }
+        ]
+        # Only Tier 2 volunteer available -> Should be blocked
+        volunteers_t2 = [
+            {"id": "vol-t2-unv", "name": "Unverified Vol", "skills": ["rescue"], "lat": 28.6, "lng": 77.2, "available": True, "ngo_verified": False}
+        ]
+        with patch("backend.routes.match.get_open_needs", return_value=open_needs), \
+             patch("backend.routes.match.get_available_volunteers", return_value=volunteers_t2):
+            resp = client.get("/match", headers=AUTH_HEADERS)
+
+        assert resp.status_code == 200
+        assert resp.json()["total_matches_made"] == 0
+        assert resp.json()["matches"][0]["status"] == "Manual Escalation Required"
 
 
 # -----------------------------------------------------------------------------
@@ -379,12 +476,203 @@ class TestDashboardRoutes:
         assert resp.status_code == 200
         assert isinstance(resp.json(), list)
 
+    def test_get_dashboard_reports_includes_volunteer_coordinates(self, client):
+        """Dashboard reports endpoint MUST serialize volunteer_lat and volunteer_lng for map markers."""
+        needs = [
+            {
+                "id": "n-map-1",
+                "description": "Flood assistance",
+                "lat": 19.0760,
+                "lng": 72.8777,
+                "status": "open"
+            }
+        ]
+        mock_assignments = [
+            {"id": "a1", "need_id": "n-map-1", "volunteer_id": "v-map-1", "status": "assigned", "resolved_at": None}
+        ]
+        mock_volunteers = [
+            {"id": "v-map-1", "name": "Rahul Verma", "phone": "9876543210", "lat": 19.0800, "lng": 72.8800}
+        ]
+
+        with patch("backend.routes.dashboard.get_all_needs", return_value=needs), \
+             patch("backend.routes.dashboard.get_db_cursor") as mock_cursor:
+            cursor = MagicMock()
+            cursor.fetchall.side_effect = [mock_assignments, mock_volunteers]
+            mock_cursor.return_value.__enter__.return_value = cursor
+
+            resp = client.get("/dashboard/reports")
+
+        assert resp.status_code == 200
+        reports = resp.json()
+        assert len(reports) == 1
+        rep = reports[0]
+        assert rep["assigned"] is True
+        assert rep["status"] == "assigned"
+        assert rep["volunteer_lat"] == 19.0800
+        assert rep["volunteer_lng"] == 72.8800
+        assert rep["volunteer_name"] == "Rahul Verma"
+        assert len(rep["assigned_volunteers"]) == 1
+
 
 # -----------------------------------------------------------------------------
 # ASSIGNMENT ROUTE
 # -----------------------------------------------------------------------------
 
 class TestAssignmentRoute:
+
+    def test_accept_need_requires_auth(self, client):
+        resp = client.post("/assignment/volunteer/need-1")
+        assert resp.status_code == 401
+
+    def test_accept_need_volunteer_claiming_own_eligible_assignment(self, client):
+        """Volunteer successfully claims their own eligible assignment."""
+        mock_vol = {
+            "id": "v1", "name": "Pooja", "skills": ["supplies", "food"],
+            "available": True, "active_assignments": 0, "ngo_verified": False
+        }
+        mock_need = {
+            "id": "need-10", "category": "supplies", "help_needed": "food",
+            "status": "open", "description": "Need food rations"
+        }
+
+        with patch("backend.routes.assignment.get_db_cursor") as mock_db, \
+             patch("backend.routes.assignment.save_assignment", return_value="assign-10"):
+            cursor = MagicMock()
+            # 1. volunteer fetch, 2. need fetch, 3. assignments check
+            cursor.fetchone.side_effect = [mock_vol, mock_need]
+            cursor.fetchall.return_value = [] # no existing assignment
+            mock_db.return_value.__enter__.return_value = cursor
+
+            resp = client.post("/assignment/volunteer/need-10?volunteer_id=v1", headers=AUTH_HEADERS)
+
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "assigned"
+        assert resp.json()["assignment_id"] == "assign-10"
+
+    def test_accept_need_with_token_dict_identity(self, client):
+        """Authenticated token containing UID is resolved automatically without trusting client param."""
+        from backend.main import app
+        from backend.auth import verify_token
+        app.dependency_overrides[verify_token] = lambda: {"uid": "v-auth"}
+
+        mock_vol = {
+            "id": "v-auth", "name": "Auth Vol", "skills": ["supplies"],
+            "available": True, "active_assignments": 0, "ngo_verified": False
+        }
+        mock_need = {
+            "id": "need-20", "category": "supplies", "status": "open", "description": "Need blankets"
+        }
+
+        try:
+            with patch("backend.routes.assignment.get_db_cursor") as mock_db, \
+                 patch("backend.routes.assignment.save_assignment", return_value="assign-20"):
+                cursor = MagicMock()
+                cursor.fetchone.side_effect = [mock_vol, mock_need]
+                cursor.fetchall.return_value = []
+                mock_db.return_value.__enter__.return_value = cursor
+
+                resp = client.post("/assignment/volunteer/need-20", headers=AUTH_HEADERS)
+
+            assert resp.status_code == 200
+            assert resp.json()["status"] == "assigned"
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_accept_need_attempting_claim_other_volunteer_forbidden(self, client):
+        """User cannot claim an assignment on behalf of a different volunteer."""
+        from backend.main import app
+        from backend.auth import verify_token
+        app.dependency_overrides[verify_token] = lambda: {"uid": "v-user-1"}
+        try:
+            resp = client.post("/assignment/volunteer/need-1?volunteer_id=v-user-2", headers=AUTH_HEADERS)
+            assert resp.status_code == 403
+            assert "Forbidden" in resp.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_accept_need_already_assigned_to_another_volunteer_forbidden(self, client):
+        """Volunteer cannot claim an emergency already claimed/assigned to someone else."""
+        mock_vol = {
+            "id": "v1", "name": "Pooja", "skills": ["supplies"],
+            "available": True, "active_assignments": 0, "ngo_verified": False
+        }
+        mock_need = {
+            "id": "need-11", "category": "supplies", "status": "assigned"
+        }
+        existing_assignment = [
+            {"id": "a-other", "need_id": "need-11", "volunteer_id": "v-other", "status": "assigned"}
+        ]
+
+        with patch("backend.routes.assignment.get_db_cursor") as mock_db:
+            cursor = MagicMock()
+            cursor.fetchone.side_effect = [mock_vol, mock_need]
+            cursor.fetchall.return_value = existing_assignment
+            mock_db.return_value.__enter__.return_value = cursor
+
+            resp = client.post("/assignment/volunteer/need-11?volunteer_id=v1", headers=AUTH_HEADERS)
+
+        assert resp.status_code == 403
+        assert "another volunteer" in resp.json()["detail"]
+
+    def test_accept_need_duplicate_claim_by_same_volunteer_conflict(self, client):
+        """Already-claimed assignments cannot be claimed again by the same volunteer."""
+        mock_vol = {
+            "id": "v1", "name": "Pooja", "skills": ["supplies"],
+            "available": True, "active_assignments": 1, "ngo_verified": False
+        }
+        mock_need = {
+            "id": "need-12", "category": "supplies", "status": "assigned"
+        }
+        existing_assignment = [
+            {"id": "a-same", "need_id": "need-12", "volunteer_id": "v1", "status": "assigned"}
+        ]
+
+        with patch("backend.routes.assignment.get_db_cursor") as mock_db:
+            cursor = MagicMock()
+            cursor.fetchone.side_effect = [mock_vol, mock_need]
+            cursor.fetchall.return_value = existing_assignment
+            mock_db.return_value.__enter__.return_value = cursor
+
+            resp = client.post("/assignment/volunteer/need-12?volunteer_id=v1", headers=AUTH_HEADERS)
+
+        assert resp.status_code == 409
+        assert "already claimed" in resp.json()["detail"]
+
+    def test_accept_need_unavailable_volunteer_fails(self, client):
+        """Unavailable volunteers or those at capacity cannot claim."""
+        mock_vol = {
+            "id": "v-busy", "name": "Busy Vol", "skills": ["supplies"],
+            "available": False, "active_assignments": 3
+        }
+        with patch("backend.routes.assignment.get_db_cursor") as mock_db:
+            cursor = MagicMock()
+            cursor.fetchone.return_value = mock_vol
+            mock_db.return_value.__enter__.return_value = cursor
+
+            resp = client.post("/assignment/volunteer/need-1?volunteer_id=v-busy", headers=AUTH_HEADERS)
+
+        assert resp.status_code == 400
+        assert "unavailable" in resp.json()["detail"]
+
+    def test_accept_need_incompatible_skills_fails(self, client):
+        """Volunteer cannot claim an emergency for which they lack required skills."""
+        mock_vol = {
+            "id": "v-cook", "name": "Cook", "skills": ["cooking"],
+            "available": True, "active_assignments": 0, "ngo_verified": False
+        }
+        mock_need = {
+            "id": "need-med", "category": "medical", "help_needed": "medical", "status": "open"
+        }
+        with patch("backend.routes.assignment.get_db_cursor") as mock_db:
+            cursor = MagicMock()
+            cursor.fetchone.side_effect = [mock_vol, mock_need]
+            cursor.fetchall.return_value = []
+            mock_db.return_value.__enter__.return_value = cursor
+
+            resp = client.post("/assignment/volunteer/need-med?volunteer_id=v-cook", headers=AUTH_HEADERS)
+
+        # Incompatible or tier error
+        assert resp.status_code in [400, 403]
 
     def test_resolve_requires_auth(self, client):
         resp = client.patch("/assignment/a1/resolve")

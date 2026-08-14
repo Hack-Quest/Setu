@@ -40,28 +40,27 @@ def save_assignment(need_id: str, volunteer_id: str) -> str:
             )
         )
     
-    # 2. Update the connected systems (Atomic-like updates)
+    # 2. Update the connected systems
     update_need_status(need_id, "assigned")        
-    update_volunteer_status(volunteer_id, False)   
 
-    # Update active assignments counter
+    # 3. Update active assignments counter & availability
     with get_db_cursor(commit=True) as cur:
         cur.execute("SELECT active_assignments FROM volunteers WHERE id = %s", (volunteer_id,))
         vol_row = cur.fetchone()
-        if vol_row:
-            current = vol_row.get("active_assignments", 0) or 0
-            new_count = current + 1
-            available = False if new_count >= 3 else True
-            
-            cur.execute(
-                """
-                UPDATE volunteers SET 
-                    active_assignments = %s,
-                    available = %s
-                WHERE id = %s
-                """,
-                (new_count, available, volunteer_id)
-            )
+        current = (vol_row.get("active_assignments", 0) if vol_row else 0) or 0
+        new_count = current + 1
+        available = False if new_count >= 3 else True
+        
+        cur.execute(
+            """
+            UPDATE volunteers SET 
+                active_assignments = %s,
+                available = %s,
+                updated_at = %s
+            WHERE id = %s
+            """,
+            (new_count, available, datetime.now(timezone.utc), volunteer_id)
+        )
     
     print(f"[INFO] Assignment {doc_id} created: Volunteer {volunteer_id} -> Need {need_id}")
     return doc_id
@@ -85,25 +84,24 @@ def resolve_assignment(doc_id: str, need_id: str, volunteer_id: str):
         )
     
     update_need_status(need_id, "resolved")      
-    update_volunteer_status(volunteer_id, True)   
     
     with get_db_cursor(commit=True) as cur:
         cur.execute("SELECT active_assignments FROM volunteers WHERE id = %s", (volunteer_id,))
         vol_row = cur.fetchone()
-        if vol_row:
-            current = vol_row.get("active_assignments", 0) or 0
-            new_count = max(0, current - 1)
-            available = True if new_count < 3 else False
-            
-            cur.execute(
-                """
-                UPDATE volunteers SET 
-                    active_assignments = %s,
-                    available = %s
-                WHERE id = %s
-                """,
-                (new_count, available, volunteer_id)
-            )
+        current = (vol_row.get("active_assignments", 0) if vol_row else 1) or 0
+        new_count = max(0, current - 1)
+        available = True if new_count < 3 else False
+        
+        cur.execute(
+            """
+            UPDATE volunteers SET 
+                active_assignments = %s,
+                available = %s,
+                updated_at = %s
+            WHERE id = %s
+            """,
+            (new_count, available, datetime.now(timezone.utc), volunteer_id)
+        )
     
     print(f"[OK] Assignment {doc_id} resolved! Volunteer is free again.")
 
@@ -114,9 +112,9 @@ def get_assignments_by_volunteer_id(volunteer_id: str):
         cur.execute("SELECT * FROM assignments WHERE volunteer_id = %s", (volunteer_id,))
         rows = cur.fetchall()
         for row in rows:
-            if row.get("assigned_at"):
+            if row.get("assigned_at") and hasattr(row["assigned_at"], "isoformat"):
                 row["assigned_at"] = row["assigned_at"].isoformat()
-            if row.get("resolved_at"):
+            if row.get("resolved_at") and hasattr(row["resolved_at"], "isoformat"):
                 row["resolved_at"] = row["resolved_at"].isoformat()
         return rows
 
@@ -127,9 +125,9 @@ def get_assignment_by_id(assignment_id: str) -> dict | None:
         cur.execute("SELECT * FROM assignments WHERE id = %s", (assignment_id,))
         row = cur.fetchone()
     if row:
-        if row.get("assigned_at"):
+        if row.get("assigned_at") and hasattr(row["assigned_at"], "isoformat"):
             row["assigned_at"] = row["assigned_at"].isoformat()
-        if row.get("resolved_at"):
+        if row.get("resolved_at") and hasattr(row["resolved_at"], "isoformat"):
             row["resolved_at"] = row["resolved_at"].isoformat()
         return row
     return None
