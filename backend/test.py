@@ -70,7 +70,7 @@ def run_comprehensive_test():
 
 
     print_section("SCENARIO 4: THE MATCH ENGINE")
-    print("⏳ Waiting 2 seconds for Firestore to settle...")
+    print("⏳ Waiting 2 seconds for PostgreSQL to settle...")
     time.sleep(2)
     
     print("📤 TRIGGERING GET /match...")

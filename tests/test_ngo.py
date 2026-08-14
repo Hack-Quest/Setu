@@ -10,12 +10,11 @@ if sys.platform == "win32" and type(sys.stderr).__name__ == "TextIOWrapper":
 
 import requests
 import time
-from google.cloud.firestore_v1.base_query import FieldFilter
 from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database.ngos_db import verify_ngo
-from database.firestore_client import db
+from database.postgres_client import get_db_cursor
 
 load_dotenv(dotenv_path="config/.env")
 
@@ -78,12 +77,9 @@ def run_test():
     # Need Location: Lat 28.6130, Lng 77.2090
     # Tier 1 Vol: Lat 28.6100, Lng 77.2000 (~1.5 km away)
     # Tier 2 Vol: Lat 28.6120, Lng 77.2085 (~0.2 km away)
-    db.collection("volunteers").document(tier1_id).update(
-        {"lat": 28.6100, "lng": 77.2000}
-    )
-    db.collection("volunteers").document(tier2_id).update(
-        {"lat": 28.6120, "lng": 77.2085}
-    )
+    with get_db_cursor(commit=True) as cur:
+        cur.execute("UPDATE volunteers SET lat = %s, lng = %s WHERE id = %s", (28.6100, 77.2000, tier1_id))
+        cur.execute("UPDATE volunteers SET lat = %s, lng = %s WHERE id = %s", (28.6120, 77.2085, tier2_id))
 
     print("\n--- 5. Report 'Medical' SOS ---")
     need_payload = {
@@ -106,7 +102,8 @@ def run_test():
     time.sleep(5)
 
     # Overwrite the Need's coordinate to be precise
-    db.collection("needs_reports").document(need_id).update({"lat": 28.6130, "lng": 77.2090})
+    with get_db_cursor(commit=True) as cur:
+        cur.execute("UPDATE needs_reports SET lat = 28.6130, lng = 77.2090 WHERE id = %s", (str(need_id),))
 
     print("\n--- 6. Running Match Engine manually to ensure assignment ---")
     headers = {"Authorization": f"Bearer {SECRET_TOKEN}"}
@@ -114,17 +111,14 @@ def run_test():
     resp.raise_for_status()
 
     print("\n--- 7. Verifying Assignment ---")
-    docs = (
-        db.collection("assignments")
-        .where(filter=FieldFilter("need_id", "==", need_id))
-        .stream()
-    )
-    assignments = list(docs)
+    with get_db_cursor(commit=False) as cur:
+        cur.execute("SELECT * FROM assignments WHERE need_id = %s", (str(need_id),))
+        assignments = cur.fetchall()
 
     if len(assignments) == 0:
         print("❌ No assignments found for this need.")
     else:
-        assigned_vol_id = assignments[0].to_dict().get("volunteer_id")
+        assigned_vol_id = assignments[0].get("volunteer_id")
         print(f"Assigned Volunteer ID: {assigned_vol_id}")
         if assigned_vol_id == tier1_id:
             print(

@@ -1,39 +1,41 @@
 from fastapi import APIRouter
 
-from database.needs_db import get_open_needs
+from database.needs_db import get_open_needs, get_all_needs
 from database.volunteers_db import get_available_volunteers, get_all_volunteers
 from database.ngos_db import get_all_ngos
+from database.postgres_client import get_db_cursor
 
 router = APIRouter(prefix="/dashboard")
 
 
 @router.get("/reports")
 def get_reports_endpoint():
-    from database.needs_db import get_all_needs
-    from database.firestore_client import db
-    
     docs = get_all_needs()
     reports = []
     
     # 1. Fetch all assignments and group by need_id
     try:
-        assignments_stream = db.collection("assignments").stream()
+        with get_db_cursor(commit=False) as cur:
+            cur.execute("SELECT need_id, volunteer_id FROM assignments")
+            assignments_rows = cur.fetchall()
+            
+            cur.execute("SELECT id, name FROM volunteers")
+            volunteers_rows = cur.fetchall()
+
         need_to_vols = {}  # need_id -> list of volunteer_ids
-        for a in assignments_stream:
-            a_data = a.to_dict()
-            n_id = a_data.get("need_id")
-            v_id = a_data.get("volunteer_id")
+        for a in assignments_rows:
+            n_id = a.get("need_id")
+            v_id = a.get("volunteer_id")
             if n_id and v_id:
                 need_to_vols.setdefault(n_id, []).append(v_id)
                 
-        # 2. Fetch all volunteers to map id -> name
-        volunteers_stream = db.collection("volunteers").stream()
+        # 2. Map volunteer details
         vol_dict = {}
-        for v in volunteers_stream:
-            v_data = v.to_dict()
-            vol_dict[v.id] = {
-                "id": v.id,
-                "name": v_data.get("volunteer_name") or v_data.get("name") or "Volunteer"
+        for v in volunteers_rows:
+            v_id = v.get("id")
+            vol_dict[v_id] = {
+                "id": v_id,
+                "name": v.get("name") or "Volunteer"
             }
     except Exception as e:
         print("Error joining volunteers:", e)

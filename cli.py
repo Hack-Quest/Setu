@@ -140,7 +140,7 @@ def register_volunteer():
 
 def view_dashboard():
     print(Colors.CYAN + "\n--- [ LIVE TACTICAL DASHBOARD ] ---" + Colors.ENDC)
-    slow_print("Fetching live telemetry from Firestore...", 0.01)
+    slow_print("Fetching live telemetry from Supabase...", 0.01)
 
     try:
         # ✅ Strict timeout applied

@@ -3,9 +3,8 @@ from backend.models import NGOInput
 from database.ngos_db import save_ngo, get_ngo, get_all_ngos
 from backend.auth import verify_token
 from database.geocoding import get_coordinates
-from database.firestore_client import db
 from database.needs_db import get_need_by_id
-from google.cloud.firestore_v1.base_query import FieldFilter
+from database.postgres_client import get_db_cursor
 
 router = APIRouter(prefix="/ngo", tags=["NGO"])
 
@@ -28,11 +27,11 @@ def list_ngos():
                 ngo_name = "Helping Hands Foundation"
                 owner_name = ngo.get("name", "Admin")
                 try:
-                    from database.firestore_client import db
-                    db.collection("ngos").document(ngo["id"]).update({
-                        "ngo_name": ngo_name,
-                        "owner_name": owner_name
-                    })
+                    with get_db_cursor(commit=True) as cur:
+                        cur.execute(
+                            "UPDATE ngos SET ngo_name = %s, owner_name = %s WHERE id = %s",
+                            (ngo_name, owner_name, ngo["id"])
+                        )
                     print(f"🔧 Backfilled NGO {ngo['id']} with {ngo_name}")
                 except Exception as e:
                     print(f"⚠️ Could not backfill NGO {ngo['id']}: {e}")
@@ -104,38 +103,47 @@ def get_ngo_dashboard(ngo_id: str):
     if not ngo:
         raise HTTPException(status_code=404, detail="NGO not found")
 
-    volunteer_docs = list(
-        db.collection("volunteers")
-        .where(filter=FieldFilter("ngo_id", "==", ngo_id))
-        .stream()
-    )
+    with get_db_cursor(commit=False) as cur:
+        cur.execute("SELECT * FROM volunteers WHERE ngo_id = %s", (ngo_id,))
+        volunteer_rows = cur.fetchall()
+
     managed_volunteers = []
-    for doc in volunteer_docs:
-        volunteer = {"id": doc.id, **doc.to_dict()}
+    for v_row in volunteer_rows:
+        volunteer = dict(v_row)
+        if volunteer.get("registered_at"):
+            volunteer["registered_at"] = volunteer["registered_at"].isoformat()
+        if volunteer.get("updated_at"):
+            volunteer["updated_at"] = volunteer["updated_at"].isoformat()
+
         volunteer.setdefault(
             "role", "+".join(volunteer.get("skills", [])) or "Volunteer"
         )
         volunteer.setdefault(
             "status", "On Call" if volunteer.get("available", True) else "Deployed"
         )
-        volunteer.setdefault("zone", volunteer.get("location", "Assigned region"))
-        volunteer.setdefault("skills", volunteer.get("skills", []))
+        volunteer.setdefault("zone", volunteer.get("location") or "Assigned region")
+        volunteer.setdefault("skills", volunteer.get("skills") or [])
         managed_volunteers.append(volunteer)
 
-    assignment_docs = list(db.collection("assignments").stream())
+    with get_db_cursor(commit=False) as cur:
+        cur.execute("SELECT * FROM assignments WHERE resolved_at IS NULL")
+        assignment_rows = cur.fetchall()
+
     active_assignments = []
-    for doc in assignment_docs:
-        assignment = {"id": doc.id, **doc.to_dict()}
-        if assignment.get("resolved_at") is not None:
-            continue
+    for a_row in assignment_rows:
+        assignment = dict(a_row)
+        if assignment.get("assigned_at"):
+            assignment["assigned_at"] = assignment["assigned_at"].isoformat()
 
         need = get_need_by_id(assignment.get("need_id")) or {}
         volunteer = None
         volunteer_id = assignment.get("volunteer_id")
         if volunteer_id:
-            volunteer_snap = db.collection("volunteers").document(str(volunteer_id)).get()
-            if volunteer_snap.exists:
-                volunteer = {"id": volunteer_snap.id, **volunteer_snap.to_dict()}
+            with get_db_cursor(commit=False) as cur:
+                cur.execute("SELECT * FROM volunteers WHERE id = %s", (str(volunteer_id),))
+                vol_row = cur.fetchone()
+            if vol_row:
+                volunteer = dict(vol_row)
 
         active_assignments.append(
             {

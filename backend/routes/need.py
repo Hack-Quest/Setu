@@ -171,7 +171,6 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
 
         # 7️⃣ FINAL OBJECT
         final_data = {
-            "id": len(needs_storage) + 1,
             "description": data.description,
             "category": category,
             "severity": severity,
@@ -180,13 +179,15 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
             "trust_score": trust_score,
             "dispatch_action": dispatch_action,
             "priority": priority,
-            "status": "open",
+            "status": "secondary_review" if dispatch_action == "secondary_review" else ("rejected" if dispatch_action == "rejected" else "open"),
             "flag": "verified" if trust_score > 50 else "suspicious",
+            "reasons": trust_result.get("reasons", []),
         }
 
         # 💾 SAVE
         doc_id = save_need(final_data)
         final_data["id"] = doc_id
+        final_data["need_id"] = doc_id
         needs_storage.append(final_data)
 
         # 🚀 AUTO ACTIONS

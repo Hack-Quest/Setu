@@ -64,15 +64,16 @@ SETU automates the entire disaster response pipeline:
 
 ### 🔐 OTP Authentication
 - Volunteers and NGOs log in via email OTP (no password required for OTP flow)  
-- OTPs are stored in Firestore, expire after **10 minutes**, and are **single-use** (deleted on first successful verification)  
+- OTPs are stored in Supabase PostgreSQL, expire after **10 minutes**, and are **single-use** (deleted on first successful verification)  
 
 ---
 
 ## 🛠️ Technology Stack
 
-### ☁️ Google Cloud
-- Cloud Run (Backend Deployment)  
-- Firestore (Database)  
+### 💾 Database
+- Supabase PostgreSQL (hosted relational database and connection pooling)
+
+### ☁️ Integration & Geocoding
 - Google Maps API (Geocoding)  
 - Google Forms (Data Ingestion)  
 
@@ -103,8 +104,11 @@ Setu/
 │   ├── email_utils.py     # Gmail SMTP OTP sender
 │   ├── models.py          # Pydantic request/response models
 │   └── routes/            # Feature routers (need, volunteer, match, ngo, …)
-├── database/              # Firestore access layer
-│   ├── firestore_client.py
+├── database/              # PostgreSQL database access layer
+│   ├── postgres_client.py # Threaded Connection pool and cursor management
+│   ├── schema.sql         # SQL schema definitions for tables
+│   ├── init_schema.py     # Database schema deployment script
+│   ├── reset_db.py        # Helper to truncate tables during tests
 │   ├── otp_db.py          # OTP save / verify (with expiry enforcement)
 │   ├── volunteers_db.py
 │   ├── needs_db.py
@@ -122,20 +126,12 @@ Setu/
 
 ---
 
-## 🌐 Live Demo
-
-- 🌍 **Main App:** [https://setu-api-949977701091.asia-south1.run.app/](https://setu-api-949977701091.asia-south1.run.app/)  
-
----
-
 ## ⚙️ Setup & Installation
 
 ### Prerequisites
 
 - Python 3.11+
-- A Google Cloud project with **Firestore** enabled
-- A **Firebase** project (can be the same GCP project)
-- [Google Cloud SDK (`gcloud`)](https://cloud.google.com/sdk/docs/install) installed
+- A Supabase account and project with a PostgreSQL database instance
 
 ---
 
@@ -183,7 +179,7 @@ Then open `config/.env` and replace every placeholder value. See the comments in
 | `GEMINI_API_KEY` | Google Gemini API key for AI processing |
 | `GROQ_API_KEY` | Groq API key (optional fallback LLM) |
 | `GOOGLE_MAPS_KEY` | Google Maps Platform key (Geocoding API) |
-| `FIREBASE_PROJECT_ID` | Your Firebase / GCP project ID |
+| `SUPABASE_DB_URL` | PostgreSQL connection string for Supabase |
 | `GMAIL_SENDER` | Gmail address used to send OTP emails |
 | `GMAIL_APP_PASSWORD` | Gmail App Password (requires 2FA) |
 | `WEATHER_API` | OpenWeatherMap API key (optional) |
@@ -192,17 +188,15 @@ Then open `config/.env` and replace every placeholder value. See the comments in
 
 ---
 
-### 4. Set Up Firebase / Firestore Authentication
+### 4. Deploy Database Schema
 
-SETU uses **Application Default Credentials (ADC)** to connect to Firestore. No service account JSON file is needed for local development.
+Initialize the Supabase database with the required tables by running:
 
 ```bash
-gcloud auth application-default login
+python database/init_schema.py
 ```
 
-This will open a browser window. Authenticate with your Google account that has access to the Firebase project. Credentials are saved automatically.
-
-> **Cloud Run / Production:** Attach a Service Account with the `Cloud Datastore User` role to your Cloud Run service. No extra configuration is needed in the code.
+This connects to your PostgreSQL server and creates all table structures defined in `database/schema.sql`.
 
 ---
 
@@ -258,10 +252,18 @@ From the CLI you can:
 ### 8. Run Tests
 
 ```bash
-pytest tests/ -v
+# Clear database state first
+python database/reset_db.py
+
+# Run unit tests
+pytest database/test_database.py backend/test_backend.py -v
+
+# Run integration tests (with live backend running)
+python tests/test_ngo.py
+python test.py
 ```
 
-> **Note:** `tests/test_ngo.py` is an integration test that requires the backend to be running and `SETU_BASE_URL` / `SECRET_TOKEN` to be set in `config/.env`. It will raise a `RuntimeError` at import time if those variables are missing.
+> **Note:** Integration tests require the backend to be running and `SETU_BASE_URL` / `SECRET_TOKEN` to be set in `config/.env`.
 
 ---
 
@@ -269,46 +271,18 @@ pytest tests/ -v
 
 The OTP flow works as follows:
 
-1. **`POST /auth/send-otp`** — generates a 6-digit OTP, saves it to Firestore (`otps` collection), and emails it via Gmail SMTP.
+1. **`POST /auth/send-otp`** — generates a 6-digit OTP, saves it to database (`otps` table), and emails it via Gmail SMTP.
 2. **`POST /auth/verify-otp`** — checks the OTP against the stored record:
    - Returns `401` if the OTP does not match.
    - Returns `401` if the OTP has **expired** (default TTL: **10 minutes**).
-   - Deletes the OTP from Firestore on success (**single-use enforcement**).
+   - Deletes the OTP from database on success (**single-use enforcement**).
 3. On success, the endpoint returns the user's role (`ngo` or `volunteer`) and the `SECRET_TOKEN` for subsequent API calls.
 
 ---
 
-## 🔮 Future Scope
+## 🏗️ Production Hardening Suggestions
 
-- 📱 Mobile application  
-- 🔔 SMS / WhatsApp alerts  
-- 🤖 Advanced AI validation (LLMs + anomaly detection)  
-- 🌍 Multi-region disaster integration  
-- 🛰️ Satellite & weather data fusion  
-
----
-
-## 🏗️ Future Work — Production Improvements
-
-The following improvements are planned before this system is deployed in a production environment:
-
-### 🔑 JWT Authentication
-Currently, a single shared `SECRET_TOKEN` (set in `.env`) is used to authenticate all API requests. This is intentionally simple for hackathon evaluation. In production:
-- Replace the shared token with **per-user JWT tokens** (e.g., using `python-jose` or Firebase Auth ID tokens).
-- Tokens should carry user identity (`volunteer_id`, `ngo_id`, `role`) so endpoints can perform ownership checks without extra DB lookups.
-
-### 🛡️ Role-Based Access Control (RBAC)
-Many endpoints (e.g., `/match`, `/ngo/{id}/dashboard`) currently rely solely on the presence of a valid bearer token, without distinguishing between volunteers, NGO admins, and platform admins. Add role claims to JWT tokens and enforce them per endpoint.
-
-### 🌐 CORS Hardening
-`main.py` currently sets `allow_origins=["*"]`, which permits any origin. In production:
-- Restrict `allow_origins` to the exact frontend domain(s).
-- Remove `allow_credentials=True` unless cookies are explicitly needed.
-
-### ⏱️ OTP Rate Limiting
-The `POST /auth/send-otp` endpoint is currently protected only by the global rate limiter (`5/minute` by IP). Add email-level rate limiting (e.g., max 3 OTP requests per email per 15 minutes) to prevent OTP flooding / SMS bombing.
-
-### 🔒 Additional Hardening
-- Store `GMAIL_APP_PASSWORD` in **Google Secret Manager** (or equivalent) instead of environment variables.
-- Add input sanitisation / length validation on all webhook payloads.
-- Enforce HTTPS-only in production (Cloud Run handles TLS termination automatically).
+- **JWT Authentication:** Replace the shared `SECRET_TOKEN` with individual user JWT tokens.
+- **Role-Based Access Control:** Distinguish permission actions dynamically based on JWT claims.
+- **CORS Hardening:** Restrict `allow_origins` to explicit staging/production origins.
+- **OTP Rate Limiting:** Enforce a limit of OTP requests per recipient email to prevent email flooding.

@@ -6,8 +6,7 @@ import random
 from backend.email_utils import send_otp_email
 from database.otp_db import save_otp, verify_otp_in_db
 from database.ngos_db import get_ngo_by_email
-from database.firestore_client import db
-from google.cloud.firestore_v1.base_query import FieldFilter
+from database.postgres_client import get_db_cursor
 
 router = APIRouter()
 
@@ -102,19 +101,26 @@ def verify_otp_endpoint(data: VerifyOTPInput):
                 "verified": ngo.get("verified", False),
                 "description": ngo.get("description", "")
             }
-            
-        # 🔍 Fetch volunteer from volunteers_auth collection (registered via app)
-        volunteers = db.collection("volunteers_auth").where(filter=FieldFilter("email", "==", email)).get()
-        print("VOLUNTEERS_AUTH QUERY RESULT:", len(volunteers))
-
-        # 🔁 Fallback: check volunteers collection (Google Form users)
-        if not volunteers or len(volunteers) == 0:
-            volunteers = db.collection("volunteers").where(filter=FieldFilter("email", "==", email)).get()
-            print("VOLUNTEERS (FORM) QUERY RESULT:", len(volunteers))
+        # 🔍 Fetch volunteer from volunteers_auth table
+        with get_db_cursor(commit=False) as cur:
+            cur.execute("SELECT id FROM volunteers_auth WHERE email = %s", (email,))
+            auth_vol = cur.fetchone()
 
         volunteer_id = None
-        if volunteers and len(volunteers) > 0:
-            volunteer_id = volunteers[0].id
+        if auth_vol:
+            volunteer_id = auth_vol.get("id")
+            print("VOLUNTEERS_AUTH QUERY RESULT: 1")
+        else:
+            print("VOLUNTEERS_AUTH QUERY RESULT: 0")
+            # 🔁 Fallback: check volunteers table
+            with get_db_cursor(commit=False) as cur:
+                cur.execute("SELECT id FROM volunteers WHERE email = %s", (email,))
+                form_vol = cur.fetchone()
+            if form_vol:
+                volunteer_id = form_vol.get("id")
+                print("VOLUNTEERS (FORM) QUERY RESULT: 1")
+            else:
+                print("VOLUNTEERS (FORM) QUERY RESULT: 0")
 
         print("VOLUNTEER ID:", volunteer_id)
 

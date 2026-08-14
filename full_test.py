@@ -38,7 +38,7 @@ def main():
         "lat": 28.61, "lng": 77.20, "radius": 50.0
     }).json()
     ngo_id = ngo_res["id"]
-    verify_ngo(ngo_id, True) # Flip verified bit in Firestore [cite: 33]
+    verify_ngo(ngo_id, True) # Flip verified bit in PostgreSQL/Supabase
     print(f"✅ NGO {ngo_id} verified as Tier 1")
 
     # 2. Register Volunteers
@@ -76,7 +76,7 @@ def main():
     need_id = res3["data"]["id"] # Use 'id' from NeedInput response 
     
     print(f"SOS Reported. Trust Score: {res3['data']['trust_score']}")
-    print("Waiting for Firestore sync...")
+    print("Waiting for PostgreSQL sync...")
     time.sleep(3)
     
     matches = requests.get(f"{BASE_URL}/match", headers=HEADERS).json()

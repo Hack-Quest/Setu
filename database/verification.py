@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 import dotenv
 import requests
-from google.cloud.firestore_v1.base_query import FieldFilter
+from database.postgres_client import get_db_cursor
 
 dotenv.load_dotenv()
 
@@ -194,19 +194,21 @@ def calculate_trust_score(
 
         # -20 SPAM CHECK: duplicate phone within the last 1 hour with 'Video Connected' status
         try:
-            from database.firestore_client import db
-
             one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
             if phone.isdigit() and len(phone) == 10:
-                duplicate_docs = (
-                    db.collection("needs_reports")
-                    .where(filter=FieldFilter("reporter_phone", "==", phone))
-                    .where(filter=FieldFilter("timestamp", ">=", one_hour_ago))
-                    .stream()
-                )
+                with get_db_cursor(commit=False) as cur:
+                    cur.execute(
+                        """
+                        SELECT status FROM needs_reports
+                        WHERE reporter_phone = %s AND timestamp >= %s
+                        """,
+                        (phone, one_hour_ago)
+                    )
+                    rows = cur.fetchall()
+                
                 video_connected_found = any(
-                    doc.to_dict().get("status") == "Video Connected"
-                    for doc in duplicate_docs
+                    row.get("status") == "Video Connected"
+                    for row in rows
                 )
                 if video_connected_found:
                     score -= 20

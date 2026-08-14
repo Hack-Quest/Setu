@@ -1,9 +1,7 @@
-from database.firestore_client import db
+from database.postgres_client import get_db_cursor
 from datetime import datetime, timezone
 import bcrypt
-import hmac
-from google.cloud.firestore_v1.base_query import FieldFilter
-
+import uuid
 
 def hash_password(password: str) -> str:
     """Hash password using bcrypt"""
@@ -22,14 +20,13 @@ def register_volunteer_auth(
     email: str, password: str, name: str, phone: str, location: str, skills: list
 ) -> dict:
     """Register a new volunteer with email and password authentication"""
+    email = email.lower().strip()
 
-    existing = (
-        db.collection("volunteers_auth")
-        .where(filter=FieldFilter("email", "==", email))
-        .stream()
-    )
-    if list(existing):
-        return {"error": "Email already registered"}
+    # Check duplicate email
+    with get_db_cursor(commit=False) as cur:
+        cur.execute("SELECT 1 FROM volunteers_auth WHERE email = %s", (email,))
+        if cur.fetchone():
+            return {"error": "Email already registered"}
 
     password_hash = hash_password(password)
 
@@ -43,81 +40,78 @@ def register_volunteer_auth(
             detail=f"Invalid or unresolvable location: {location}"
         )
 
-    volunteer_data = {
-        "email": email,
-        "password_hash": password_hash,
-        "name": name,
-        "phone": phone,
-        "location": location,
-        "skills": (
-            [s.lower().strip() for s in skills]
-            if isinstance(skills, list)
-            else [skills.lower().strip()]
-        ),
-        "lat": coords["lat"],
-        "lng": coords["lng"],
-        "available": True,
-        "registered_at": datetime.now(timezone.utc).isoformat(),
-    }
+    skills_normalized = (
+        [s.lower().strip() for s in skills]
+        if isinstance(skills, list)
+        else [skills.lower().strip()]
+    )
 
-    update_time, doc_ref = db.collection("volunteers_auth").add(volunteer_data)
+    volunteer_id = uuid.uuid4().hex
+    registered_at = datetime.now(timezone.utc)
 
-    # 🔥 ALSO SAVE IN MAIN VOLUNTEERS COLLECTION (FOR MATCHING)
-    main_ref = db.collection("volunteers").document()
+    # We save in both tables using a transaction (commit=True)
+    with get_db_cursor(commit=True) as cur:
+        cur.execute(
+            """
+            INSERT INTO volunteers_auth (
+                id, email, password_hash, name, phone, location, skills, lat, lng, available, registered_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                volunteer_id, email, password_hash, name, phone, location,
+                skills_normalized, coords["lat"], coords["lng"], True, registered_at
+            )
+        )
 
-    main_ref.set({
-        "id": main_ref.id,
-        "name": name,
-        "phone": phone,
-        "skills": volunteer_data["skills"],
-        "lat": volunteer_data["lat"],
-        "lng": volunteer_data["lng"],
-        "available": True,
-        "active_assignments": 0,
-    })
+        cur.execute(
+            """
+            INSERT INTO volunteers (
+                id, name, email, phone, skills, lat, lng, available, active_assignments, registered_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                volunteer_id, name, email, phone, skills_normalized,
+                coords["lat"], coords["lng"], True, 0, registered_at
+            )
+        )
 
-    print(f"🦸 Volunteer registered with ID: {main_ref.id}")
-    return {"success": True, "volunteer_id": main_ref.id}
+    print(f"[OK] Volunteer registered with ID: {volunteer_id}")
+    return {"success": True, "volunteer_id": volunteer_id}
 
 
 def login_volunteer(email: str, password: str) -> dict:
-    docs = (
-        db.collection("volunteers_auth")
-        .where(filter=FieldFilter("email", "==", email))
-        .stream()
-    )
-    volunteer_list = list(docs)
+    """Login volunteer with email and password"""
+    email = email.lower().strip()
+    with get_db_cursor(commit=False) as cur:
+        cur.execute("SELECT * FROM volunteers_auth WHERE email = %s", (email,))
+        row = cur.fetchone()
 
-    if not volunteer_list:
+    if not row:
         return {"error": "Invalid email or password"}
 
-    volunteer_doc = volunteer_list[0]
-    volunteer_data = volunteer_doc.to_dict()
-
-    if not verify_password(password, volunteer_data.get("password_hash", "")):
+    if not verify_password(password, row.get("password_hash", "")):
         return {"error": "Invalid email or password"}
 
     return {
         "success": True,
-        "volunteer_id": volunteer_doc.id,
-        "name": volunteer_data.get("name"),
-        "email": volunteer_data.get("email"),
+        "volunteer_id": row.get("id"),
+        "name": row.get("name"),
+        "email": row.get("email"),
     }
 
 
 def save_volunteer(data) -> str:
     """
-    Registers a new volunteer in Firestore.
+    Registers a new volunteer in Supabase PostgreSQL.
     Automatically marks them as available for deployment.
     """
-
     # Normalize skills
     if isinstance(data, dict) and "skills" in data and isinstance(data["skills"], list):
         data["skills"] = [s.lower().strip() for s in data["skills"]]
 
     from database.geocoding import get_coordinates
 
-    # 🔥 HANDLE BOTH dict AND object
+    # Handle both dict and object
     if isinstance(data, dict):
         location_text = data.get("location") or data.get("location_text") or ""
         lat = float(data.get("lat", 0.0))
@@ -129,13 +123,12 @@ def save_volunteer(data) -> str:
 
     print("📍 LOCATION RECEIVED:", location_text)
 
-    # ✅ Skip geocoding if coordinates are already provided
+    # Skip geocoding if coordinates are already provided
     if lat != 0.0 and lng != 0.0:
         coords = {"lat": lat, "lng": lng}
         if not location_text.strip():
             location_text = f"{lat}, {lng}"
     else:
-        # 🚨 HARD VALIDATION
         if not location_text.strip():
             from fastapi import HTTPException
             raise HTTPException(
@@ -145,7 +138,6 @@ def save_volunteer(data) -> str:
 
         coords = get_coordinates(location_text)
 
-        # ✅ FINAL VALIDATION
         if not coords or coords.get("lat") is None or coords.get("lng") is None:
             from fastapi import HTTPException
             raise HTTPException(
@@ -153,59 +145,120 @@ def save_volunteer(data) -> str:
                 detail=f"Invalid or unresolvable location: {location_text}"
             )
 
-    # Finally, ensure we're saving the correct location text and coords back into data
+    # Normalize incoming format
     if isinstance(data, dict):
-        data["location"] = location_text
-
-    # 🔥 STORE CORRECTLY
-    if isinstance(data, dict):
-        data["lat"] = coords["lat"]
-        data["lng"] = coords["lng"]
-        data["available"] = True
-        data["active_assignments"] = 0
-        data["registered_at"] = datetime.now(timezone.utc).isoformat()
-
-        update_time, doc_ref = db.collection("volunteers").add(data)
+        data_dict = dict(data)
     else:
-        # If it's an object, convert to dict
         data_dict = data.dict()
-        data_dict["lat"] = coords["lat"]
-        data_dict["lng"] = coords["lng"]
-        data_dict["available"] = True
-        data_dict["active_assignments"] = 0
-        data_dict["registered_at"] = datetime.now(timezone.utc).isoformat()
 
-        update_time, doc_ref = db.collection("volunteers").add(data_dict)
+    doc_id = data_dict.get("id") or data_dict.get("volunteer_id") or uuid.uuid4().hex
+    
+    data_dict["id"] = doc_id
+    data_dict["location"] = location_text
+    data_dict["lat"] = coords["lat"]
+    data_dict["lng"] = coords["lng"]
+    data_dict["available"] = True
+    data_dict["active_assignments"] = data_dict.get("active_assignments", 0)
+    
+    reg_at = data_dict.get("registered_at")
+    if reg_at:
+        if isinstance(reg_at, datetime):
+            data_dict["registered_at"] = reg_at
+        else:
+            try:
+                data_dict["registered_at"] = datetime.fromisoformat(reg_at)
+            except ValueError:
+                data_dict["registered_at"] = datetime.now(timezone.utc)
+    else:
+        data_dict["registered_at"] = datetime.now(timezone.utc)
 
-    print(f"✅ Volunteer registered: {doc_ref.id}")
-    return doc_ref.id
+    with get_db_cursor(commit=True) as cur:
+        # Check if already exists
+        cur.execute("SELECT 1 FROM volunteers WHERE id = %s", (doc_id,))
+        exists = cur.fetchone()
+        
+        if exists:
+            cur.execute(
+                """
+                UPDATE volunteers SET 
+                    name = %s, email = %s, phone = %s, skills = %s, lat = %s, lng = %s, 
+                    available = %s, active_assignments = %s, registered_at = %s, 
+                    ngo_id = %s, ngo_verified = %s, specialty = %s, ngo_affiliation = %s, 
+                    verification_code = %s, updated_at = %s
+                WHERE id = %s
+                """,
+                (
+                    data_dict.get("name"), data_dict.get("email"), data_dict.get("phone"), data_dict.get("skills"),
+                    data_dict["lat"], data_dict["lng"], data_dict["available"], data_dict["active_assignments"],
+                    data_dict["registered_at"], data_dict.get("ngo_id"), data_dict.get("ngo_verified", False),
+                    data_dict.get("specialty"), data_dict.get("ngo_affiliation"), data_dict.get("verification_code"),
+                    datetime.now(timezone.utc), doc_id
+                )
+            )
+        else:
+            cur.execute(
+                """
+                INSERT INTO volunteers (
+                    id, name, email, phone, skills, lat, lng, available, active_assignments, registered_at, 
+                    ngo_id, ngo_verified, specialty, ngo_affiliation, verification_code
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    doc_id, data_dict.get("name"), data_dict.get("email"), data_dict.get("phone"), data_dict.get("skills"),
+                    data_dict["lat"], data_dict["lng"], data_dict["available"], data_dict["active_assignments"],
+                    data_dict["registered_at"], data_dict.get("ngo_id"), data_dict.get("ngo_verified", False),
+                    data_dict.get("specialty"), data_dict.get("ngo_affiliation"), data_dict.get("verification_code")
+                )
+            )
+
+    print(f"[OK] Volunteer registered: {doc_id}")
+    return doc_id
 
 
 def get_available_volunteers(category: str = None) -> list:
-    docs = (
-        db.collection("volunteers")
-        .where(filter=FieldFilter("available", "==", True))
-        .stream()
-    )
-    volunteers = [{"id": doc.id, **doc.to_dict()} for doc in docs]
-
-    if category:
-        volunteers = [v for v in volunteers if category in v.get("skills", [])]
-
-    return volunteers
+    """Fetch available volunteers, optionally filtered by skill category"""
+    with get_db_cursor(commit=False) as cur:
+        if category:
+            cur.execute(
+                "SELECT * FROM volunteers WHERE available = TRUE AND %s = ANY(skills)",
+                (category.lower().strip(),)
+            )
+        else:
+            cur.execute("SELECT * FROM volunteers WHERE available = TRUE")
+        
+        rows = cur.fetchall()
+        for row in rows:
+            if row.get("registered_at"):
+                row["registered_at"] = row["registered_at"].isoformat()
+            if row.get("updated_at"):
+                row["updated_at"] = row["updated_at"].isoformat()
+        return rows
 
 
 def update_volunteer_status(doc_id: str, is_available: bool):
-    db.collection("volunteers").document(doc_id).update(
-        {
-            "available": is_available,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
-    )
+    """Update availability status of a volunteer"""
+    with get_db_cursor(commit=True) as cur:
+        cur.execute(
+            """
+            UPDATE volunteers SET 
+                available = %s,
+                updated_at = %s
+            WHERE id = %s
+            """,
+            (is_available, datetime.now(timezone.utc), doc_id)
+        )
     status_text = "Available" if is_available else "Deployed"
-    print(f"🔄 Volunteer {doc_id} status updated to: {status_text}")
+    print(f"[INFO] Volunteer {doc_id} status updated to: {status_text}")
 
 
 def get_all_volunteers() -> list:
-    docs = db.collection("volunteers").stream()
-    return [{"id": doc.id, **doc.to_dict()} for doc in docs]
+    """Fetch all volunteers from database"""
+    with get_db_cursor(commit=False) as cur:
+        cur.execute("SELECT * FROM volunteers")
+        rows = cur.fetchall()
+        for row in rows:
+            if row.get("registered_at"):
+                row["registered_at"] = row["registered_at"].isoformat()
+            if row.get("updated_at"):
+                row["updated_at"] = row["updated_at"].isoformat()
+        return rows

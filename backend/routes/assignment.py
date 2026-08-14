@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
 from backend.auth import verify_token
-from database.firestore_client import db
 
 router = APIRouter(prefix="/assignment")
 
@@ -17,7 +16,7 @@ def accept_need(
     # 🏃 Move import here to prevent circular dependency at startup
     from database.assignments_db import save_assignment 
     
-    # Get volunteer UID from the verified Firebase token
+    # Get volunteer ID from the verified Supabase token
     resolved_volunteer_id = token.get("uid") if isinstance(token, dict) else volunteer_id
     if not resolved_volunteer_id:
          raise HTTPException(status_code=400, detail="volunteer_id is required.")
@@ -68,15 +67,12 @@ def resolve(
     Volunteer calls this to close a case.
     Marks assignment resolved and frees the volunteer status.
     """
-    from database.assignments_db import resolve_assignment
+    from database.assignments_db import resolve_assignment, get_assignment_by_id
 
-    doc_ref = db.collection("assignments").document(assignment_id)
-    snap = doc_ref.get()
+    doc = get_assignment_by_id(assignment_id)
     
-    if not snap.exists:
+    if not doc:
         raise HTTPException(status_code=404, detail=f"Assignment '{assignment_id}' not found")
-
-    doc = snap.to_dict()
 
     # Prevent double-resolution
     if doc.get("resolved_at") is not None or doc.get("status") == "resolved":

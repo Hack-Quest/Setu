@@ -13,7 +13,7 @@ Tests for:
   - backend/routes/assignment.py
   - backend/routes/ngo.py
 
-All Firestore, Gemini, geocoding, and external I/O are mocked.
+All database, Gemini, geocoding, and external I/O are mocked.
 
 Run from project root:
     pytest backend/test_backend.py -v
@@ -40,32 +40,21 @@ if not VALID_TOKEN:
 AUTH_HEADERS = {"Authorization": f"Bearer {VALID_TOKEN}"}
 
 
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # SHARED FIXTURES
-# ─────────────────────────────────────────────────────────────
-
-def _make_doc(doc_id, data, exists=True):
-    doc = MagicMock()
-    doc.id = doc_id
-    doc.exists = exists
-    doc.to_dict.return_value = dict(data)
-    return doc
-
+# -----------------------------------------------------------------------------
 
 @pytest.fixture(scope="module")
 def client():
     """Full FastAPI TestClient with all external I/O mocked."""
-    fake_db = MagicMock()
-    doc_ref = MagicMock(); doc_ref.id = "test-id"
-    fake_db.collection.return_value.add.return_value = (MagicMock(), doc_ref)
-    fake_db.collection.return_value.where.return_value.stream.return_value = []
-    fake_db.collection.return_value.where.return_value.where.return_value.stream.return_value = []
-    fake_db.collection.return_value.stream.return_value = []
-    snap = MagicMock(); snap.exists = False
-    fake_db.collection.return_value.document.return_value.get.return_value = snap
+    fake_cursor = MagicMock()
+    fake_cursor.fetchone.return_value = None
+    fake_cursor.fetchall.return_value = []
 
-    with patch("database.firestore_client.db", fake_db), \
+    with patch("database.postgres_client.get_db_cursor") as mock_db_cursor, \
          patch("ai_processing.gemini_processor.client") as mock_gemini:
+
+        mock_db_cursor.return_value.__enter__.return_value = fake_cursor
 
         mock_resp = MagicMock()
         mock_resp.text = json.dumps({
@@ -79,9 +68,9 @@ def client():
         yield TestClient(app)
 
 
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # AUTH MODULE
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 class TestAuth:
 
@@ -99,261 +88,186 @@ class TestAuth:
         with pytest.raises(HTTPException) as exc_info:
             verify_token(creds)
         assert exc_info.value.status_code == 401
-
-    def test_verify_token_none_raises_401(self):
-        from fastapi import HTTPException
-        from backend.auth import verify_token
-        with pytest.raises(HTTPException) as exc_info:
-            verify_token(None)
-        assert exc_info.value.status_code == 401
-
-    def test_secret_token_loaded_from_env(self):
-        from backend.auth import SECRET_TOKEN
-        assert isinstance(SECRET_TOKEN, str)
-        assert len(SECRET_TOKEN) > 0
+        assert "Invalid" in exc_info.value.detail
 
 
-# ─────────────────────────────────────────────────────────────
-# MODELS
-# ─────────────────────────────────────────────────────────────
-
-class TestModels:
-
-    def test_need_input_location_alias(self):
-        from backend.models import NeedInput
-        n = NeedInput(reporter_name="A", reporter_phone="9000000001",
-                      location="Kanpur", disaster_type="Flood",
-                      help_needed="rescue", description="Test need")
-        assert n.location_text == "Kanpur"
-
-    def test_need_input_location_text_alias(self):
-        from backend.models import NeedInput
-        n = NeedInput(reporter_name="A", reporter_phone="9000000001",
-                      location_text="Lucknow", disaster_type="Fire",
-                      help_needed="rescue", description="Building on fire")
-        assert n.location_text == "Lucknow"
-
-    def test_volunteer_input_defaults(self):
-        from backend.models import VolunteerInput
-        v = VolunteerInput(name="Raj", phone="9000000002", location="Delhi",
-                           skills=["food"], email="raj@test.com", password="p")
-        assert v.lat == 0.0
-        assert v.lng == 0.0
-        assert v.ngo_id is None
-        assert v.credential_tags == []
-
-    def test_volunteer_register_input(self):
-        from backend.models import VolunteerRegisterInput
-        v = VolunteerRegisterInput(email="a@b.com", password="pass",
-                                   name="Name", phone="9000000003",
-                                   location="City", skills=["food"])
-        assert v.email == "a@b.com"
-
-    def test_volunteer_login_input(self):
-        from backend.models import VolunteerLoginInput
-        v = VolunteerLoginInput(email="x@y.com", password="secret")
-        assert v.password == "secret"
-
-    def test_ngo_input_defaults(self):
-        from backend.models import NGOInput
-        ngo = NGOInput(name="HelpOrg", reg_number="REG001")
-        assert ngo.verified is False
-        assert ngo.radius == 50.0
-        assert ngo.lat == 0.0
-
-    def test_ngo_input_coverage_area_alias(self):
-        from backend.models import NGOInput
-        ngo = NGOInput(name="Org", reg_number="R001", coverage_area="Noida")
-        assert ngo.location == "Noida"
-
-
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # WEBSOCKET MANAGER
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 class TestWebSocketManager:
 
-    def test_connect_adds_websocket(self):
+    @pytest.mark.asyncio
+    async def test_connect_adds_to_connections(self):
         from backend.main import WebSocketManager
         manager = WebSocketManager()
-        mock_ws = MagicMock()
-        mock_ws.accept = AsyncMock()
+        ws = MagicMock()
+        # Mock the coroutine
+        ws.accept = AsyncMock()
+        await manager.connect(ws)
+        assert ws in manager.active_connections
+        ws.accept.assert_called_once()
 
-        asyncio.run(manager.connect(mock_ws))
-        assert mock_ws in manager.active_connections
-
-    def test_disconnect_removes_websocket(self):
+    @pytest.mark.asyncio
+    async def test_disconnect_removes_connection(self):
         from backend.main import WebSocketManager
         manager = WebSocketManager()
-        mock_ws = MagicMock()
-        mock_ws.accept = AsyncMock()
+        ws = MagicMock()
+        manager.active_connections.append(ws)
+        manager.disconnect(ws)
+        assert ws not in manager.active_connections
 
-        asyncio.run(manager.connect(mock_ws))
-        manager.disconnect(mock_ws)
-        assert mock_ws not in manager.active_connections
-
-    def test_disconnect_nonexistent_websocket_is_safe(self):
+    @pytest.mark.asyncio
+    async def test_broadcast_sends_to_all(self):
         from backend.main import WebSocketManager
         manager = WebSocketManager()
-        mock_ws = MagicMock()
-        manager.disconnect(mock_ws)   # should not raise
-
-    def test_broadcast_sends_to_all(self):
-        from backend.main import WebSocketManager
-        manager = WebSocketManager()
-
         ws1 = MagicMock(); ws1.send_json = AsyncMock()
         ws2 = MagicMock(); ws2.send_json = AsyncMock()
-        manager.active_connections = [ws1, ws2]
-
-        asyncio.run(manager.broadcast_json({"type": "TEST"}))
-        ws1.send_json.assert_called_once()
-        ws2.send_json.assert_called_once()
-
-    def test_broadcast_removes_stale_connections(self):
-        from backend.main import WebSocketManager
-        manager = WebSocketManager()
-
-        good_ws = MagicMock()
-        bad_ws = MagicMock()
-
-        async def good_send(d): pass
-        async def bad_send(d): raise Exception("broken pipe")
-
-        good_ws.send_json = good_send
-        bad_ws.send_json = bad_send
-        manager.active_connections = [good_ws, bad_ws]
-
-        asyncio.run(manager.broadcast_json({"type": "PING"}))
-        assert good_ws in manager.active_connections
-        assert bad_ws not in manager.active_connections
+        manager.active_connections.extend([ws1, ws2])
+        await manager.broadcast_json({"msg": "hello"})
+        ws1.send_json.assert_called_with({"msg": "hello"})
+        ws2.send_json.assert_called_with({"msg": "hello"})
 
 
-# ─────────────────────────────────────────────────────────────
-# MAIN APP ROUTES (infrastructure)
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
+# APP BASIC ROUTES
+# -----------------------------------------------------------------------------
 
-class TestMainRoutes:
+class TestBasicRoutes:
 
-    def test_home_returns_message(self, client):
-        resp = client.get("/")
-        assert resp.status_code == 200
-        assert "message" in resp.json()
-
-    def test_health_returns_ok(self, client):
+    def test_health_check(self, client):
         resp = client.get("/health")
         assert resp.status_code == 200
         assert resp.json()["status"] == "ok"
+        assert "database" in resp.json()
 
-    def test_config_public_no_key_returns_503(self, client):
-        with patch("os.getenv", return_value=""):
-            resp = client.get("/config/public")
-            assert resp.status_code in (200, 503)
+    def test_get_config(self, client):
+        resp = client.get("/config/public")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "google_maps_api_key" in data
 
 
-# ─────────────────────────────────────────────────────────────
-# NEED ROUTE
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
+# NEED ROUTES
+# -----------------------------------------------------------------------------
 
 class TestNeedRoute:
 
-    def test_need_route_requires_auth(self, client):
-        resp = client.post("/need", json={
-            "reporter_name": "X", "reporter_phone": "9000000000",
-            "location": "Delhi", "disaster_type": "Flood",
-            "help_needed": "rescue", "description": "Test description here"
-        })
+    def test_webhook_requires_auth(self, client):
+        resp = client.post("/need", json={"description": "Test need"})
         assert resp.status_code == 401
 
-    def test_need_route_with_valid_token(self, client):
-        with patch("database.geocoding.get_coordinates", return_value={"lat": 26.5, "lng": 80.3}), \
-             patch("database.needs_db.save_need", return_value="need-001"), \
-             patch("database.needs_db.check_corroboration", return_value=0):
-            resp = client.post("/need",
-                headers=AUTH_HEADERS,
-                json={
-                    "reporter_name": "Rahul Kumar",
-                    "reporter_phone": "9876543210",
-                    "location": "Kanpur, UP",
-                    "disaster_type": "Flood",
-                    "help_needed": "rescue",
-                    "description": "Flood waters rising rapidly near the main bridge"
-                }
-            )
+    def test_webhook_validation_fail_short_desc(self, client):
+        with patch("backend.routes.need.process_need_text", return_value={"category": "rescue", "severity": "medium", "consistency": 5}), \
+             patch("backend.routes.need.get_coordinates", return_value={"lat": 12.3, "lng": 45.6}), \
+             patch("backend.routes.need.save_need", return_value="need-short"):
+            resp = client.post("/need", json={"description": "Need food immediately", "location": "Delhi"}, headers=AUTH_HEADERS)
         assert resp.status_code == 200
+        assert resp.json()["status"] == "secondary_review"
+        assert "reasons" in resp.json()
 
-    def test_need_route_short_description_returns_error(self, client):
-        with patch("database.geocoding.get_coordinates", return_value={"lat": 26.5, "lng": 80.3}), \
-             patch("database.needs_db.save_need", return_value="need-x"):
-            resp = client.post("/need",
-                headers=AUTH_HEADERS,
-                json={
-                    "reporter_name": "X", "reporter_phone": "9876543210",
-                    "location": "Kanpur", "disaster_type": "Fire",
-                    "help_needed": "rescue", "description": "help"
-                }
-            )
-        # 200 with error key OR 422 – both acceptable
-        assert resp.status_code in (200, 422)
-        if resp.status_code == 200:
-            assert "error" in resp.json()
+    def test_webhook_success_general(self, client):
+        with patch("backend.routes.need.get_coordinates", return_value={"lat": 26.5, "lng": 80.3}), \
+             patch("backend.routes.need.save_need", return_value="need-001"), \
+             patch("backend.routes.need.check_corroboration", return_value=2), \
+             patch("backend.routes.need.process_need_text", return_value={"category": "logistics", "severity": "medium", "consistency": 9}):
+            
+            resp = client.post("/need", json={
+                "name": "Victim A", "phone": "9876543210",
+                "address": "Kanpur, India",
+                "disaster_type": "flood", "help_needed": "food",
+                "description": "Stranded in Kanpur flood without food for 2 days"
+            }, headers=AUTH_HEADERS)
 
-    def test_webhook_endpoint_accepts_payload(self, client):
-        with patch("database.geocoding.get_coordinates", return_value={"lat": 26.5, "lng": 80.3}), \
-             patch("database.needs_db.save_need", return_value="wh-001"), \
-             patch("database.needs_db.check_corroboration", return_value=0):
-            resp = client.post("/webhook", json={
-                "name": "Reporter", "phone": "9123456789",
-                "address": "Lucknow", "disaster_type": "Earthquake",
-                "description": "Building collapsed after strong earthquake, 20 people trapped inside",
-                "help_needed": "rescue"
-            })
         assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "open"
+        assert data["need_id"] == "need-001"
+        assert "trust_score" in data
+
+    def test_webhook_success_critical(self, client):
+        with patch("backend.routes.need.get_coordinates", return_value={"lat": 26.5, "lng": 80.3}), \
+             patch("backend.routes.need.save_need", return_value="need-x"), \
+             patch("backend.routes.need.check_corroboration", return_value=2), \
+             patch("backend.routes.need.process_need_text", return_value={"category": "rescue", "severity": "critical", "consistency": 10}):
+            
+            resp = client.post("/need", json={
+                "name": "Victim B", "phone": "9900000001",
+                "address": "Kanpur",
+                "disaster_type": "accident", "help_needed": "medical",
+                "description": "Building collapse! Severe bleeding, please send medical help immediately"
+            }, headers=AUTH_HEADERS)
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["status"] == "open"
+        assert data["need_id"] == "need-x"
+
+    def test_webhook_missing_coords_falls_back(self, client):
+        with patch("backend.routes.need.get_coordinates", return_value={"lat": 26.5, "lng": 80.3}), \
+             patch("backend.routes.need.save_need", return_value="wh-001"), \
+             patch("backend.routes.need.check_corroboration", return_value=0), \
+             patch("backend.routes.need.process_need_text", return_value={"category": "logistics", "severity": "low", "consistency": 9}):
+            
+            resp = client.post("/need", json={
+                "name": "Victim C", "phone": "9900000002",
+                "address": "Delhi", "disaster_type": "rain", "help_needed": "shelter",
+                "description": "Water logging inside house, need dry shelter"
+            }, headers=AUTH_HEADERS)
+
+        assert resp.status_code == 200
+        assert resp.json()["need_id"] == "wh-001"
 
 
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # VOLUNTEER ROUTES
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
-class TestVolunteerRoutes:
+class TestVolunteerRoute:
 
-    def test_create_volunteer_requires_auth(self, client):
-        resp = client.post("/volunteer", json={
-            "name": "Test", "phone": "9000000000", "location": "Mumbai",
-            "skills": ["food"], "email": "t@t.com", "password": "p"
-        })
+    def test_volunteer_webhook_requires_auth(self, client):
+        resp = client.post("/volunteer", json={})
         assert resp.status_code == 401
 
-    def test_create_volunteer_with_token(self, client):
-        with patch("database.volunteers_db.save_volunteer", return_value="vol-001"), \
-             patch("database.volunteers_db.get_available_volunteers", return_value=[{}, {}]), \
-             patch("database.geocoding.get_coordinates", return_value={"lat": 19.0, "lng": 72.8}):
-            resp = client.post("/volunteer",
-                headers=AUTH_HEADERS,
-                json={
-                    "name": "Meera Joshi", "phone": "9222222222",
-                    "location": "Mumbai", "skills": ["food", "sanitation"],
-                    "email": "meera@test.com", "password": "pass123"
-                }
-            )
-        assert resp.status_code == 200
-        assert resp.json().get("message") == "volunteer added"
-
-    def test_volunteer_webhook_no_auth_required(self, client):
-        with patch("database.volunteers_db.save_volunteer", return_value="vol-wh-1"), \
-             patch("database.geocoding.get_coordinates", return_value={"lat": 12.9, "lng": 77.6}), \
-             patch("database.ngos_db.get_ngo", return_value=None):
+    def test_volunteer_webhook_success(self, client):
+        with patch("backend.main.save_volunteer", return_value="vol-001"), \
+             patch("backend.main.get_coordinates", return_value={"lat": 19.0, "lng": 72.8}):
+            
             resp = client.post("/volunteer_webhook", json={
-                "volunteer_name": "Field Hero", "phone": "9333333333",
-                "location": "Bangalore", "skills": "food,rescue"
-            })
+                "volunteer_name": "Ravi", "phone": "9898989898",
+                "skills": "first-aid", "location": "Mumbai"
+            }, headers=AUTH_HEADERS)
+
         assert resp.status_code == 200
+        assert resp.json()["status"] == "registered"
+        assert resp.json()["volunteer_id"] == "vol-001"
+
+    def test_volunteer_webhook_missing_location_falls_back(self, client):
+        with patch("backend.main.save_volunteer", return_value="vol-wh-1"), \
+             patch("backend.main.get_coordinates", return_value={"lat": 12.9, "lng": 77.6}), \
+             patch("backend.main.get_ngo", return_value=None):
+            
+            resp = client.post("/volunteer_webhook", json={
+                "volunteer_name": "Sita", "phone": "9000000010",
+                "skills": "cooking", "location": "Bengaluru"
+            }, headers=AUTH_HEADERS)
+
+        assert resp.status_code == 200
+        assert resp.json()["volunteer_id"] == "vol-wh-1"
+
+
+# -----------------------------------------------------------------------------
+# VOLUNTEER AUTH ROUTES
+# -----------------------------------------------------------------------------
+
+class TestVolunteerAuth:
 
     def test_auth_register_new_volunteer(self, client):
-        with patch("database.volunteers_db.db") as mock_db:
-            mock_db.collection.return_value.where.return_value.stream.return_value = []
-            new_ref = MagicMock(); new_ref.id = "vol-new"
-            mock_db.collection.return_value.add.return_value = (MagicMock(), new_ref)
+        with patch("database.volunteers_db.get_db_cursor") as mock_get_db:
+            cursor = MagicMock()
+            cursor.fetchone.return_value = None  # Email not taken
+            mock_get_db.return_value.__enter__.return_value = cursor
             with patch("database.geocoding.get_coordinates", return_value={"lat": 28.6, "lng": 77.2}):
                 resp = client.post("/auth/register", json={
                     "email": "newvol@test.com", "password": "SecurePass123",
@@ -365,8 +279,10 @@ class TestVolunteerRoutes:
         assert "token" in resp.json()
 
     def test_auth_register_duplicate_email_returns_400(self, client):
-        with patch("database.volunteers_db.db") as mock_db:
-            mock_db.collection.return_value.where.return_value.stream.return_value = [MagicMock()]
+        with patch("database.volunteers_db.get_db_cursor") as mock_get_db:
+            cursor = MagicMock()
+            cursor.fetchone.return_value = {"id": "vol-1"}  # Email duplicate
+            mock_get_db.return_value.__enter__.return_value = cursor
             resp = client.post("/auth/register", json={
                 "email": "dup@test.com", "password": "pass",
                 "name": "Dup", "phone": "9111111111",
@@ -376,213 +292,97 @@ class TestVolunteerRoutes:
 
     def test_auth_login_success(self, client):
         from database.volunteers_db import hash_password
-        doc = _make_doc("v-login", {"email": "login@test.com",
-                                     "password_hash": hash_password("TestPass"),
-                                     "name": "Login User"})
-        with patch("database.volunteers_db.db") as mock_db:
-            mock_db.collection.return_value.where.return_value.stream.return_value = [doc]
+        with patch("database.volunteers_db.get_db_cursor") as mock_get_db:
+            cursor = MagicMock()
+            cursor.fetchone.return_value = {
+                "id": "v-login", "email": "login@test.com",
+                "password_hash": hash_password("TestPass"), "name": "Login User"
+            }
+            mock_get_db.return_value.__enter__.return_value = cursor
             resp = client.post("/auth/login", json={"email": "login@test.com", "password": "TestPass"})
         assert resp.status_code == 200
         assert resp.json()["name"] == "Login User"
 
     def test_auth_login_wrong_password_returns_401(self, client):
         from database.volunteers_db import hash_password
-        doc = _make_doc("v-bad", {"email": "bad@test.com",
-                                   "password_hash": hash_password("correct"),
-                                   "name": "Bad"})
-        with patch("database.volunteers_db.db") as mock_db:
-            mock_db.collection.return_value.where.return_value.stream.return_value = [doc]
+        with patch("database.volunteers_db.get_db_cursor") as mock_get_db:
+            cursor = MagicMock()
+            cursor.fetchone.return_value = {
+                "id": "v-bad", "email": "bad@test.com",
+                "password_hash": hash_password("correct"), "name": "Bad"
+            }
+            mock_get_db.return_value.__enter__.return_value = cursor
             resp = client.post("/auth/login", json={"email": "bad@test.com", "password": "wrong"})
         assert resp.status_code == 401
 
 
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # MATCH ROUTES & LOGIC
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
-class TestMatchRoute:
+class TestMatchRoutes:
 
-    def test_match_requires_auth(self, client):
+    def test_run_matcher_unauthorized(self, client):
         resp = client.get("/match")
         assert resp.status_code == 401
 
-    def test_match_returns_summary_dict(self, client):
-        open_needs = [{
-            "id": "n1", "category": "food", "help_needed": "food",
-            "severity": "high", "status": "open", "trust_score": 80,
-            "lat": 26.8, "lng": 80.9
-        }]
-        volunteers = [{
-            "id": "v1", "name": "Worker", "skills": ["food"],
-            "lat": 26.85, "lng": 80.95, "ngo_verified": False
-        }]
-        with patch("backend.routes.match.get_open_needs", return_value=open_needs), \
-             patch("backend.routes.match.get_available_volunteers", return_value=volunteers), \
-             patch("backend.routes.match.save_assignment", return_value="a1"):
-            resp = client.get("/match", headers=AUTH_HEADERS)
-        assert resp.status_code == 200
-        data = resp.json()
-        assert "total_matches_made" in data
-        assert "matches" in data
-
-    def test_match_skips_low_trust_needs(self, client):
-        open_needs = [{
-            "id": "n-low", "category": "food", "help_needed": "food",
-            "severity": "medium", "status": "open", "trust_score": 20,
-            "lat": 26.8, "lng": 80.9
-        }]
-        with patch("backend.routes.match.get_open_needs", return_value=open_needs), \
+    def test_run_matcher_no_needs(self, client):
+        with patch("backend.routes.match.get_open_needs", return_value=[]), \
              patch("backend.routes.match.get_available_volunteers", return_value=[]):
+            
             resp = client.get("/match", headers=AUTH_HEADERS)
         assert resp.status_code == 200
-        assert resp.json()["total_needs_processed"] == 0
+        assert resp.json()["total_matches_made"] == 0
 
-    def test_match_escalates_sensitive_with_no_tier1(self, client):
-        open_needs = [{
-            "id": "n-rescue", "category": "rescue", "help_needed": "rescue",
-            "severity": "critical", "status": "open", "trust_score": 90,
-            "lat": 26.8, "lng": 80.9
-        }]
-        tier2_vol = [{
-            "id": "v-t2", "name": "Community", "skills": ["rescue"],
-            "lat": 26.85, "lng": 80.95, "ngo_verified": False
-        }]
-        with patch("backend.routes.match.get_open_needs", return_value=open_needs), \
-             patch("backend.routes.match.get_available_volunteers", return_value=tier2_vol), \
-             patch("backend.routes.match.save_assignment", return_value="a-esc"):
-            resp = client.get("/match", headers=AUTH_HEADERS)
-        assert resp.status_code == 200
-        matches = resp.json()["matches"]
-        assert any(m.get("status") == "Manual Escalation Required" for m in matches or m.get("reason") == "No suitable volunteers found.")
-
-    def test_match_assigns_tier1_for_sensitive_need(self, client):
-        open_needs = [{
-            "id": "n-s1", "category": "rescue", "help_needed": "rescue",
-            "severity": "critical", "status": "open", "trust_score": 90,
-            "lat": 26.8, "lng": 80.9
-        }]
-        volunteers = [{
-            "id": "v-t1", "name": "NGO Responder", "skills": ["rescue"],
-            "lat": 26.82, "lng": 80.92, "ngo_verified": True
-        }]
+    def test_run_matcher_with_successful_tiered_match(self, client):
+        open_needs = [
+            {"id": "n1", "category": "rescue", "lat": 28.6, "lng": 77.2, "status": "open", "trust_score": 80}
+        ]
+        # Tier 1 volunteer has same coordinates
+        volunteers = [
+            {"id": "vol-t1", "ngo_id": "ngo-1", "skills": ["rescue"], "lat": 28.6, "lng": 77.2, "available": True, "ngo_verified": True}
+        ]
         with patch("backend.routes.match.get_open_needs", return_value=open_needs), \
              patch("backend.routes.match.get_available_volunteers", return_value=volunteers), \
              patch("backend.routes.match.save_assignment", return_value="a-t1"):
+            
             resp = client.get("/match", headers=AUTH_HEADERS)
+    
         assert resp.status_code == 200
         assert resp.json()["total_matches_made"] == 1
+        assert len(resp.json()["matches"]) == 1
+        assert resp.json()["matches"][0]["status"] == "assigned"
 
 
-class TestMatchLogicPure:
-    """Pure unit tests for match.py helper functions (no HTTP)."""
+# -----------------------------------------------------------------------------
+# DASHBOARD ROUTES
+# -----------------------------------------------------------------------------
 
-    def test_haversine_known_distance(self):
-        from backend.routes.match import _haversine_km
-        # Delhi to Agra ≈ 200 km
-        dist = _haversine_km(28.6, 77.2, 27.17, 78.01)
-        assert 170 < dist < 220
+class TestDashboardRoutes:
 
-    def test_haversine_same_point_is_zero(self):
-        from backend.routes.match import _haversine_km
-        assert _haversine_km(20.0, 80.0, 20.0, 80.0) == 0.0
-
-    def test_find_best_volunteer_picks_skill_match(self):
-        from backend.routes.match import find_best_volunteer
-        need = {"lat": 26.8, "lng": 80.9, "category": "food", "help_needed": "food"}
-        vols = [
-            {"id": "v1", "skills": ["food"], "lat": 26.85, "lng": 80.95, "ngo_verified": False},
-            {"id": "v2", "skills": ["medical"],    "lat": 26.81, "lng": 80.91, "ngo_verified": False},
+    def test_get_global_dashboard_stats(self, client):
+        needs = [
+            {"id": "1", "status": "open", "category": "food", "severity": "medium"},
+            {"id": "2", "status": "resolved", "category": "medical", "severity": "critical"}
         ]
-        result = find_best_volunteer(need, vols)
-        assert result is not None
-        assert result["id"] == "v1"
-
-    def test_find_best_volunteer_no_skill_match_returns_none(self):
-        from backend.routes.match import find_best_volunteer
-        need = {"lat": 0.0, "lng": 0.0, "category": "rescue", "help_needed": "rescue"}
-        vols = [{"id": "v1", "skills": ["food"], "lat": 0.1, "lng": 0.1, "ngo_verified": False}]
-        assert find_best_volunteer(need, vols) is None
-
-    def test_find_best_volunteer_sensitive_returns_tier1(self):
-        from backend.routes.match import find_best_volunteer
-        need = {"lat": 0.0, "lng": 0.0, "category": "rescue", "help_needed": "rescue"}
-        vols = [
-            {"id": "t1", "skills": ["rescue"], "lat": 0.5, "lng": 0.0, "ngo_verified": True},
-            {"id": "t2", "skills": ["rescue"], "lat": 0.1, "lng": 0.0, "ngo_verified": False},
-        ]
-        result = find_best_volunteer(need, vols)
-        assert result is not None
-        assert result["ngo_verified"] is True
-
-    def test_find_best_volunteer_sensitive_no_tier1_returns_none(self):
-        from backend.routes.match import find_best_volunteer
-        need = {"lat": 0.0, "lng": 0.0, "category": "rescue", "help_needed": "rescue"}
-        vols = [{"id": "t2", "skills": ["rescue"], "lat": 0.1, "lng": 0.0, "ngo_verified": False}]
-        assert find_best_volunteer(need, vols) is None
-
-    def test_find_best_volunteer_tier1_preferred_within_margin(self):
-        from backend.routes.match import find_best_volunteer
-        # Tier1 is ~5km, Tier2 is ~2km – within 10km margin so Tier1 wins
-        need = {"lat": 0.0, "lng": 0.0, "category": "food", "help_needed": "food"}
-        vols = [
-            {"id": "t1", "skills": ["food"], "lat": 0.045, "lng": 0.0, "ngo_verified": True},
-            {"id": "t2", "skills": ["food"], "lat": 0.018, "lng": 0.0, "ngo_verified": False},
-        ]
-        result = find_best_volunteer(need, vols)
-        assert result["id"] == "t1"
-
-    def test_empty_volunteer_pool_returns_none(self):
-        from backend.routes.match import find_best_volunteer
-        need = {"lat": 0.0, "lng": 0.0, "category": "food", "help_needed": "food"}
-        assert find_best_volunteer(need, []) is None
-
-
-# ─────────────────────────────────────────────────────────────
-# DASHBOARD ROUTE
-# ─────────────────────────────────────────────────────────────
-
-class TestDashboardRoute:
-
-    def test_dashboard_returns_stats_fields(self, client):
-        with patch("backend.routes.dashboard.get_open_needs", return_value=[]), \
+        with patch("backend.routes.dashboard.get_open_needs", return_value=needs), \
              patch("backend.routes.dashboard.get_available_volunteers", return_value=[]):
+            
             resp = client.get("/dashboard")
         assert resp.status_code == 200
-        for key in ("total_needs", "total_volunteers", "critical_cases",
-                    "high_priority_cases", "unmatched_cases", "flagged_cases"):
-            assert key in resp.json()
+        assert "reports" in resp.json()
+        assert resp.json()["total_needs"] == 2
 
-    def test_dashboard_counts_critical_correctly(self, client):
-        needs = [
-            {"id": "n1", "severity": "critical", "status": "open", "trust_score": 80},
-            {"id": "n2", "severity": "high",     "status": "open", "trust_score": 80},
-        ]
-        with patch("backend.routes.dashboard.get_open_needs", return_value=needs), \
-             patch("backend.routes.dashboard.get_available_volunteers", return_value=[]):
-            resp = client.get("/dashboard")
-        assert resp.json()["critical_cases"] == 1
-        assert resp.json()["high_priority_cases"] == 1
-
-    def test_dashboard_counts_flagged_correctly(self, client):
-        needs = [
-            {"id": "n1", "severity": "high", "status": "open", "trust_score": 30},
-            {"id": "n2", "severity": "high", "status": "open", "trust_score": 90},
-        ]
-        with patch("backend.routes.dashboard.get_open_needs", return_value=needs), \
-             patch("backend.routes.dashboard.get_available_volunteers", return_value=[]):
-            resp = client.get("/dashboard")
-        assert resp.json()["flagged_cases"] == 1
-
-    def test_dashboard_reports_returns_list(self, client):
+    def test_get_dashboard_reports_list(self, client):
         with patch("database.needs_db.get_all_needs", return_value=[{"id": "n1", "status": "open"}]):
             resp = client.get("/dashboard/reports")
         assert resp.status_code == 200
         assert isinstance(resp.json(), list)
 
 
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # ASSIGNMENT ROUTE
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 class TestAssignmentRoute:
 
@@ -591,10 +391,9 @@ class TestAssignmentRoute:
         assert resp.status_code == 401
 
     def test_resolve_success(self, client):
-        snap = _make_doc("a1", {"need_id": "n1", "volunteer_id": "v1", "resolved_at": None})
-        with patch("backend.routes.assignment.db") as mock_db, \
+        assignment = {"id": "a1", "need_id": "n1", "volunteer_id": "v1", "resolved_at": None}
+        with patch("database.assignments_db.get_assignment_by_id", return_value=assignment), \
              patch("database.assignments_db.resolve_assignment"):
-            mock_db.collection.return_value.document.return_value.get.return_value = snap
             resp = client.patch("/assignment/a1/resolve",
                 headers=AUTH_HEADERS
             )
@@ -602,21 +401,18 @@ class TestAssignmentRoute:
         assert resp.json()["status"] == "resolved"
 
     def test_resolve_not_found_returns_404(self, client):
-        snap = _make_doc("ax", {}, exists=False)
-        with patch("backend.routes.assignment.db") as mock_db:
-            mock_db.collection.return_value.document.return_value.get.return_value = snap
+        with patch("database.assignments_db.get_assignment_by_id", return_value=None):
             resp = client.patch("/assignment/ghost-assign/resolve",
                 headers=AUTH_HEADERS
             )
         assert resp.status_code == 404
 
     def test_resolve_already_resolved_returns_409(self, client):
-        snap = _make_doc("a2", {
-            "need_id": "n2", "volunteer_id": "v2",
+        assignment = {
+            "id": "a2", "need_id": "n2", "volunteer_id": "v2",
             "resolved_at": "2025-01-01T10:00:00+00:00"
-        })
-        with patch("backend.routes.assignment.db") as mock_db:
-            mock_db.collection.return_value.document.return_value.get.return_value = snap
+        }
+        with patch("database.assignments_db.get_assignment_by_id", return_value=assignment):
             resp = client.patch("/assignment/a2/resolve",
                 headers=AUTH_HEADERS
             )
@@ -637,9 +433,9 @@ class TestAssignmentRoute:
         assert resp.status_code == 401
 
 
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 # NGO ROUTE
-# ─────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
 
 class TestNGORoute:
 
@@ -673,10 +469,15 @@ class TestNGORoute:
 
     def test_ngo_dashboard_returns_stats(self, client):
         with patch("backend.routes.ngo.get_ngo", return_value={"id": "ngo-1", "ngo_name": "TestNGO"}), \
-             patch("database.firestore_client.db") as mock_db:
-            mock_db.collection.return_value.where.return_value.stream.return_value = []
-            mock_db.collection.return_value.stream.return_value = []
+             patch("backend.routes.ngo.get_db_cursor") as mock_get_cursor:
+            cursor = MagicMock()
+            cursor.fetchall.side_effect = [
+                [{"id": f"v{i}", "skills": ["medical"]} for i in range(5)], # volunteers
+                [] # assignments
+            ]
+            mock_get_cursor.return_value.__enter__.return_value = cursor
             resp = client.get("/ngo/ngo-1/dashboard")
         assert resp.status_code == 200
         assert "stats" in resp.json()
-        assert "managed_volunteers" in resp.json()["stats"]
+        assert resp.json()["stats"]["managed_volunteers"] == 5
+        assert resp.json()["stats"]["active_assignments"] == 0

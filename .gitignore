@@ -27,3 +27,5 @@ ngrok.log
 
 config/.env
 config/cloudrun_env.yaml
+
+hello.txt

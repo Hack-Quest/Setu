@@ -10,8 +10,6 @@ if sys.platform == "win32" and type(sys.stderr).__name__ == "TextIOWrapper":
 
 from typing import List, Dict
 import os
-import firebase_admin
-from firebase_admin import credentials
 from fastapi import (
     FastAPI, Request, BackgroundTasks, WebSocket, WebSocketDisconnect
 )
@@ -196,7 +194,7 @@ async def webhook_ngo_register_alias(request: Request, payload: Dict, background
             "data": mapped_volunteer
         })
 
-        return {"message": "Volunteer registered", "id": doc_id}
+        return {"message": "Volunteer registered", "id": doc_id, "volunteer_id": doc_id, "status": "registered"}
 
     except Exception as e:
         traceback.print_exc()

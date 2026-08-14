@@ -25,10 +25,13 @@ def create_volunteer(data: VolunteerInput, token: str = Depends(verify_token)): 
         # Geocoding and location handling is now centralized in save_volunteer()
         print("📥 Incoming Volunteer Data:", volunteer_dict)
 
-        save_volunteer(volunteer_dict)
+        doc_id = save_volunteer(volunteer_dict)
 
         return {
             "message": "volunteer added",
+            "status": "registered",
+            "volunteer_id": doc_id,
+            "id": doc_id,
             "total_volunteers": len(get_available_volunteers())
         }
 

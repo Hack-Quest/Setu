@@ -5,7 +5,8 @@ python-dotenv
 requests
 slowapi
 bcrypt
-firebase-admin
+psycopg2-binary
 googlemaps
 passlib[bcrypt]
 pytest
+pytest-asyncio
