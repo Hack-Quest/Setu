@@ -12,7 +12,6 @@ def get_coordinates(address: str) -> dict:
     Automatically falls back to OpenStreetMap if Google fails or is missing a key.
     """
     api_key = os.getenv("GOOGLE_MAPS_KEY")
-    print("API KEY:", api_key)
     # try google maps
     if api_key:
         for attempt in range(2):
@@ -49,7 +48,6 @@ def get_coordinates(address: str) -> dict:
             "User-Agent": "Setu" 
         }
 
-        time.sleep(1)
         response = requests.get(url, params=params, headers=headers, timeout=10)
         response.raise_for_status() # Catches HTTP errors
         data = response.json()

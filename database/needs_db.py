@@ -6,7 +6,7 @@ def save_need(data: dict) -> str:
     """Stores need into Supabase PostgreSQL"""
     doc_id = data.get("id") or uuid.uuid4().hex
     
-    data["status"] = "open"
+    data.setdefault("status", "open")
     
     timestamp = data.get("timestamp")
     if timestamp:

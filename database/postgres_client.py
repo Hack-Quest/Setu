@@ -84,8 +84,7 @@ def get_db_cursor(commit=False, dict_cursor=True):
             if commit:
                 conn.commit()
         except Exception as e:
-            if commit:
-                conn.rollback()
+            conn.rollback()
             raise e
         finally:
             cursor.close()

@@ -4,6 +4,7 @@ import unittest
 import requests
 import time
 import uuid
+import pytest
 from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -13,7 +14,7 @@ from database.volunteers_db import save_volunteer
 
 load_dotenv(dotenv_path="config/.env")
 
-BASE_URL = os.getenv("SETU_BASE_URL") or "http://127.0.0.1:8080"
+BASE_URL = (os.getenv("SETU_BASE_URL") or "http://127.0.0.1:8080").rstrip("/")
 SECRET_TOKEN = os.getenv("SECRET_TOKEN")
 
 if not BASE_URL:
@@ -21,6 +22,9 @@ if not BASE_URL:
 if not SECRET_TOKEN:
     raise RuntimeError("SECRET_TOKEN is not set.")
 
+pytestmark = pytest.mark.integration
+
+@pytest.mark.integration
 class TestAuthSecurity(unittest.TestCase):
     
     @classmethod

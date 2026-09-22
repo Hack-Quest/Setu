@@ -133,10 +133,38 @@ def accept_need(
 
 @router.get("/volunteer/{volunteer_id}")
 def get_volunteer_assignments(
-    volunteer_id: str, token: str = Depends(verify_token)
+    volunteer_id: str, token: dict = Depends(verify_token)
 ):
     from database.needs_db import get_need_by_id
     from database.assignments_db import get_assignments_by_volunteer_id
+
+    if isinstance(token, dict):
+        role = token.get("role")
+        caller_id = (
+            token.get("uid")
+            or token.get("sub")
+            or token.get("id")
+            or token.get("volunteer_id")
+        )
+        if role == "volunteer" and caller_id != volunteer_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: cannot view another volunteer's assignments",
+            )
+        elif role == "ngo":
+            with get_db_cursor(commit=False) as cur:
+                cur.execute("SELECT ngo_id FROM volunteers WHERE id = %s", (volunteer_id,))
+                row = cur.fetchone()
+            if not row or row.get("ngo_id") != caller_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Access denied: volunteer is not affiliated with your NGO",
+                )
+        elif role not in ["system", "ngo", "volunteer"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: unauthorized role",
+            )
 
     assignments = get_assignments_by_volunteer_id(volunteer_id)
 

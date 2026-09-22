@@ -184,9 +184,21 @@ class TestNeedsDB:
 
     def test_save_need_sets_status_open(self, mock_cursor):
         from database.needs_db import save_need
-        result = save_need({"description": "Flood"})
+        data = {"description": "Flood"}
+        result = save_need(data)
         assert result is not None
+        assert data["status"] == "open"
         assert mock_cursor.execute.called
+
+    def test_save_need_preserves_explicit_status(self, mock_cursor):
+        from database.needs_db import save_need
+        data = {"description": "Review needed", "status": "secondary_review"}
+        save_need(data)
+        assert data["status"] == "secondary_review"
+
+        data_rej = {"description": "Spam", "status": "rejected"}
+        save_need(data_rej)
+        assert data_rej["status"] == "rejected"
 
     def test_save_need_sets_timestamp(self, mock_cursor):
         from database.needs_db import save_need
@@ -463,3 +475,18 @@ class TestVerification:
         assert "score" in result
         assert "dispatch_action" in result
         assert result["dispatch_action"] in ("auto_dispatch", "human_review", "flagged")
+
+
+class TestPostgresClient:
+
+    def test_get_db_cursor_rolls_back_on_exception_without_commit(self):
+        from database.postgres_client import get_db_cursor
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value = mock_cursor
+        with patch("database.postgres_client.get_db_connection") as mock_get_conn:
+            mock_get_conn.return_value.__enter__.return_value = mock_conn
+            with pytest.raises(ValueError):
+                with get_db_cursor(commit=False) as cur:
+                    raise ValueError("Simulated DB query failure")
+            mock_conn.rollback.assert_called_once()

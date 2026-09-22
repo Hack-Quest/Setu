@@ -11,13 +11,16 @@ from ai_processing.prompts import build_prompt, VALID_CATEGORIES, VALID_SEVERITI
 load_dotenv(dotenv_path="config/.env")
 
 # For the new google-genai SDK
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+_gemini_api_key = os.getenv("GEMINI_API_KEY")
+client = genai.Client(api_key=_gemini_api_key) if _gemini_api_key else None
 
 # Create a mockable _gemini_model helper that the test suite patches.
 # In production, this delegates to client.models.
 class GeminiModelWrapper:
     def generate_content(self, contents, **kwargs):
         # gemini-2.0-flash is a supported model name.
+        if not client:
+            raise ValueError("GEMINI_API_KEY is not configured")
         return client.models.generate_content(
             model="gemini-2.0-flash",
             contents=contents,

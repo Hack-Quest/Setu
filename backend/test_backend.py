@@ -320,7 +320,9 @@ class TestNeedRoute:
              patch("backend.routes.need.check_corroboration", return_value=3), \
              patch("backend.routes.need.process_need_text", return_value={
                  "category": "logistics", "severity": "medium", "consistency": 9
-             }):
+             }), \
+             patch("backend.routes.need._auto_match_for_need"), \
+             patch("backend.routes.need.send_alert"):
             resp = client.post("/need", json={
                 "name": "Victim A", "phone": "9876543210",
                 "address": "Kanpur, India",
@@ -341,7 +343,9 @@ class TestNeedRoute:
              patch("backend.routes.need.check_corroboration", return_value=2), \
              patch("backend.routes.need.process_need_text", return_value={
                  "category": "rescue", "severity": "critical", "consistency": 10
-             }):
+             }), \
+             patch("backend.routes.need._auto_match_for_need"), \
+             patch("backend.routes.need.send_alert"):
             resp = client.post("/need", json={
                 "name": "Victim B", "phone": "9900000001",
                 "address": "Kanpur",
@@ -361,7 +365,9 @@ class TestNeedRoute:
              patch("backend.routes.need.check_corroboration", return_value=1), \
              patch("backend.routes.need.process_need_text", return_value={
                  "category": "flood", "severity": "high", "consistency": 8
-             }):
+             }), \
+             patch("backend.routes.need._auto_match_for_need"), \
+             patch("backend.routes.need.send_alert"):
             resp = client.post("/need", json={
                 "name": "Victim C", "phone": "9900000002",
                 "address": "Kolkata",
@@ -379,7 +385,9 @@ class TestNeedRoute:
              patch("backend.routes.need.check_corroboration", return_value=2), \
              patch("backend.routes.need.process_need_text", return_value={
                  "category": "earthquake", "severity": "critical", "consistency": 9
-             }):
+             }), \
+             patch("backend.routes.need._auto_match_for_need"), \
+             patch("backend.routes.need.send_alert"):
             resp = client.post("/need", json={
                 "name": "Victim D", "phone": "9000000099",
                 "address": "Delhi",
@@ -397,7 +405,9 @@ class TestNeedRoute:
              patch("backend.routes.need.check_corroboration", return_value=3), \
              patch("backend.routes.need.process_need_text", return_value={
                  "category": "medical", "severity": "high", "consistency": 9
-             }):
+             }), \
+             patch("backend.routes.need._auto_match_for_need"), \
+             patch("backend.routes.need.send_alert"):
             resp = client.post("/need", json={
                 "name": "Victim E", "phone": "9000000010",
                 "address": "Mumbai",
@@ -430,7 +440,8 @@ class TestNeedRoute:
              patch("backend.routes.need.get_coordinates", return_value={"lat": 28.6, "lng": 77.2}), \
              patch("backend.routes.need.save_need", return_value="wh-need-1"), \
              patch("backend.routes.need.check_corroboration", return_value=2), \
-             patch("notifications.gmail_alert.send_alert"):
+             patch("backend.routes.need._auto_match_for_need"), \
+             patch("backend.routes.need.send_alert"):
             resp = client.post("/webhook", json={
                 "reporter_name": "Ram", "reporter_phone": "9898989898",
                 "description": "House on fire, people trapped inside, need rescue team immediately",
@@ -1035,6 +1046,14 @@ class TestMatchRoutes:
 
 class TestDashboardRoutes:
 
+    def test_dashboard_unauthenticated(self, client):
+        resp = client.get("/dashboard")
+        assert resp.status_code == 401
+
+    def test_dashboard_reports_unauthenticated(self, client):
+        resp = client.get("/dashboard/reports")
+        assert resp.status_code == 401
+
     def test_get_global_dashboard_stats(self, client):
         needs = [
             {"id": "1", "status": "open", "category": "food", "severity": "medium", "trust_score": 80},
@@ -1044,7 +1063,7 @@ class TestDashboardRoutes:
              patch("backend.routes.dashboard.get_available_volunteers", return_value=[]), \
              patch("backend.routes.dashboard.get_all_volunteers", return_value=[]), \
              patch("backend.routes.dashboard.get_all_ngos", return_value=[]):
-            resp = client.get("/dashboard")
+            resp = client.get("/dashboard", headers=AUTH_HEADERS)
         assert resp.status_code == 200
         data = resp.json()
         assert "reports" in data
@@ -1061,7 +1080,7 @@ class TestDashboardRoutes:
              patch("backend.routes.dashboard.get_available_volunteers", return_value=[]), \
              patch("backend.routes.dashboard.get_all_volunteers", return_value=[]), \
              patch("backend.routes.dashboard.get_all_ngos", return_value=[]):
-            resp = client.get("/dashboard")
+            resp = client.get("/dashboard", headers=AUTH_HEADERS)
         assert resp.status_code == 200
         d = resp.json()
         assert d["critical_cases"] == 1
@@ -1079,12 +1098,12 @@ class TestDashboardRoutes:
              patch("backend.routes.dashboard.get_available_volunteers", return_value=[]), \
              patch("backend.routes.dashboard.get_all_volunteers", return_value=[]), \
              patch("backend.routes.dashboard.get_all_ngos", return_value=[]):
-            resp = client.get("/dashboard")
+            resp = client.get("/dashboard", headers=AUTH_HEADERS)
         assert resp.json()["flagged_cases"] == 2
 
     def test_get_dashboard_reports_list(self, client):
         with patch("backend.routes.dashboard.get_all_needs", return_value=[{"id": "n1", "status": "open"}]):
-            resp = client.get("/dashboard/reports")
+            resp = client.get("/dashboard/reports", headers=AUTH_HEADERS)
         assert resp.status_code == 200
         assert isinstance(resp.json(), list)
 
@@ -1107,7 +1126,7 @@ class TestDashboardRoutes:
             cursor = MagicMock()
             cursor.fetchall.side_effect = [mock_assignments, mock_volunteers]
             mock_cursor.return_value.__enter__.return_value = cursor
-            resp = client.get("/dashboard/reports")
+            resp = client.get("/dashboard/reports", headers=AUTH_HEADERS)
 
         assert resp.status_code == 200
         reports = resp.json()
@@ -1127,7 +1146,7 @@ class TestDashboardRoutes:
             cursor = MagicMock()
             cursor.fetchall.side_effect = [[], []]  # No assignments, no volunteers
             mock_cursor.return_value.__enter__.return_value = cursor
-            resp = client.get("/dashboard/reports")
+            resp = client.get("/dashboard/reports", headers=AUTH_HEADERS)
 
         assert resp.status_code == 200
         rep = resp.json()[0]
@@ -1399,6 +1418,30 @@ class TestAssignmentRoute:
         assert resp.status_code == 200
         assert isinstance(resp.json(), list)
 
+    def test_get_volunteer_assignments_idor_forbidden(self, client):
+        from backend.auth import verify_token
+        from backend.main import app
+        app.dependency_overrides[verify_token] = lambda: {"uid": "vol-1", "role": "volunteer"}
+        try:
+            resp = client.get("/assignment/volunteer/vol-2", headers=AUTH_HEADERS)
+            assert resp.status_code == 403
+            assert "Access denied" in resp.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_get_volunteer_assignments_own_success(self, client):
+        from backend.auth import verify_token
+        from backend.main import app
+        app.dependency_overrides[verify_token] = lambda: {"uid": "vol-1", "role": "volunteer"}
+        try:
+            with patch("database.assignments_db.get_assignments_by_volunteer_id", return_value=[]), \
+                 patch("database.needs_db.get_need_by_id", return_value=None):
+                resp = client.get("/assignment/volunteer/vol-1", headers=AUTH_HEADERS)
+            assert resp.status_code == 200
+        finally:
+            app.dependency_overrides.clear()
+
+
 
 # =============================================================================
 # NGO ROUTE
@@ -1407,8 +1450,8 @@ class TestAssignmentRoute:
 class TestNGORoute:
 
     def test_register_ngo_success(self, client):
-        with patch("database.ngos_db.save_ngo", return_value="ngo-001"), \
-             patch("database.geocoding.get_coordinates", return_value={"lat": 22.5, "lng": 88.3}):
+        with patch("backend.routes.ngo.save_ngo", return_value="ngo-001"), \
+             patch("backend.routes.ngo.get_coordinates", return_value={"lat": 22.5, "lng": 88.3}):
             resp = client.post("/ngo/register", json={
                 "name": "HelpIndia NGO", "reg_number": "NGO/KP/001",
                 "location": "Kolkata", "radius": 100.0
@@ -1508,4 +1551,4 @@ class TestNGORoute:
             assert resp.status_code == 403
             assert "Access denied" in resp.json()["detail"]
         finally:
-            app.dependency_overrides.clear()
+            app.dependency_overrides.clear()

@@ -10,7 +10,7 @@ router = APIRouter(prefix="/dashboard")
 
 
 @router.get("/reports")
-def get_reports_endpoint():
+def get_reports_endpoint(token: dict = Depends(verify_token)):
     """
     Returns all disaster needs reports joined with assigned volunteer metadata,
     specifically serializing volunteer_lat and volunteer_lng for the map UI.
@@ -110,7 +110,7 @@ def get_reports_endpoint():
 
 
 @router.get("")
-def dashboard():
+def dashboard(token: dict = Depends(verify_token)):
     needs = get_open_needs()
     vols = get_available_volunteers()
     all_vols = get_all_volunteers()
