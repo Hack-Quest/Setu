@@ -8,7 +8,7 @@
 window.SETU_API_BASE_URL = (function () {
     var origin = window.location.origin;
     if (!origin || origin === "null" || origin === "file://") {
-        return "http://127.0.0.1:8000";
+        return "http://127.0.0.1:8080";
     }
     return origin;
 })();

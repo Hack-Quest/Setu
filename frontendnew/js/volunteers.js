@@ -133,9 +133,7 @@ function renderVolunteers(volunteers) {
         const location = v.location || v.area || v.city || "";
         const phone = v.phone || v.contact || "";
         const isAvailable = v.available === true || String(v.available).toLowerCase() === "true";
-        const isTier1 = (v.ngo_verified === true || String(v.ngo_verified).toLowerCase() === "true") || 
-                        (Array.isArray(v.credential_tags) && v.credential_tags.length > 0) || 
-                        !!v.ngo_id;
+        const isTier1 = v.ngo_verified === true || String(v.ngo_verified).toLowerCase() === "true";
                         
         const tierText = isTier1 ? "Tier 1 - NGO Verified" : "Tier 2 - Community Volunteer";
         const badgeClass = isTier1 ? "bg-primary-container/10 text-primary" : "bg-surface-container text-on-surface-variant";

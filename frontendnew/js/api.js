@@ -5,7 +5,7 @@
 // Reads SETU_API_BASE_URL lazily so config.js can set it first.
 // ============================================================
 
-const _getBase = () => window.SETU_API_BASE_URL || 'http://127.0.0.1:8000';
+const _getBase = () => window.SETU_API_BASE_URL || 'http://127.0.0.1:8080';
 
 class ApiService {
     /**

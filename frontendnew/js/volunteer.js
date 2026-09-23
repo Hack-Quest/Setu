@@ -14,25 +14,15 @@ const volunteerId = localStorage.getItem('volunteer_id');
 
 // Safety check: invalid volunteer ID
 if (!volunteerId || volunteerId === 'null' || volunteerId === 'undefined') {
+    window.location.href = 'login.html';
+} else {
+    // ── Init ──────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
-        document.body.innerHTML = `
-            <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;
-                        font-family:'Inter',sans-serif;background:#faf8ff;flex-direction:column;gap:16px;">
-                <h2 style="color:#1e293b;font-size:24px;">Session Error</h2>
-                <p style="color:#64748b;">Could not retrieve your volunteer ID.</p>
-                <a href="login.html" style="background:#004ac6;color:#fff;padding:12px 24px;
-                    border-radius:8px;text-decoration:none;font-weight:600;">Login Again</a>
-            </div>`;
+        loadProfile();
+        loadAssignments();
+        setupEventListeners();
     });
-    throw new Error('Halting: invalid volunteer ID');
 }
-
-// ── Init ──────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-    loadProfile();
-    loadAssignments();
-    setupEventListeners();
-});
 
 function loadProfile() {
     const name = localStorage.getItem('name') || 'Volunteer';
@@ -54,8 +44,14 @@ function setupEventListeners() {
         });
     }
 
-    const resolveBtn = document.getElementById('markResolvedBtn');
-    if (resolveBtn) resolveBtn.addEventListener('click', markCurrentResolved);
+    const missionSection = document.getElementById('active-mission-section');
+    if (missionSection) {
+        missionSection.addEventListener('click', (e) => {
+            if (e.target.closest('#markResolvedBtn')) {
+                markCurrentResolved();
+            }
+        });
+    }
 }
 
 // ── Load Assignments ──────────────────────────────────────
@@ -169,8 +165,7 @@ function renderActiveMission(assignments) {
                     <button id="markResolvedBtn"
                             class="flex-1 border border-safety-green text-safety-green font-label-md text-label-md
                                    py-3 rounded-lg hover:bg-safety-green hover:text-white transition-all
-                                   flex items-center justify-center gap-2"
-                            onclick="markCurrentResolved()">
+                                   flex items-center justify-center gap-2">
                         <span class="material-symbols-outlined">check_circle</span>
                         Mark as Resolved
                     </button>
@@ -195,17 +190,16 @@ function renderActiveMission(assignments) {
 // ── Update Personal Stats ─────────────────────────────────
 function updatePersonalStats(assignments) {
     const resolved = assignments.filter(a => a.status === 'resolved' || a.resolved_at).length;
-    const trust    = 88; // Would come from volunteer profile
 
     const setEl = (id, val) => {
         const el = document.getElementById(id);
         if (el) el.textContent = val;
     };
     setEl('stat-missions-completed', resolved);
-    setEl('stat-trust-score',        trust);
+    setEl('stat-trust-score',        'N/A');
 
     const trustBar = document.getElementById('trust-score-bar');
-    if (trustBar) trustBar.style.width = `${trust}%`;
+    if (trustBar) trustBar.style.width = '0%';
 }
 
 // ── Mark Resolved ─────────────────────────────────────────

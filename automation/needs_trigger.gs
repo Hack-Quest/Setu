@@ -1,6 +1,6 @@
 function onFormSubmit(e) {
-  // Jab Khare Google Cloud ka link degi, tab yahan replace karenge
-  var targetWebsite = "https://tweak-dole-registry.ngrok-free.dev/webhook";
+  // Configurable backend webhook target (update with staging/production domain or local tunnel)
+  var targetWebsite = "http://127.0.0.1:8080/webhook";
 
   var answers = e.namedValues;
 

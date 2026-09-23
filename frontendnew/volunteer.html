@@ -146,6 +146,8 @@
                     <a class="font-label-md text-label-md text-primary font-bold border-b-2 border-primary pb-1"
                         href="emergency_dashboard.html">Dashboard</a>
                     <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="map.html">Map</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
                         href="about.html">Science of SETU</a>
                 </nav>
             </div>
@@ -169,17 +171,17 @@
             <p class="text-on-surface-variant font-label-sm text-label-sm">Field Responder Unit</p>
         </div>
         <a class="flex items-center gap-3 px-3 py-2 text-primary font-bold bg-surface-container rounded-lg group transition-all active:scale-95"
-            href="#">
+            href="volunteer.html">
             <span class="material-symbols-outlined">dashboard</span>
             <span class="font-label-md text-label-md">Overview</span>
         </a>
         <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all active:scale-95"
-            href="#">
+            href="#active-mission-section">
             <span class="material-symbols-outlined">assignment</span>
             <span class="font-label-md text-label-md">Assignments</span>
         </a>
         <a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-all active:scale-95"
-            href="#">
+            href="volunteers.html">
             <span class="material-symbols-outlined">group</span>
             <span class="font-label-md text-label-md">Team</span>
         </a>
@@ -192,9 +194,9 @@
             <p class="font-label-sm text-label-sm text-text-muted mb-2">Trust Score</p>
             <div class="flex items-center gap-2">
                 <div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden">
-                    <div id="trust-score-bar" class="bg-safety-green h-full w-[88%]"></div>
+                    <div id="trust-score-bar" class="bg-safety-green h-full w-0"></div>
                 </div>
-                <span class="font-label-md text-label-md font-bold text-safety-green">88</span>
+                <span class="font-label-md text-label-md font-bold text-text-muted">N/A</span>
             </div>
         </div>
     </aside>
@@ -299,13 +301,13 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="p-4 bg-surface-container-low rounded-xl border border-border-gray text-center">
                             <span class="material-symbols-outlined text-primary mb-2 text-3xl">task_alt</span>
-                            <p id="stat-missions-completed" class="font-display-lg text-display-lg block">142</p>
+                            <p id="stat-missions-completed" class="font-display-lg text-display-lg block">0</p>
                             <p class="font-label-sm text-label-sm text-text-muted">Missions Completed</p>
                         </div>
                         <div class="p-4 bg-surface-container-low rounded-xl border border-border-gray text-center">
                             <span class="material-symbols-outlined text-safety-green mb-2 text-3xl"
                                 style="font-variation-settings: 'FILL' 1;">verified</span>
-                            <p id="stat-trust-score" class="font-display-lg text-display-lg block">88</p>
+                            <p id="stat-trust-score" class="font-display-lg text-display-lg block">N/A</p>
                             <p class="font-label-sm text-label-sm text-text-muted">Trust Score</p>
                         </div>
                     </div>
@@ -376,15 +378,15 @@
     <!-- Mobile Navigation Shell (Bottom Bar) -->
     <nav
         class="md:hidden fixed bottom-0 left-0 right-0 bg-surface-bright border-t border-border-gray px-margin-mobile py-2 flex justify-around items-center z-50">
-        <a class="flex flex-col items-center gap-1 text-primary" href="#">
+        <a class="flex flex-col items-center gap-1 text-primary" href="volunteer.html">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
             <span class="text-[10px] font-bold">Overview</span>
         </a>
-        <a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#active-mission-section">
             <span class="material-symbols-outlined">assignment</span>
             <span class="text-[10px]">Tasks</span>
         </a>
-        <a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+        <a class="flex flex-col items-center gap-1 text-on-surface-variant" href="volunteers.html">
             <span class="material-symbols-outlined">group</span>
             <span class="text-[10px]">Team</span>
         </a>

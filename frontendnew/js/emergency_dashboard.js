@@ -8,7 +8,7 @@
 //   • Filter bar
 // ============================================================
 
-const API_BASE = window.SETU_API_BASE_URL || 'http://127.0.0.1:8000';
+const API_BASE = window.SETU_API_BASE_URL || 'http://127.0.0.1:8080';
 
 let allReports       = [];
 let currentFilter    = 'all';    // 'all' | 'critical' | 'medical'
@@ -105,7 +105,10 @@ function renderFeed(reports) {
                           medium: 'bg-primary-container text-white', low: 'bg-surface-container text-on-surface-variant' };
         const badgeCls = badges[severity] || badges.low;
 
-        const trust = r.trust_score ?? Math.floor(Math.random() * 30 + 65);
+        const hasTrust = r.trust_score != null && !isNaN(Number(r.trust_score));
+        const trustDisplay = hasTrust ? Math.round(Number(r.trust_score)) : 'N/A';
+        const trustBorderCls = hasTrust ? 'border-safety-green' : 'border-outline-variant';
+        const trustTextCls = hasTrust ? 'text-safety-green' : 'text-text-muted';
 
         return `
         <div class="bg-surface-bright border border-border-gray p-gutter rounded-xl
@@ -122,8 +125,8 @@ function renderFeed(reports) {
             </p>
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-full border-2 border-safety-green flex items-center justify-center">
-                        <span class="text-[10px] font-bold text-safety-green">${trust}</span>
+                    <div class="w-8 h-8 rounded-full border-2 ${trustBorderCls} flex items-center justify-center">
+                        <span class="text-[10px] font-bold ${trustTextCls}">${trustDisplay}</span>
                     </div>
                     <span class="text-label-sm font-label-sm text-text-muted">Trust</span>
                 </div>
@@ -146,8 +149,15 @@ async function loadStats() {
 
         setEl('stat-active-emergencies', d.total_needs      ?? d.critical_cases ?? '—');
         setEl('stat-available-volunteers', d.total_volunteers ?? '—');
-        setEl('stat-avg-trust',            '89.4');  // computed on backend would be ideal
-        setEl('stat-resolved-reports',     '—');     // backend doesn't expose this directly yet
+
+        const validScores = allReports
+            .filter(r => r.trust_score != null && !isNaN(Number(r.trust_score)))
+            .map(r => Number(r.trust_score));
+        const avgTrust = validScores.length
+            ? (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1)
+            : '—';
+        setEl('stat-avg-trust',            avgTrust);
+        setEl('stat-resolved-reports',     '—');
 
     } catch (err) {
         console.error('loadStats error:', err);

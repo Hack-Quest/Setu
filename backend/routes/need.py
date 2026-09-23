@@ -171,6 +171,11 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
 
         # 7️⃣ FINAL OBJECT
         final_data = {
+            "reporter_name": data.reporter_name,
+            "reporter_phone": data.reporter_phone,
+            "location_text": data.location_text,
+            "disaster_type": data.disaster_type,
+            "help_needed": data.help_needed,
             "description": data.description,
             "category": category,
             "severity": severity,

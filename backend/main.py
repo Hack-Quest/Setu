@@ -135,14 +135,20 @@ async def webhook(request: Request, payload: Dict, background_tasks: BackgroundT
 
         # Concatenate everything into description so the AI doesn't miss the full story
         # if the user typed their emergency into the wrong box.
-        full_desc = f"Report: {payload.get('description', '')} | Details: {payload.get('location', '')} | Help: {payload.get('help_needed', '')}"
+        loc_val = (
+            payload.get("location_text")
+            or payload.get("location")
+            or payload.get("address")
+            or payload.get("help_needed")
+            or "Unknown Location"
+        )
+        full_desc = f"Report: {payload.get('description', '')} | Details: {payload.get('location') or payload.get('location_text') or payload.get('address') or ''} | Help: {payload.get('help_needed', '')}"
 
         mapped_data = {
-            "reporter_name": payload.get("reporter_name", "Unknown"),
-            "reporter_phone": payload.get("reporter_phone", "0000000000"),
+            "reporter_name": payload.get("reporter_name") or payload.get("name") or "Unknown",
+            "reporter_phone": payload.get("reporter_phone") or payload.get("phone") or "0000000000",
             "description": full_desc,
-            # Fallback to help_needed if location is a huge paragraph or empty
-            "location_text": payload.get("location") or payload.get("help_needed") or payload.get("address") or "Unknown Location",
+            "location_text": loc_val,
             "lat": safe_float(payload.get("lat") or payload.get("Latitude") or payload.get("latitude")),
             "lng": safe_float(payload.get("lng") or payload.get("Longitude") or payload.get("longitude")),
             "disaster_type": payload.get("disaster_type", "Not Specified"),

@@ -97,14 +97,30 @@ async function verifyOTP() {
         const data = response.data;
         console.log('Verify OTP response:', data);
 
+        if (data.ok === false || data.role === 'new_user') {
+            showToast(data.message || 'Email not registered. Please sign up as a volunteer first.', 'error');
+            return;
+        }
+
         // Store auth info
         if (data.token) localStorage.setItem('auth_token', data.token);
-        localStorage.setItem('role', data.role || role);
+        const resolvedRole = data.role || role;
+        localStorage.setItem('role', resolvedRole);
 
-        if (data.volunteer_id && data.volunteer_id !== 'null') {
-            localStorage.setItem('volunteer_id', data.volunteer_id);
+        if (resolvedRole === 'ngo') {
+            localStorage.removeItem('volunteer_id');
+            const ngoId = data.id || data.ngo_id;
+            if (ngoId && ngoId !== 'null' && ngoId !== 'undefined') {
+                localStorage.setItem('ngo_id', ngoId);
+            }
+        } else if (resolvedRole === 'volunteer') {
+            localStorage.removeItem('ngo_id');
+            const volunteerId = data.volunteer_id || data.id;
+            if (volunteerId && volunteerId !== 'null' && volunteerId !== 'undefined') {
+                localStorage.setItem('volunteer_id', volunteerId);
+            }
         }
-        if (data.id)        localStorage.setItem('ngo_id', data.id);
+
         if (data.ngo_name)  localStorage.setItem('name', data.ngo_name);
         else if (data.name) localStorage.setItem('name', data.name);
         if (data.email)     localStorage.setItem('user_email', data.email);
@@ -113,13 +129,8 @@ async function verifyOTP() {
 
         // Redirect based on role
         setTimeout(() => {
-            const resolvedRole = data.role || role;
             if (resolvedRole === 'ngo') {
                 window.location.href = 'ngo.html';
-            } else if (data.volunteer_id && data.volunteer_id !== 'null') {
-                window.location.href = 'volunteer.html';
-            } else if (data.role === 'new_user') {
-                showToast('Email not registered. Please sign up as a volunteer first.', 'error');
             } else {
                 window.location.href = 'volunteer.html';
             }
