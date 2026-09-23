@@ -8,10 +8,11 @@ if sys.platform == "win32" and type(sys.stdout).__name__ == "TextIOWrapper":
 if sys.platform == "win32" and type(sys.stderr).__name__ == "TextIOWrapper":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-from typing import List, Dict
+from typing import List, Dict, Optional
 import os
+import jwt
 from fastapi import (
-    FastAPI, Request, BackgroundTasks, WebSocket, WebSocketDisconnect
+    FastAPI, Request, BackgroundTasks, WebSocket, WebSocketDisconnect, Query, status
 )
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +20,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from dotenv import load_dotenv
+from backend.auth import JWT_SECRET, JWT_ALGORITHM, SECRET_TOKEN
 
 # Routers
 from backend.routes.need import router as need_router, process_and_save_need
@@ -80,7 +82,21 @@ app.add_middleware(
 
 # 🔌 WebSocket endpoint
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, token: Optional[str] = Query(None)):
+    user = None
+    if token:
+        if token == SECRET_TOKEN:
+            user = {"uid": "system", "role": "system", "email": "system@setu.org"}
+        else:
+            try:
+                user = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+                user = None
+
+    if not user:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Unauthorized")
+        return
+
     await manager.connect(websocket)
     try:
         while True:
@@ -193,9 +209,17 @@ async def webhook_ngo_register_alias(request: Request, payload: Dict, background
         doc_id = save_volunteer(mapped_volunteer)
 
         # 🔥 Broadcast update via WebSocket
+        # 🔒 SECURITY: Sanitize broadcast payload — omit phone, email, and personal PII
+        broadcast_volunteer = {
+            "name": mapped_volunteer.get("name", "Volunteer"),
+            "skills": mapped_volunteer.get("skills", []),
+            "location": mapped_volunteer.get("location", ""),
+            "available": mapped_volunteer.get("available", True),
+            "ngo_verified": mapped_volunteer.get("ngo_verified", False)
+        }
         await manager.broadcast_json({
             "type": "NEW_VOLUNTEER",
-            "data": mapped_volunteer
+            "data": broadcast_volunteer
         })
 
         return {"message": "Volunteer registered", "id": doc_id, "volunteer_id": doc_id, "status": "registered"}

@@ -267,6 +267,83 @@ class TestWebSocketManager:
         assert ws_ok in manager.active_connections
 
 
+class TestWebSocketEndpointSecurity:
+    """Security tests for WebSocket endpoint (/ws) authentication and payload sanitization."""
+
+    def test_websocket_unauthenticated_rejected(self, client):
+        """Connecting without token must disconnect with code 1008 (policy violation)."""
+        import starlette.websockets
+        with pytest.raises(starlette.websockets.WebSocketDisconnect) as exc_info:
+            with client.websocket_connect("/ws"):
+                pass
+        assert exc_info.value.code == 1008
+
+    def test_websocket_invalid_token_rejected(self, client):
+        """Connecting with invalid token must disconnect with code 1008."""
+        import starlette.websockets
+        with pytest.raises(starlette.websockets.WebSocketDisconnect) as exc_info:
+            with client.websocket_connect("/ws?token=invalid.jwt.token"):
+                pass
+        assert exc_info.value.code == 1008
+
+    def test_websocket_expired_token_rejected(self, client):
+        """Connecting with expired JWT must disconnect with code 1008."""
+        import jwt
+        import starlette.websockets
+        from backend.main import JWT_SECRET, JWT_ALGORITHM
+        expired_token = jwt.encode(
+            {"uid": "v-exp", "exp": 0},
+            JWT_SECRET,
+            algorithm=JWT_ALGORITHM
+        )
+        with pytest.raises(starlette.websockets.WebSocketDisconnect) as exc_info:
+            with client.websocket_connect(f"/ws?token={expired_token}"):
+                pass
+        assert exc_info.value.code == 1008
+
+    def test_websocket_valid_jwt_connects(self, client):
+        """Connecting with valid JWT should successfully establish connection."""
+        import jwt
+        from backend.main import JWT_SECRET, JWT_ALGORITHM
+        valid_token = jwt.encode(
+            {"uid": "v-1", "role": "volunteer"},
+            JWT_SECRET,
+            algorithm=JWT_ALGORITHM
+        )
+        with client.websocket_connect(f"/ws?token={valid_token}") as ws:
+            assert ws is not None
+
+    def test_websocket_secret_token_connects(self, client):
+        """Connecting with system SECRET_TOKEN should connect successfully."""
+        from backend.main import SECRET_TOKEN
+        with client.websocket_connect(f"/ws?token={SECRET_TOKEN}") as ws:
+            assert ws is not None
+
+    def test_volunteer_webhook_broadcast_pii_sanitized(self, client):
+        """Volunteer webhook broadcast must sanitize out phone, email, and private PII."""
+        with patch("backend.main.save_volunteer", return_value="v-sanitized"), \
+             patch("backend.main.manager.broadcast_json", new_callable=AsyncMock) as mock_broadcast:
+            resp = client.post("/volunteer_webhook", json={
+                "volunteer_name": "Sanitized User",
+                "email": "sensitive_email@test.com",
+                "phone": "+919876543210",
+                "skills": "first_aid, driving",
+                "location": "Central Delhi"
+            })
+            assert resp.status_code == 200
+            assert mock_broadcast.called
+            call_arg = mock_broadcast.call_args[0][0]
+            assert call_arg["type"] == "NEW_VOLUNTEER"
+            data = call_arg["data"]
+            # Sensitive PII must NOT be present in broadcast payload
+            assert "email" not in data
+            assert "phone" not in data
+            # Safe fields are present
+            assert data["name"] == "Sanitized User"
+            assert data["skills"] == ["first_aid", "driving"]
+            assert data["location"] == "Central Delhi"
+
+
 # =============================================================================
 # APP BASIC ROUTES
 # =============================================================================
@@ -482,6 +559,28 @@ class TestVolunteerRoute:
         assert resp.status_code == 200
         assert resp.json()["status"] == "registered"
         assert resp.json()["volunteer_id"] == "vol-sys-1"
+
+    def test_create_volunteer_ngo_token_resolves_and_verifies_ngo(self, client):
+        """Authenticated NGO adding volunteer associates ngo_id and verifies against DB."""
+        from backend.main import app
+        from backend.auth import verify_token
+        app.dependency_overrides[verify_token] = lambda: {"uid": "ngo-123", "role": "ngo"}
+        try:
+            with patch("backend.routes.volunteer.get_ngo", return_value={"id": "ngo-123", "verified": True}), \
+                 patch("backend.routes.volunteer.save_volunteer", return_value="vol-ngo-1") as mock_save, \
+                 patch("backend.routes.volunteer.get_available_volunteers", return_value=[]):
+                resp = client.post("/volunteer", json={
+                    "name": "Team Medic", "phone": "9000000002",
+                    "location": "Delhi", "skills": ["medical"],
+                    "email": "medic@ngo.org", "password": "Pass1234"
+                }, headers=AUTH_HEADERS)
+                assert resp.status_code == 200
+                assert resp.json()["volunteer_id"] == "vol-ngo-1"
+                saved_vol = mock_save.call_args[0][0]
+                assert saved_vol["ngo_id"] == "ngo-123"
+                assert saved_vol["ngo_verified"] is True
+        finally:
+            app.dependency_overrides.clear()
 
     def test_list_volunteers_requires_auth(self, client):
         resp = client.get("/volunteers")
@@ -1388,6 +1487,85 @@ class TestAssignmentRoute:
             resp = client.patch("/assignment/a1/resolve", headers=AUTH_HEADERS)
         assert resp.status_code == 200
         assert resp.json()["status"] == "resolved"
+
+    def test_resolve_assignment_volunteer_own_success(self, client):
+        """Volunteer can resolve their own assignment."""
+        assignment = {"id": "a1", "need_id": "n1", "volunteer_id": "v-self", "resolved_at": None, "status": "assigned"}
+        from backend.main import app
+        from backend.auth import verify_token
+        app.dependency_overrides[verify_token] = lambda: {"uid": "v-self", "role": "volunteer"}
+        try:
+            with patch("database.assignments_db.get_assignment_by_id", return_value=assignment), \
+                 patch("database.assignments_db.resolve_assignment"):
+                resp = client.patch("/assignment/a1/resolve", headers=AUTH_HEADERS)
+            assert resp.status_code == 200
+            assert resp.json()["status"] == "resolved"
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_resolve_assignment_volunteer_another_forbidden(self, client):
+        """Volunteer cannot resolve another volunteer's assignment (403)."""
+        assignment = {"id": "a1", "need_id": "n1", "volunteer_id": "v-other", "resolved_at": None, "status": "assigned"}
+        from backend.main import app
+        from backend.auth import verify_token
+        app.dependency_overrides[verify_token] = lambda: {"uid": "v-attacker", "role": "volunteer"}
+        try:
+            with patch("database.assignments_db.get_assignment_by_id", return_value=assignment):
+                resp = client.patch("/assignment/a1/resolve", headers=AUTH_HEADERS)
+            assert resp.status_code == 403
+            assert "own assignments" in resp.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_resolve_assignment_ngo_same_ngo_success(self, client):
+        """NGO can resolve assignment for volunteer affiliated with their NGO."""
+        assignment = {"id": "a1", "need_id": "n1", "volunteer_id": "v-ngo-vol", "resolved_at": None, "status": "assigned"}
+        from backend.main import app
+        from backend.auth import verify_token
+        app.dependency_overrides[verify_token] = lambda: {"uid": "ngo-1", "role": "ngo"}
+        try:
+            with patch("database.assignments_db.get_assignment_by_id", return_value=assignment), \
+                 patch("database.assignments_db.resolve_assignment"), \
+                 patch("backend.routes.assignment.get_db_cursor") as mock_db:
+                cursor = MagicMock()
+                cursor.fetchone.return_value = {"ngo_id": "ngo-1"}
+                mock_db.return_value.__enter__.return_value = cursor
+                resp = client.patch("/assignment/a1/resolve", headers=AUTH_HEADERS)
+            assert resp.status_code == 200
+            assert resp.json()["status"] == "resolved"
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_resolve_assignment_ngo_another_ngo_forbidden(self, client):
+        """NGO cannot resolve assignment for volunteer from another NGO (403)."""
+        assignment = {"id": "a1", "need_id": "n1", "volunteer_id": "v-other-ngo", "resolved_at": None, "status": "assigned"}
+        from backend.main import app
+        from backend.auth import verify_token
+        app.dependency_overrides[verify_token] = lambda: {"uid": "ngo-attacker", "role": "ngo"}
+        try:
+            with patch("database.assignments_db.get_assignment_by_id", return_value=assignment), \
+                 patch("backend.routes.assignment.get_db_cursor") as mock_db:
+                cursor = MagicMock()
+                cursor.fetchone.return_value = {"ngo_id": "ngo-victim"}
+                mock_db.return_value.__enter__.return_value = cursor
+                resp = client.patch("/assignment/a1/resolve", headers=AUTH_HEADERS)
+            assert resp.status_code == 403
+            assert "not affiliated" in resp.json()["detail"]
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_resolve_assignment_unknown_role_forbidden(self, client):
+        """Unknown role cannot resolve assignments (403)."""
+        assignment = {"id": "a1", "need_id": "n1", "volunteer_id": "v1", "resolved_at": None, "status": "assigned"}
+        from backend.main import app
+        from backend.auth import verify_token
+        app.dependency_overrides[verify_token] = lambda: {"uid": "user-x", "role": "guest"}
+        try:
+            with patch("database.assignments_db.get_assignment_by_id", return_value=assignment):
+                resp = client.patch("/assignment/a1/resolve", headers=AUTH_HEADERS)
+            assert resp.status_code == 403
+        finally:
+            app.dependency_overrides.clear()
 
     def test_resolve_assignment_not_found(self, client):
         with patch("database.assignments_db.get_assignment_by_id", return_value=None):

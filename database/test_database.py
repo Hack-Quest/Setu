@@ -352,6 +352,60 @@ class TestAssignmentsDB:
         resolve_assignment("assign-1", "need-1", "vol-1")
         assert mock_cursor.execute.called
 
+    def test_save_assignment_raises_if_need_already_assigned(self, mock_cursor):
+        mock_cursor.fetchone.side_effect = [
+            {"active_assignments": 0, "name": "V", "phone": "123"},
+            {"status": "assigned"}
+        ]
+        from database.assignments_db import save_assignment
+        with pytest.raises(ValueError, match="already assigned"):
+            save_assignment("need-assigned", "vol-1")
+
+    def test_save_assignment_raises_if_need_not_found(self, mock_cursor):
+        mock_cursor.fetchone.side_effect = [
+            {"active_assignments": 0, "name": "V", "phone": "123"},
+            None
+        ]
+        from database.assignments_db import save_assignment
+        with pytest.raises(ValueError, match="not found"):
+            save_assignment("need-ghost", "vol-1")
+
+    def test_save_assignment_raises_if_volunteer_not_found(self, mock_cursor):
+        mock_cursor.fetchone.return_value = None
+        from database.assignments_db import save_assignment
+        with pytest.raises(ValueError, match="Volunteer 'vol-ghost' not found"):
+            save_assignment("need-open", "vol-ghost")
+
+    def test_save_assignment_raises_if_volunteer_at_capacity(self, mock_cursor):
+        mock_cursor.fetchone.return_value = {
+            "active_assignments": 3, "name": "Busy", "phone": "123"
+        }
+        from database.assignments_db import save_assignment
+        with pytest.raises(ValueError, match="maximum active assignments"):
+            save_assignment("need-open", "vol-busy")
+
+    def test_save_assignment_uses_atomic_sql_increment(self, mock_cursor):
+        mock_cursor.fetchone.side_effect = [
+            {"active_assignments": 1, "name": "V", "phone": "123"},
+            {"status": "open", "description": "Need food", "location_text": "Delhi"}
+        ]
+        from database.assignments_db import save_assignment
+        assign_id = save_assignment("need-open", "vol-1")
+        assert isinstance(assign_id, str) and len(assign_id) == 32
+        # Verify an execute call includes atomic increment and FOR UPDATE lock
+        queries = [call[0][0] for call in mock_cursor.execute.call_args_list]
+        assert any("FOR UPDATE" in q for q in queries)
+        assert any("active_assignments = active_assignments + 1" in q for q in queries)
+
+    def test_resolve_assignment_uses_atomic_sql_decrement(self, mock_cursor):
+        mock_cursor.fetchone.return_value = {"active_assignments": 2}
+        from database.assignments_db import resolve_assignment
+        res = resolve_assignment("assign-1", "need-1", "vol-1")
+        assert res is True
+        queries = [call[0][0] for call in mock_cursor.execute.call_args_list]
+        assert any("GREATEST(0, active_assignments - 1)" in q for q in queries)
+
+
 
 # -----------------------------------------------------------------------------
 # OTP DB

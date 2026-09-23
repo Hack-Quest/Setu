@@ -126,6 +126,8 @@ def accept_need(
             "assignment_id": assignment_id,
             "message": f"Volunteer {resolved_volunteer_id} is now handling Need {need_id}",
         }
+    except ValueError as ve:
+        raise HTTPException(status_code=409, detail=str(ve))
     except Exception as e:
         print(f"Error in accept_need: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -185,10 +187,15 @@ def get_volunteer_assignments(
 
 
 @router.patch("/{assignment_id}/resolve")
-def resolve(assignment_id: str, token: str = Depends(verify_token)):
+def resolve(assignment_id: str, token: dict = Depends(verify_token)):
     """
-    Volunteer calls this to close a case.
+    Volunteer, NGO, or system calls this to close a case.
     Marks assignment resolved and frees the volunteer status.
+    Enforces authorization:
+      - Volunteer: must be the assigned volunteer (caller.uid == assignment.volunteer_id)
+      - NGO: volunteer must belong to this NGO (volunteer.ngo_id == caller.uid)
+      - System: allowed
+      - Unknown/other: 403 Forbidden
     """
     from database.assignments_db import resolve_assignment, get_assignment_by_id
 
@@ -199,12 +206,6 @@ def resolve(assignment_id: str, token: str = Depends(verify_token)):
             status_code=404, detail=f"Assignment '{assignment_id}' not found"
         )
 
-    # Prevent double-resolution
-    if doc.get("resolved_at") is not None or doc.get("status") == "resolved":
-        raise HTTPException(
-            status_code=409, detail="Assignment already resolved"
-        )
-
     need_id = doc.get("need_id")
     volunteer_id = doc.get("volunteer_id")
 
@@ -212,6 +213,42 @@ def resolve(assignment_id: str, token: str = Depends(verify_token)):
         raise HTTPException(
             status_code=422,
             detail="Assignment data corrupted: missing need_id or volunteer_id",
+        )
+
+    # 🔒 Authorization Check
+    caller_role = token.get("role") if isinstance(token, dict) else None
+    caller_uid = (
+        token.get("uid") or token.get("sub") or token.get("id") or token.get("volunteer_id")
+    ) if isinstance(token, dict) else None
+
+    if caller_role == "system":
+        pass  # System callers are authorized
+    elif caller_role == "volunteer":
+        if not caller_uid or caller_uid != volunteer_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Forbidden: You can only resolve your own assignments."
+            )
+    elif caller_role == "ngo":
+        # An NGO may resolve an assignment ONLY if the assigned volunteer belongs to that NGO
+        with get_db_cursor(commit=False) as cur:
+            cur.execute("SELECT ngo_id FROM volunteers WHERE id = %s", (volunteer_id,))
+            vol_row = cur.fetchone()
+        if not vol_row or vol_row.get("ngo_id") != caller_uid:
+            raise HTTPException(
+                status_code=403,
+                detail="Forbidden: Volunteer is not affiliated with your NGO."
+            )
+    else:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Unauthorized role to resolve assignments."
+        )
+
+    # Prevent double-resolution
+    if doc.get("resolved_at") is not None or doc.get("status") == "resolved":
+        raise HTTPException(
+            status_code=409, detail="Assignment already resolved"
         )
 
     resolve_assignment(assignment_id, need_id, volunteer_id)

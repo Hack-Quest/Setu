@@ -8,24 +8,39 @@ from database.volunteers_db import update_volunteer_status
 
 def save_assignment(need_id: str, volunteer_id: str) -> str:
     """
-    Creates a new assignment and automatically updates the 
-    status of both the volunteer and the community need.
+    Creates a new assignment and atomically updates both
+    the volunteer and the need status in a single database transaction.
     """
-    # Fetch volunteer details
-    with get_db_cursor(commit=False) as cur:
-        cur.execute("SELECT * FROM volunteers WHERE id = %s", (volunteer_id,))
-        vol_data = cur.fetchone() or {}
-
-    # Fetch need details
-    with get_db_cursor(commit=False) as cur:
-        cur.execute("SELECT * FROM needs_reports WHERE id = %s", (need_id,))
-        need_data = cur.fetchone() or {}
-
     doc_id = uuid.uuid4().hex
     assigned_at = datetime.now(timezone.utc)
 
-    # 1. Create the assignment record
     with get_db_cursor(commit=True) as cur:
+        # 1. Fetch volunteer and lock row
+        cur.execute(
+            "SELECT id, name, phone, active_assignments, available FROM volunteers WHERE id = %s FOR UPDATE",
+            (volunteer_id,)
+        )
+        vol_data = cur.fetchone()
+        if not vol_data:
+            raise ValueError(f"Volunteer '{volunteer_id}' not found")
+
+        if vol_data.get("active_assignments", 0) >= 3:
+            raise ValueError(f"Volunteer '{volunteer_id}' has reached maximum active assignments")
+
+        # 2. Fetch need and lock row
+        cur.execute(
+            "SELECT id, description, location_text, status FROM needs_reports WHERE id = %s FOR UPDATE",
+            (need_id,)
+        )
+        need_data = cur.fetchone()
+        if not need_data:
+            raise ValueError(f"Need '{need_id}' not found")
+
+        # Prevent duplicate active assignment if need is already assigned, resolved, or rejected
+        if need_data.get("status") in ("assigned", "resolved", "rejected"):
+            raise ValueError(f"Need '{need_id}' is already {need_data['status']}")
+
+        # 3. Create the assignment record
         cur.execute(
             """
             INSERT INTO assignments (
@@ -39,29 +54,30 @@ def save_assignment(need_id: str, volunteer_id: str) -> str:
                 assigned_at, "assigned", None
             )
         )
-    
-    # 2. Update the connected systems
-    update_need_status(need_id, "assigned")        
 
-    # 3. Update active assignments counter & availability
-    with get_db_cursor(commit=True) as cur:
-        cur.execute("SELECT active_assignments FROM volunteers WHERE id = %s", (volunteer_id,))
-        vol_row = cur.fetchone()
-        current = (vol_row.get("active_assignments", 0) if vol_row else 0) or 0
-        new_count = current + 1
-        available = False if new_count >= 3 else True
-        
+        # 4. Update need status to assigned
         cur.execute(
             """
-            UPDATE volunteers SET 
-                active_assignments = %s,
-                available = %s,
+            UPDATE needs_reports SET 
+                status = 'assigned',
                 updated_at = %s
             WHERE id = %s
             """,
-            (new_count, available, datetime.now(timezone.utc), volunteer_id)
+            (assigned_at, need_id)
         )
-    
+
+        # 5. Atomically update volunteer active_assignments counter & availability
+        cur.execute(
+            """
+            UPDATE volunteers SET 
+                active_assignments = active_assignments + 1,
+                available = CASE WHEN active_assignments + 1 >= 3 THEN FALSE ELSE TRUE END,
+                updated_at = %s
+            WHERE id = %s
+            """,
+            (assigned_at, volunteer_id)
+        )
+
     print(f"[INFO] Assignment {doc_id} created: Volunteer {volunteer_id} -> Need {need_id}")
     return doc_id
 
@@ -69,10 +85,12 @@ def save_assignment(need_id: str, volunteer_id: str) -> str:
 def resolve_assignment(doc_id: str, need_id: str, volunteer_id: str):
     """
     Marks the job as done, resolves the need, and frees up the volunteer.
+    All operations are committed in a single atomic database transaction.
     """
     resolved_at = datetime.now(timezone.utc)
 
     with get_db_cursor(commit=True) as cur:
+        # 1. Update assignment status
         cur.execute(
             """
             UPDATE assignments SET 
@@ -82,28 +100,32 @@ def resolve_assignment(doc_id: str, need_id: str, volunteer_id: str):
             """,
             (resolved_at, doc_id)
         )
-    
-    update_need_status(need_id, "resolved")      
-    
-    with get_db_cursor(commit=True) as cur:
-        cur.execute("SELECT active_assignments FROM volunteers WHERE id = %s", (volunteer_id,))
-        vol_row = cur.fetchone()
-        current = (vol_row.get("active_assignments", 0) if vol_row else 1) or 0
-        new_count = max(0, current - 1)
-        available = True if new_count < 3 else False
-        
+
+        # 2. Update need status
         cur.execute(
             """
-            UPDATE volunteers SET 
-                active_assignments = %s,
-                available = %s,
+            UPDATE needs_reports SET 
+                status = 'resolved',
                 updated_at = %s
             WHERE id = %s
             """,
-            (new_count, available, datetime.now(timezone.utc), volunteer_id)
+            (resolved_at, need_id)
         )
-    
+
+        # 3. Atomically decrement volunteer active_assignments counter & restore availability
+        cur.execute(
+            """
+            UPDATE volunteers SET 
+                active_assignments = GREATEST(0, active_assignments - 1),
+                available = TRUE,
+                updated_at = %s
+            WHERE id = %s
+            """,
+            (resolved_at, volunteer_id)
+        )
+
     print(f"[OK] Assignment {doc_id} resolved! Volunteer is free again.")
+    return True
 
 
 def get_assignments_by_volunteer_id(volunteer_id: str):

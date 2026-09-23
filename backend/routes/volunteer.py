@@ -2,6 +2,7 @@ import traceback
 from fastapi import APIRouter, Depends, HTTPException
 from backend.auth import verify_token                    # ✅ Centralised auth
 from database.volunteers_db import save_volunteer, get_available_volunteers, get_all_volunteers, hash_password
+from database.ngos_db import get_ngo
 from backend.models import VolunteerInput
 from database.geocoding import get_coordinates
 

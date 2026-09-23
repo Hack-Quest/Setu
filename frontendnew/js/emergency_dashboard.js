@@ -24,7 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ── WebSocket ─────────────────────────────────────────────
 function connectWebSocket() {
-    const wsUrl = API_BASE.replace(/^http/, 'ws') + '/ws';
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+        console.warn('WebSocket: No auth token found. Skipping connection.');
+        return;
+    }
+    const wsUrl = API_BASE.replace(/^http/, 'ws') + `/ws?token=${encodeURIComponent(token)}`;
     try {
         wsConnection = new WebSocket(wsUrl);
 
@@ -45,8 +50,10 @@ function connectWebSocket() {
         };
 
         wsConnection.onclose = () => {
-            // Reconnect after 5 s
-            setTimeout(connectWebSocket, 5000);
+            // Reconnect after 5 s if still authenticated
+            if (localStorage.getItem('auth_token')) {
+                setTimeout(connectWebSocket, 5000);
+            }
         };
     } catch (e) {
         console.warn('WebSocket unavailable:', e.message);

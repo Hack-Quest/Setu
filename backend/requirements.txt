@@ -8,5 +8,7 @@ bcrypt
 psycopg2-binary
 googlemaps
 passlib[bcrypt]
+PyJWT
+python-multipart
 pytest
 pytest-asyncio
