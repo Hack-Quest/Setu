@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SETU | Volunteer Registration</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-tertiary-container": "#ffede6",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9d9e5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-container": "#e0e3e5",
+                        "text-muted": "#64748B",
+                        "secondary-fixed": "#e0e3e5",
+                        "surface-container-low": "#f3f3fe",
+                        "on-secondary-fixed-variant": "#444749",
+                        "outline": "#737686",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-container": "#626567",
+                        "surface-bright": "#faf8ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#191b23",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-variant": "#e1e2ed",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#943700",
+                        "safety-green": "#22C55E",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#b4c5ff",
+                        "surface": "#faf8ff",
+                        "text-main": "#1E293B",
+                        "critical-red": "#EF4444",
+                        "tertiary-container": "#bc4800",
+                        "surface-container": "#ededf9",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "inverse-on-surface": "#f0f0fb",
+                        "border-gray": "#E2E8F0",
+                        "inverse-surface": "#2e3039",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c3c6d7",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-highest": "#e1e2ed",
+                        "primary": "#004ac6",
+                        "surface-container-high": "#e7e7f3",
+                        "on-background": "#191b23",
+                        "primary-container": "#2563eb",
+                        "secondary": "#5c5f61",
+                        "background": "#faf8ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "2rem",
+                        "margin-mobile": "1rem",
+                        "stack-md": "1rem",
+                        "gutter": "1.5rem",
+                        "container-max": "1280px",
+                        "margin-desktop": "2.5rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #faf8ff;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.7);
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at top right, rgba(0, 83, 219, 0.05), transparent), radial-gradient(circle at bottom left, rgba(0, 83, 219, 0.02), transparent);
+        }
+
+        .skill-checkbox:checked + label {
+            background-color: #004ac6;
+            color: #ffffff;
+            border-color: #004ac6;
+        }
+    </style>
+</head>
+
+<body class="text-on-background min-h-screen flex flex-col justify-between hero-gradient">
+    <!-- Top Navigation Bar -->
+    <header class="fixed top-0 w-full bg-surface-bright border-b border-border-gray z-50">
+        <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-16">
+            <div class="flex items-center gap-8">
+                <span class="font-headline-md text-headline-md font-bold text-surface-tint cursor-pointer" onclick="window.location.href='landing.html'">SETU</span>
+                <nav class="hidden md:flex gap-6 items-center">
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="landing.html">Home</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="map.html">Live Map</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="about.html">Science of SETU</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.href='login.html'"
+                    class="font-label-md text-label-md text-primary border border-primary px-4 py-2 rounded-lg hover:bg-surface-container transition-all">
+                    Login
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Registration Section -->
+    <main class="flex-grow pt-28 pb-16 flex items-center justify-center px-margin-mobile">
+        <div class="glass-card w-full max-w-xl p-8 rounded-2xl shadow-xl flex flex-col gap-6">
+            
+            <!-- Header Info -->
+            <div class="text-center">
+                <div class="w-14 h-14 bg-primary-fixed rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span class="material-symbols-outlined text-primary text-3xl">volunteer_activism</span>
+                </div>
+                <h1 class="font-headline-md text-headline-md text-text-main font-bold">Become a SETU Volunteer</h1>
+                <p class="text-label-md text-text-muted mt-1">Join the native disaster response network and provide critical assistance to communities in need.</p>
+            </div>
+
+            <!-- Inline Error Alert -->
+            <div id="form-error" style="display: none;" class="p-4 rounded-xl bg-error-container/60 border border-error/30 text-error flex items-start gap-3">
+                <span class="material-symbols-outlined text-xl flex-shrink-0 mt-0.5">error</span>
+                <div class="flex-1 text-sm font-medium" id="form-error-text"></div>
+            </div>
+
+            <!-- Registration Form Card -->
+            <form id="volunteerForm" class="flex flex-col gap-5" novalidate>
+                <!-- Full Name -->
+                <div class="flex flex-col gap-1.5">
+                    <label for="name" class="text-label-sm font-bold text-text-muted">FULL NAME <span class="text-critical-red">*</span></label>
+                    <input type="text" id="name" required placeholder="e.g. Aarav Sharma"
+                        class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                </div>
+
+                <!-- Email & Phone Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Email -->
+                    <div class="flex flex-col gap-1.5">
+                        <label for="email" class="text-label-sm font-bold text-text-muted">EMAIL ADDRESS <span class="text-critical-red">*</span></label>
+                        <input type="email" id="email" required placeholder="e.g. aarav@example.com"
+                            class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                    </div>
+                    <!-- Phone -->
+                    <div class="flex flex-col gap-1.5">
+                        <label for="phone" class="text-label-sm font-bold text-text-muted">PHONE NUMBER <span class="text-critical-red">*</span></label>
+                        <input type="tel" id="phone" required placeholder="e.g. 9876543210"
+                            class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="flex flex-col gap-1.5">
+                    <label for="password" class="text-label-sm font-bold text-text-muted">PASSWORD <span class="text-critical-red">*</span></label>
+                    <div class="relative">
+                        <input type="password" id="password" required placeholder="At least 6 characters"
+                            class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all pr-12">
+                        <button type="button" id="togglePasswordBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main p-1">
+                            <span class="material-symbols-outlined text-xl" id="togglePasswordIcon">visibility</span>
+                        </button>
+                    </div>
+                    <span class="text-xs text-text-muted">Used for direct portal authentication alongside secure OTP.</span>
+                </div>
+
+                <!-- Location -->
+                <div class="flex flex-col gap-1.5">
+                    <label for="location" class="text-label-sm font-bold text-text-muted">LOCATION / CITY <span class="text-critical-red">*</span></label>
+                    <input type="text" id="location" required placeholder="e.g. Delhi, Mumbai, Kanpur, Connaught Place"
+                        class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                    <span class="text-xs text-text-muted">Automatically geocoded to match you with nearby incident reports.</span>
+                </div>
+
+                <!-- Skills & Capabilities -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-label-sm font-bold text-text-muted">SKILLS &amp; CAPABILITIES <span class="text-critical-red">*</span></label>
+                    <p class="text-xs text-text-muted">Select all disaster relief areas you can contribute to:</p>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+                        <div>
+                            <input type="checkbox" id="skill-medical" name="skills" value="medical" class="hidden skill-checkbox">
+                            <label for="skill-medical" class="flex items-center gap-2 p-2.5 border border-border-gray rounded-lg cursor-pointer bg-white text-sm font-medium hover:border-primary transition-all select-none">
+                                <span class="material-symbols-outlined text-lg text-primary">medical_services</span>
+                                Medical
+                            </label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="skill-rescue" name="skills" value="rescue" class="hidden skill-checkbox">
+                            <label for="skill-rescue" class="flex items-center gap-2 p-2.5 border border-border-gray rounded-lg cursor-pointer bg-white text-sm font-medium hover:border-primary transition-all select-none">
+                                <span class="material-symbols-outlined text-lg text-primary">health_and_safety</span>
+                                Rescue
+                            </label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="skill-food" name="skills" value="food" class="hidden skill-checkbox">
+                            <label for="skill-food" class="flex items-center gap-2 p-2.5 border border-border-gray rounded-lg cursor-pointer bg-white text-sm font-medium hover:border-primary transition-all select-none">
+                                <span class="material-symbols-outlined text-lg text-primary">lunch_dining</span>
+                                Food / Relief
+                            </label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="skill-logistics" name="skills" value="logistics" class="hidden skill-checkbox">
+                            <label for="skill-logistics" class="flex items-center gap-2 p-2.5 border border-border-gray rounded-lg cursor-pointer bg-white text-sm font-medium hover:border-primary transition-all select-none">
+                                <span class="material-symbols-outlined text-lg text-primary">local_shipping</span>
+                                Logistics
+                            </label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="skill-shelter" name="skills" value="shelter" class="hidden skill-checkbox">
+                            <label for="skill-shelter" class="flex items-center gap-2 p-2.5 border border-border-gray rounded-lg cursor-pointer bg-white text-sm font-medium hover:border-primary transition-all select-none">
+                                <span class="material-symbols-outlined text-lg text-primary">night_shelter</span>
+                                Shelter
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Custom Skills Input -->
+                    <div class="mt-2">
+                        <input type="text" id="custom_skills" placeholder="Other skills (comma-separated, e.g. driving, counseling, translation)"
+                            class="w-full bg-white border border-border-gray rounded-lg px-4 py-2.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submitBtn"
+                    class="w-full bg-primary text-white font-label-md py-3.5 rounded-lg hover:opacity-90 transition-all font-bold flex items-center justify-center gap-2 shadow-md shadow-primary/20 mt-2">
+                    <span class="material-symbols-outlined">how_to_reg</span>
+                    <span>Complete Volunteer Registration</span>
+                </button>
+
+                <!-- Footer link to login -->
+                <p class="text-label-sm text-text-muted text-center pt-2">
+                    Already registered as a volunteer? 
+                    <a href="login.html" class="text-primary font-bold hover:underline">Log in here</a>
+                </p>
+            </form>
+
+            <!-- Success Card (hidden initially) -->
+            <div id="success-card" style="display: none;" class="flex flex-col items-center text-center py-6 gap-5">
+                <div class="w-16 h-16 bg-safety-green/10 text-safety-green rounded-full flex items-center justify-center">
+                    <span class="material-symbols-outlined text-4xl">check_circle</span>
+                </div>
+                <div>
+                    <h2 class="font-headline-md text-headline-md text-text-main font-bold">Registration Successful!</h2>
+                    <p class="text-body-md text-text-muted mt-2 max-w-md" id="success-message">
+                        Welcome to SETU! Your volunteer profile has been registered in the system. You can now log in to access your volunteer dashboard and receive disaster response assignments.
+                    </p>
+                </div>
+
+                <div class="w-full max-w-sm flex flex-col gap-3 pt-2">
+                    <button id="goToLoginBtn" onclick="window.location.href='login.html'"
+                        class="w-full bg-primary text-white font-label-md py-3.5 rounded-lg hover:opacity-90 transition-opacity font-bold flex items-center justify-center gap-2 shadow-md shadow-primary/20">
+                        <span class="material-symbols-outlined">login</span>
+                        <span>Proceed to Login</span>
+                    </button>
+                    <p class="text-xs text-text-muted" id="redirect-countdown">
+                        Redirecting to login in 5 seconds...
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface-container-low border-t border-border-gray py-8">
+        <div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto gap-4 font-label-sm text-label-sm text-text-muted">
+            <div>
+                <span class="font-headline-md text-headline-md text-primary font-bold">SETU</span>
+                <p class="inline-block ml-2">© 2024 SETU Emergency Systems</p>
+            </div>
+            <div class="flex gap-6">
+                <a href="landing.html" class="hover:text-primary transition-colors">Home</a>
+                <a href="about.html" class="hover:text-primary transition-colors">Science of SETU</a>
+                <a href="login.html" class="hover:text-primary transition-colors">Portal Login</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/volunteer-register.js"></script>
+</body>
+
+</html>

@@ -62,7 +62,7 @@ function logout(redirectTo = 'landing.html') {
 // ── Google Forms ───────────────────────────────────────────
 function openNeedForm()      { window.open(window.SETU_NEED_FORM_URL,      '_blank'); }
 function openNGOForm()       { window.open(window.SETU_NGO_FORM_URL,       '_blank'); }
-function openVolunteerForm() { window.open(window.SETU_VOLUNTEER_FORM_URL, '_blank'); }
+function openVolunteerForm() { window.location.href = 'volunteer-register.html'; }
 
 // ── Severity Helpers ───────────────────────────────────────
 const SEVERITY_COLORS = {

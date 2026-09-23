@@ -1,23 +1,24 @@
 // ============================================================
-// frontend/js/login.js  — SETU OTP Login Flow
+// frontend/js/login.js  — SETU Portal Login Flow
 // ============================================================
 // Drives the login.html page:
-//   1. User enters email + selects role → Send OTP
-//   2. User enters OTP → Verify → redirect based on role
+//   1. OTP Verification Flow (Default):
+//      - User enters email + selects role → Send OTP
+//      - User enters OTP → Verify → redirect based on role
+//   2. Direct Password Flow:
+//      - Registered volunteers enter email + password → redirect to volunteer dashboard
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    // OTP flow elements
     const sendBtn    = document.getElementById('sendBtn');
     const verifyBtn  = document.getElementById('verifyBtn');
-    const otpSection = document.getElementById('otp-section');
     const emailInput = document.getElementById('email');
-    const roleSelect = document.getElementById('role');
     const otpInput   = document.getElementById('otp');
 
     if (sendBtn)   sendBtn.addEventListener('click',   sendOTP);
     if (verifyBtn) verifyBtn.addEventListener('click', verifyOTP);
 
-    // Allow pressing Enter in OTP field to verify
     if (otpInput) {
         otpInput.addEventListener('keydown', e => {
             if (e.key === 'Enter') verifyOTP();
@@ -26,6 +27,46 @@ document.addEventListener('DOMContentLoaded', () => {
     if (emailInput) {
         emailInput.addEventListener('keydown', e => {
             if (e.key === 'Enter') sendOTP();
+        });
+    }
+
+    // Password flow elements
+    const loginPassBtn  = document.getElementById('loginPassBtn');
+    const passEmail     = document.getElementById('passEmail');
+    const passPassword  = document.getElementById('passPassword');
+
+    if (loginPassBtn) loginPassBtn.addEventListener('click', loginWithPassword);
+
+    if (passPassword) {
+        passPassword.addEventListener('keydown', e => {
+            if (e.key === 'Enter') loginWithPassword();
+        });
+    }
+    if (passEmail) {
+        passEmail.addEventListener('keydown', e => {
+            if (e.key === 'Enter') loginWithPassword();
+        });
+    }
+
+    // Tab switcher
+    const tabOtp      = document.getElementById('tabOtp');
+    const tabPassword = document.getElementById('tabPassword');
+    const otpFlow     = document.getElementById('otp-flow');
+    const passFlow    = document.getElementById('password-flow');
+
+    if (tabOtp && tabPassword && otpFlow && passFlow) {
+        tabOtp.addEventListener('click', () => {
+            tabOtp.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-primary text-primary transition-all';
+            tabPassword.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-transparent text-text-muted hover:text-text-main transition-all';
+            otpFlow.style.display = 'flex';
+            passFlow.style.display = 'none';
+        });
+
+        tabPassword.addEventListener('click', () => {
+            tabPassword.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-primary text-primary transition-all';
+            tabOtp.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-transparent text-text-muted hover:text-text-main transition-all';
+            passFlow.style.display = 'flex';
+            otpFlow.style.display = 'none';
         });
     }
 });
@@ -144,6 +185,60 @@ async function verifyOTP() {
     }
 }
 
+// ── Step 3: Password Login Flow ───────────────────────────
+async function loginWithPassword() {
+    const email = document.getElementById('passEmail')?.value?.trim();
+    const password = document.getElementById('passPassword')?.value;
+
+    if (!email || !password) {
+        showToast('Please enter both email and password', 'warning');
+        return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showToast('Please enter a valid email address', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('loginPassBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Logging in…'; }
+
+    try {
+        const response = await ApiService.login({ email, password });
+
+        if (!response.ok) {
+            showToast(response.error || 'Invalid email or password', 'error');
+            return;
+        }
+
+        const data = response.data;
+        if (data.token) localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('role', 'volunteer');
+        localStorage.removeItem('ngo_id');
+
+        const volunteerId = data.volunteer_id || data.id;
+        if (volunteerId && volunteerId !== 'null' && volunteerId !== 'undefined') {
+            localStorage.setItem('volunteer_id', volunteerId);
+        }
+
+        if (data.name) localStorage.setItem('name', data.name);
+        if (data.email) localStorage.setItem('user_email', data.email);
+
+        showToast('Login successful! Redirecting…', 'success');
+
+        setTimeout(() => {
+            window.location.href = 'volunteer.html';
+        }, 800);
+
+    } catch (err) {
+        console.error('loginWithPassword error:', err);
+        showToast('Server error. Please try again.', 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Log In'; }
+    }
+}
+
 // Expose for any inline onclick="" usage
-window.sendOTP   = sendOTP;
-window.verifyOTP = verifyOTP;
+window.sendOTP           = sendOTP;
+window.verifyOTP         = verifyOTP;
+window.loginWithPassword = loginWithPassword;

@@ -131,7 +131,7 @@
                 </nav>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="openVolunteerForm()"
+                <button onclick="window.location.href='volunteer-register.html'"
                     class="font-label-md text-label-md bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 transition-all">Volunteer
                     Signup</button>
             </div>
@@ -146,39 +146,74 @@
                     <span class="material-symbols-outlined text-primary text-2xl">lock</span>
                 </div>
                 <h2 class="font-headline-md text-headline-md text-text-main font-bold">Secure Portal Login</h2>
-                <p class="text-label-md text-text-muted mt-1">Access your dashboard via secure email verification.</p>
+                <p class="text-label-md text-text-muted mt-1">Access your dashboard via secure credentials or email verification.</p>
             </div>
 
-            <!-- Role Selection -->
-            <div class="flex flex-col gap-2">
-                <label for="role" class="text-label-sm font-bold text-text-muted">SELECT PORTAL ROLE</label>
-                <select id="role" class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
-                    <option value="volunteer">Volunteer Responder</option>
-                    <option value="ngo">NGO Administrator</option>
-                </select>
-            </div>
-
-            <!-- Email Input -->
-            <div class="flex flex-col gap-2">
-                <label for="email" class="text-label-sm font-bold text-text-muted">EMAIL ADDRESS</label>
-                <input type="email" id="email" placeholder="Enter your email (e.g. name@domain.com)" class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
-            </div>
-
-            <!-- Send OTP Button -->
-            <button id="sendBtn" class="w-full bg-primary text-white font-label-md py-3.5 rounded-lg hover:opacity-90 transition-opacity font-bold">
-                Send Verification OTP
-            </button>
-
-            <!-- OTP Verification Section -->
-            <div id="otp-section" style="display: none;" class="flex flex-col gap-4 pt-4 border-t border-border-gray">
-                <div class="flex flex-col gap-2">
-                    <label for="otp" class="text-label-sm font-bold text-text-muted">ENTER OTP CODE</label>
-                    <input type="text" id="otp" placeholder="Enter 6-digit code" class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-center tracking-widest font-bold">
-                </div>
-                <button id="verifyBtn" class="w-full bg-safety-green text-white font-label-md py-3.5 rounded-lg hover:opacity-90 transition-opacity font-bold">
-                    Verify &amp; Login
+            <!-- Login Method Tabs -->
+            <div class="flex border-b border-border-gray">
+                <button id="tabOtp" type="button" class="flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-primary text-primary transition-all">
+                    OTP Verification
+                </button>
+                <button id="tabPassword" type="button" class="flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-transparent text-text-muted hover:text-text-main transition-all">
+                    Password Login
                 </button>
             </div>
+
+            <!-- Flow 1: OTP Verification (Default) -->
+            <div id="otp-flow" class="flex flex-col gap-4">
+                <!-- Role Selection -->
+                <div class="flex flex-col gap-2">
+                    <label for="role" class="text-label-sm font-bold text-text-muted">SELECT PORTAL ROLE</label>
+                    <select id="role" class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                        <option value="volunteer">Volunteer Responder</option>
+                        <option value="ngo">NGO Administrator</option>
+                    </select>
+                </div>
+
+                <!-- Email Input -->
+                <div class="flex flex-col gap-2">
+                    <label for="email" class="text-label-sm font-bold text-text-muted">EMAIL ADDRESS</label>
+                    <input type="email" id="email" placeholder="Enter your email (e.g. name@domain.com)" class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                </div>
+
+                <!-- Send OTP Button -->
+                <button id="sendBtn" class="w-full bg-primary text-white font-label-md py-3.5 rounded-lg hover:opacity-90 transition-opacity font-bold">
+                    Send Verification OTP
+                </button>
+
+                <!-- OTP Verification Section -->
+                <div id="otp-section" style="display: none;" class="flex flex-col gap-4 pt-4 border-t border-border-gray">
+                    <div class="flex flex-col gap-2">
+                        <label for="otp" class="text-label-sm font-bold text-text-muted">ENTER OTP CODE</label>
+                        <input type="text" id="otp" placeholder="Enter 6-digit code" class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-center tracking-widest font-bold">
+                    </div>
+                    <button id="verifyBtn" class="w-full bg-safety-green text-white font-label-md py-3.5 rounded-lg hover:opacity-90 transition-opacity font-bold">
+                        Verify &amp; Login
+                    </button>
+                </div>
+            </div>
+
+            <!-- Flow 2: Password Login -->
+            <div id="password-flow" style="display: none;" class="flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="passEmail" class="text-label-sm font-bold text-text-muted">EMAIL ADDRESS</label>
+                    <input type="email" id="passEmail" placeholder="Enter your registered email" class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="passPassword" class="text-label-sm font-bold text-text-muted">PASSWORD</label>
+                    <input type="password" id="passPassword" placeholder="Enter your password" class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                </div>
+
+                <button id="loginPassBtn" class="w-full bg-primary text-white font-label-md py-3.5 rounded-lg hover:opacity-90 transition-opacity font-bold">
+                    Log In
+                </button>
+            </div>
+
+            <!-- Bottom Registration Link -->
+            <p class="text-label-sm text-text-muted text-center pt-2 border-t border-border-gray">
+                New volunteer? <a href="volunteer-register.html" class="text-primary font-bold hover:underline">Register here</a>
+            </p>
         </div>
     </main>
 
