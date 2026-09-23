@@ -1,5 +1,5 @@
 import traceback
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from backend.models import NeedInput
 from backend.auth import verify_token
 from ai_processing.gemini_processor import process_need_text
@@ -202,6 +202,8 @@ def process_and_save_need(data: NeedInput, background_tasks: BackgroundTasks):
 
         return final_data
 
+    except HTTPException:
+        raise
     except Exception as e:
         traceback.print_exc()
         return {"error": str(e)}

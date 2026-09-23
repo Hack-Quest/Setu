@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>SETU | Report an Emergency</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#0053db",
+                        "on-tertiary-container": "#ffede6",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#d9d9e5",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-container": "#e0e3e5",
+                        "text-muted": "#64748B",
+                        "secondary-fixed": "#e0e3e5",
+                        "surface-container-low": "#f3f3fe",
+                        "on-secondary-fixed-variant": "#444749",
+                        "outline": "#737686",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-container": "#626567",
+                        "surface-bright": "#faf8ff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-surface": "#191b23",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#360f00",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#191c1e",
+                        "surface-variant": "#e1e2ed",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#943700",
+                        "safety-green": "#22C55E",
+                        "error": "#ba1a1a",
+                        "inverse-primary": "#b4c5ff",
+                        "surface": "#faf8ff",
+                        "text-main": "#1E293B",
+                        "critical-red": "#EF4444",
+                        "tertiary-container": "#bc4800",
+                        "surface-container": "#ededf9",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#c4c7c9",
+                        "inverse-on-surface": "#f0f0fb",
+                        "border-gray": "#E2E8F0",
+                        "inverse-surface": "#2e3039",
+                        "on-tertiary-fixed-variant": "#7d2d00",
+                        "outline-variant": "#c3c6d7",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#434655",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "surface-container-highest": "#e1e2ed",
+                        "primary": "#004ac6",
+                        "surface-container-high": "#e7e7f3",
+                        "on-background": "#191b23",
+                        "primary-container": "#2563eb",
+                        "secondary": "#5c5f61",
+                        "background": "#faf8ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "2rem",
+                        "margin-mobile": "1rem",
+                        "stack-md": "1rem",
+                        "gutter": "1.5rem",
+                        "container-max": "1280px",
+                        "margin-desktop": "2.5rem",
+                        "stack-sm": "0.5rem"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #faf8ff;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.6);
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at top right, rgba(239, 68, 68, 0.05), transparent),
+                        radial-gradient(circle at bottom left, rgba(0, 83, 219, 0.03), transparent);
+        }
+    </style>
+</head>
+
+<body class="text-on-background min-h-screen flex flex-col justify-between hero-gradient">
+    <!-- Top Navigation Bar -->
+    <header class="fixed top-0 w-full bg-surface-bright/95 backdrop-blur-md border-b border-border-gray z-50">
+        <div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-16">
+            <div class="flex items-center gap-8">
+                <span onclick="window.location.href='landing.html'"
+                    class="font-headline-md text-headline-md font-bold text-surface-tint cursor-pointer">SETU</span>
+                <nav class="hidden md:flex gap-6 items-center">
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="landing.html">Home</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="emergency_dashboard.html">Live Dashboard</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="map.html">Crisis Map</a>
+                    <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors duration-200"
+                        href="about.html">Science of SETU</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="user-badge" class="hidden items-center gap-2 bg-surface-container px-3 py-1.5 rounded-lg border border-border-gray text-label-sm font-medium text-text-main">
+                    <span class="material-symbols-outlined text-primary text-[18px]">account_circle</span>
+                    <span id="user-identifier">Authenticated</span>
+                </div>
+                <button id="logoutBtn" onclick="logout('landing.html')"
+                    class="font-label-md text-label-sm text-text-muted hover:text-critical-red border border-border-gray hover:border-red-200 px-3 py-1.5 rounded-lg transition-all">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow pt-24 pb-16 px-margin-mobile">
+        <div class="max-w-3xl mx-auto flex flex-col gap-6">
+
+            <!-- Breadcrumb Navigation -->
+            <div class="flex items-center gap-2 text-label-sm text-text-muted">
+                <a href="landing.html" class="hover:text-primary transition-colors">Home</a>
+                <span>/</span>
+                <span class="text-text-main font-semibold">Report Emergency</span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="flex flex-col gap-2">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-critical-red border border-red-200 w-fit">
+                    <span class="material-symbols-outlined text-[18px]">emergency</span>
+                    <span class="font-label-sm uppercase tracking-wider font-bold">SETU Emergency Assistance Portal</span>
+                </div>
+                <h1 class="font-display-lg text-[32px] sm:text-[40px] text-text-main font-bold leading-tight">
+                    Emergency Need Report
+                </h1>
+                <p class="font-body-md text-body-md text-text-muted">
+                    Submit verified emergency information directly to the SETU automated triage pipeline. Reports are instantly analyzed for severity, geo-matched, and dispatched to nearby volunteer squads.
+                </p>
+            </div>
+
+            <!-- Form Section -->
+            <div id="emergency-form-section" class="glass-card p-6 sm:p-8 rounded-2xl shadow-xl flex flex-col gap-6">
+                <!-- Inline Error Banner -->
+                <div id="form-error-banner" style="display: none;" class="p-4 rounded-xl bg-red-50 border border-red-200 text-critical-red flex items-start gap-3">
+                    <span class="material-symbols-outlined text-xl flex-shrink-0 mt-0.5">error</span>
+                    <div class="flex-grow text-label-md">
+                        <span id="form-error-message" class="font-medium">Please review the form errors below.</span>
+                    </div>
+                </div>
+
+                <form id="emergencyForm" onsubmit="handleEmergencySubmit(event)" class="flex flex-col gap-6" novalidate>
+                    <!-- 1. Reporter Identity -->
+                    <div class="flex flex-col gap-4">
+                        <h2 class="font-headline-md text-headline-md font-bold text-text-main flex items-center gap-2 border-b border-border-gray pb-2">
+                            <span class="material-symbols-outlined text-primary">person</span>
+                            1. Reporter Information
+                        </h2>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="flex flex-col gap-1.5">
+                                <label for="reporter_name" class="text-label-sm font-bold text-text-muted">
+                                    YOUR FULL NAME <span class="text-critical-red">*</span>
+                                </label>
+                                <input type="text" id="reporter_name" name="reporter_name" required
+                                    placeholder="Enter your name"
+                                    class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md text-text-main focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                                <span id="err-reporter_name" class="text-[12px] text-critical-red font-medium hidden">Name is required.</span>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label for="reporter_phone" class="text-label-sm font-bold text-text-muted">
+                                    CONTACT PHONE NUMBER (10 DIGITS) <span class="text-critical-red">*</span>
+                                </label>
+                                <input type="tel" id="reporter_phone" name="reporter_phone" required maxlength="10"
+                                    placeholder="e.g. 9876543210"
+                                    class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md text-text-main focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                                <span id="err-reporter_phone" class="text-[12px] text-critical-red font-medium hidden">Enter a valid 10-digit mobile number.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Location & Coordinates -->
+                    <div class="flex flex-col gap-4">
+                        <h2 class="font-headline-md text-headline-md font-bold text-text-main flex items-center gap-2 border-b border-border-gray pb-2">
+                            <span class="material-symbols-outlined text-primary">location_on</span>
+                            2. Incident Location
+                        </h2>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label for="location_text" class="text-label-sm font-bold text-text-muted">
+                                ADDRESS, LANDMARK, OR LOCALITY <span class="text-critical-red">*</span>
+                            </label>
+                            <input type="text" id="location_text" name="location_text"
+                                placeholder="e.g. Civil Lines, Near Central Station, Kanpur, India"
+                                class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md text-text-main focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                            <span id="err-location_text" class="text-[12px] text-critical-red font-medium hidden">Location address or GPS coordinates are required.</span>
+                        </div>
+
+                        <!-- GPS Location Capture -->
+                        <div class="bg-surface-container-low p-4 rounded-xl border border-border-gray flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex items-start gap-3">
+                                <span class="material-symbols-outlined text-primary text-2xl mt-0.5">my_location</span>
+                                <div>
+                                    <div class="text-label-md font-bold text-text-main">GPS Geolocation</div>
+                                    <div id="gps-status-text" class="text-label-sm text-text-muted">
+                                        Optional: Automatically attach your live device coordinates to bypass address geocoding.
+                                    </div>
+                                    <div id="gps-coords-display" class="hidden font-mono text-[13px] text-safety-green font-semibold mt-1"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button type="button" id="getGpsBtn" onclick="captureUserLocation()"
+                                    class="bg-white border border-primary text-primary hover:bg-primary hover:text-white px-4 py-2.5 rounded-lg font-label-sm font-bold flex items-center gap-1.5 transition-all shadow-sm">
+                                    <span class="material-symbols-outlined text-[18px]">gps_fixed</span>
+                                    <span id="gpsBtnText">Capture GPS</span>
+                                </button>
+                                <button type="button" id="clearGpsBtn" onclick="clearGpsLocation()" style="display: none;"
+                                    class="bg-white border border-border-gray text-text-muted hover:text-critical-red px-3 py-2.5 rounded-lg font-label-sm transition-all" title="Clear GPS Coordinates">
+                                    <span class="material-symbols-outlined text-[18px]">clear</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hidden GPS input fields -->
+                        <input type="hidden" id="lat" name="lat" value="0.0">
+                        <input type="hidden" id="lng" name="lng" value="0.0">
+                    </div>
+
+                    <!-- 3. Disaster & Help Type -->
+                    <div class="flex flex-col gap-4">
+                        <h2 class="font-headline-md text-headline-md font-bold text-text-main flex items-center gap-2 border-b border-border-gray pb-2">
+                            <span class="material-symbols-outlined text-primary">warning</span>
+                            3. Disaster & Assistance Details
+                        </h2>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="flex flex-col gap-1.5">
+                                <label for="disaster_type" class="text-label-sm font-bold text-text-muted">
+                                    TYPE OF DISASTER <span class="text-critical-red">*</span>
+                                </label>
+                                <select id="disaster_type" name="disaster_type" required
+                                    class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md text-text-main focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                                    <option value="Flood">Flood</option>
+                                    <option value="Earthquake">Earthquake</option>
+                                    <option value="Building Collapse">Building Collapse</option>
+                                    <option value="Fire">Fire</option>
+                                    <option value="Medical Emergency">Medical Emergency</option>
+                                    <option value="Landslide">Landslide</option>
+                                    <option value="Cyclone">Cyclone</option>
+                                    <option value="Other">Other Emergency</option>
+                                </select>
+                            </div>
+
+                            <div class="flex flex-col gap-1.5">
+                                <label for="help_needed" class="text-label-sm font-bold text-text-muted">
+                                    IMMEDIATE ASSISTANCE NEEDED <span class="text-critical-red">*</span>
+                                </label>
+                                <select id="help_needed" name="help_needed" required
+                                    class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md text-text-main focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                                    <option value="Search &amp; Rescue">Search &amp; Rescue</option>
+                                    <option value="Medical Assistance">Medical Assistance</option>
+                                    <option value="Food &amp; Clean Water">Food &amp; Clean Water</option>
+                                    <option value="Logistics &amp; Evacuation">Logistics &amp; Evacuation</option>
+                                    <option value="Temporary Shelter">Temporary Shelter</option>
+                                    <option value="Multiple / Urgent Relief">Multiple / Urgent Relief</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 4. Situation Description -->
+                        <div class="flex flex-col gap-1.5">
+                            <div class="flex justify-between items-center">
+                                <label for="description" class="text-label-sm font-bold text-text-muted">
+                                    SITUATION DESCRIPTION <span class="text-critical-red">*</span>
+                                </label>
+                                <span id="charCount" class="text-[12px] text-text-muted font-medium">0 / 10 min chars</span>
+                            </div>
+                            <textarea id="description" name="description" rows="4" required minlength="10"
+                                placeholder="Describe what is happening: number of people stranded or injured, severity of danger, specific access challenges, or immediate survival needs..."
+                                class="w-full bg-white border border-border-gray rounded-lg px-4 py-3 text-label-md text-text-main focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"></textarea>
+                            <span id="err-description" class="text-[12px] text-critical-red font-medium hidden">Description must be at least 10 characters for AI triage.</span>
+                            <p class="text-[12px] text-text-muted">
+                                ℹ️ Detailed descriptions with specific urgency details receive higher verification and trust confidence from the triage engine.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-4 border-t border-border-gray flex flex-col sm:flex-row items-center gap-4">
+                        <button type="submit" id="submitBtn"
+                            class="w-full sm:w-auto flex-grow bg-critical-red text-white font-label-md py-4 px-8 rounded-xl hover:brightness-110 active:brightness-95 transition-all font-bold shadow-lg shadow-red-200 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-2xl">report</span>
+                            <span id="submitBtnText">Submit Emergency Report</span>
+                        </button>
+                        <a href="landing.html"
+                            class="w-full sm:w-auto text-center px-6 py-4 rounded-xl border border-border-gray text-text-muted hover:text-text-main hover:bg-surface-container font-label-md font-semibold transition-all">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Processed Result Display Section (Initially Hidden) -->
+            <div id="emergency-result-section" style="display: none;" class="glass-card p-6 sm:p-8 rounded-2xl shadow-xl flex flex-col gap-6">
+                <!-- Success Header -->
+                <div class="flex items-start gap-4 border-b border-border-gray pb-6">
+                    <div class="w-12 h-12 rounded-full bg-green-100 border border-green-200 flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-safety-green text-3xl">verified</span>
+                    </div>
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-green-50 text-safety-green border border-green-200 text-[12px] font-bold uppercase tracking-wider mb-1">
+                            Report Logged &amp; Processed
+                        </div>
+                        <h2 class="font-headline-md text-headline-md font-bold text-text-main">
+                            Emergency Request Submitted Successfully
+                        </h2>
+                        <p class="text-label-md text-text-muted mt-1">
+                            The request has been evaluated through the SETU AI verification pipeline and persisted into the emergency registry.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Backend Pipeline Result Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Request ID -->
+                    <div class="bg-surface-container-low p-4 rounded-xl border border-border-gray flex flex-col gap-1">
+                        <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Request ID</span>
+                        <span id="res-id" class="font-mono text-label-md font-bold text-text-main break-all">—</span>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="bg-surface-container-low p-4 rounded-xl border border-border-gray flex flex-col gap-1">
+                        <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Triage Status</span>
+                        <div>
+                            <span id="res-status" class="inline-block px-3 py-1 rounded-full text-label-sm font-bold tracking-wide uppercase bg-blue-100 text-primary border border-blue-200">—</span>
+                        </div>
+                    </div>
+
+                    <!-- Priority -->
+                    <div class="bg-surface-container-low p-4 rounded-xl border border-border-gray flex flex-col gap-1">
+                        <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Priority Level</span>
+                        <div>
+                            <span id="res-priority" class="inline-block px-3 py-1 rounded-full text-label-sm font-bold tracking-wide uppercase bg-red-100 text-critical-red border border-red-200">—</span>
+                        </div>
+                    </div>
+
+                    <!-- AI Category -->
+                    <div class="bg-surface-container-low p-4 rounded-xl border border-border-gray flex flex-col gap-1">
+                        <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">AI Category</span>
+                        <span id="res-category" class="font-label-md font-bold text-text-main capitalize">—</span>
+                    </div>
+
+                    <!-- Severity -->
+                    <div class="bg-surface-container-low p-4 rounded-xl border border-border-gray flex flex-col gap-1">
+                        <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Severity</span>
+                        <span id="res-severity" class="font-label-md font-bold text-text-main capitalize">—</span>
+                    </div>
+
+                    <!-- Trust Score -->
+                    <div class="bg-surface-container-low p-4 rounded-xl border border-border-gray flex flex-col gap-1">
+                        <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Trust Score</span>
+                        <span id="res-trust-score" class="font-label-md font-bold text-primary">—</span>
+                    </div>
+
+                    <!-- Dispatch Action -->
+                    <div class="bg-surface-container-low p-4 rounded-xl border border-border-gray flex flex-col gap-1">
+                        <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Dispatch Action</span>
+                        <span id="res-dispatch-action" class="font-label-md font-bold text-text-main font-mono">—</span>
+                    </div>
+
+                    <!-- Verification Flag -->
+                    <div class="bg-surface-container-low p-4 rounded-xl border border-border-gray flex flex-col gap-1">
+                        <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Verification Flag</span>
+                        <span id="res-flag" class="font-label-md font-bold text-text-main uppercase">—</span>
+                    </div>
+
+                    <!-- Coordinates / Resolved Location -->
+                    <div class="bg-surface-container-low p-4 rounded-xl border border-border-gray flex flex-col gap-1">
+                        <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Geo Coordinates</span>
+                        <span id="res-coords" class="font-mono text-label-sm text-text-main">—</span>
+                    </div>
+                </div>
+
+                <!-- Triage Reasons List -->
+                <div class="flex flex-col gap-2 bg-surface-container-low p-4 rounded-xl border border-border-gray">
+                    <span class="text-label-sm font-bold text-text-muted uppercase tracking-wider">
+                        Verification &amp; Scoring Assessment Log
+                    </span>
+                    <ul id="res-reasons-list" class="flex flex-col gap-1 text-label-sm text-text-main pl-4 list-disc">
+                        <li>Standard triage checks passed</li>
+                    </ul>
+                </div>
+
+                <!-- Action Links -->
+                <div class="flex flex-col sm:flex-row gap-4 pt-2">
+                    <button onclick="resetEmergencyForm()"
+                        class="bg-primary text-white font-label-md py-3.5 px-6 rounded-xl hover:opacity-90 font-bold transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">add_circle</span>
+                        Report Another Emergency
+                    </button>
+                    <a href="emergency_dashboard.html"
+                        class="bg-surface-container text-text-main border border-border-gray font-label-md py-3.5 px-6 rounded-xl hover:bg-surface-container-high font-bold transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        View Live Operations Dashboard
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-surface-container-low border-t border-border-gray py-8 mt-12">
+        <div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop max-w-container-max mx-auto gap-4 font-label-sm text-label-sm text-text-muted">
+            <div>
+                <span class="font-headline-md text-headline-md text-primary font-bold">SETU</span>
+                <p class="inline-block ml-2">© 2024 SETU Emergency Systems</p>
+            </div>
+            <div class="flex gap-6">
+                <a href="landing.html" class="hover:text-primary transition-colors">Home</a>
+                <a href="emergency_dashboard.html" class="hover:text-primary transition-colors">Live Dashboard</a>
+                <a href="map.html" class="hover:text-primary transition-colors">Crisis Map</a>
+                <a href="about.html" class="hover:text-primary transition-colors">Science of SETU</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/emergency_report.js"></script>
+</body>
+
+</html>

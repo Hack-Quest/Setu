@@ -24,14 +24,35 @@ class ApiService {
 
         try {
             const response = await fetch(url, { ...options, headers });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.detail || data.error || data.message || `HTTP ${response.status}`);
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (jsonErr) {
+                data = null;
             }
-            return { ok: true, data };
+
+            if (!response.ok) {
+                let errorMsg = `HTTP ${response.status}`;
+                if (data) {
+                    if (typeof data.detail === 'string') {
+                        errorMsg = data.detail;
+                    } else if (Array.isArray(data.detail)) {
+                        errorMsg = data.detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+                    } else if (data.error) {
+                        errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+                    } else if (data.message) {
+                        errorMsg = data.message;
+                    }
+                }
+                const err = new Error(errorMsg);
+                err.status = response.status;
+                err.data = data;
+                throw err;
+            }
+            return { ok: true, data, status: response.status };
         } catch (err) {
             console.error(`🚨 API [${endpoint}]:`, err.message);
-            return { ok: false, error: err.message };
+            return { ok: false, error: err.message, status: err.status || 0, data: err.data || null };
         }
     }
 

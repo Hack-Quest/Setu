@@ -168,9 +168,14 @@ async function verifyOTP() {
 
         showToast('Login successful! Redirecting…', 'success');
 
-        // Redirect based on role
+        // Redirect based on redirect parameter or role
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectUrl = urlParams.get('redirect');
+
         setTimeout(() => {
-            if (resolvedRole === 'ngo') {
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            } else if (resolvedRole === 'ngo') {
                 window.location.href = 'ngo.html';
             } else {
                 window.location.href = 'volunteer.html';

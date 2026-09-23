@@ -59,8 +59,8 @@ function logout(redirectTo = 'landing.html') {
     window.location.href = redirectTo;
 }
 
-// ── Google Forms ───────────────────────────────────────────
-function openNeedForm()      { window.open(window.SETU_NEED_FORM_URL,      '_blank'); }
+// ── Forms Navigation ───────────────────────────────────────
+function openNeedForm()      { window.location.href = 'emergency_report.html'; }
 function openNGOForm()       { window.open(window.SETU_NGO_FORM_URL,       '_blank'); }
 function openVolunteerForm() { window.location.href = 'volunteer-register.html'; }
 
