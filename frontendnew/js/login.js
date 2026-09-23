@@ -16,6 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const emailInput = document.getElementById('email');
     const otpInput   = document.getElementById('otp');
 
+    // Support URL prefill (e.g. from NGO registration: login.html?role=ngo&email=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get('role');
+    const emailParam = urlParams.get('email');
+    if (roleSelect && roleParam) roleSelect.value = roleParam;
+    if (emailInput && emailParam) emailInput.value = emailParam;
+
     if (sendBtn)   sendBtn.addEventListener('click',   sendOTP);
     if (verifyBtn) verifyBtn.addEventListener('click', verifyOTP);
 

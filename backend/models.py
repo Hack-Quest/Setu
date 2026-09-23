@@ -56,6 +56,7 @@ class NGOInput(BaseModel):
     email: Optional[str] = None
     password: Optional[str] = None
     description: Optional[str] = None
+    phone: Optional[str] = Field(default=None, validation_alias=AliasChoices("phone", "contact_phone", "mobile"))
 
 
 class SendOTPInput(BaseModel):

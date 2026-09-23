@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 from backend.models import NGOInput
-from database.ngos_db import save_ngo, get_ngo, get_all_ngos
+from database.ngos_db import save_ngo, get_ngo, get_all_ngos, get_ngo_by_email
 from backend.auth import verify_token
 from database.geocoding import get_coordinates
 from database.needs_db import get_need_by_id
@@ -73,15 +73,30 @@ async def register_ngo(request: Request):
         # Parse with Pydantic model (with our forgiving aliases)
         data = NGOInput(**raw_data)
         
+        # Check duplicate email if email is provided
+        if data.email:
+            clean_email = data.email.strip().lower()
+            existing = get_ngo_by_email(clean_email)
+            if existing:
+                raise HTTPException(
+                    status_code=400,
+                    detail="An NGO with this email already exists. Please log in instead."
+                )
+
         coords = get_coordinates(data.location) if data.location else None
         ngo_dict = data.model_dump() if hasattr(data, "model_dump") else data.dict()
         if coords:
             ngo_dict["lat"] = coords.get("lat", ngo_dict.get("lat", 0.0))
             ngo_dict["lng"] = coords.get("lng", ngo_dict.get("lng", 0.0))
             
+        if ngo_dict.get("email"):
+            ngo_dict["email"] = ngo_dict["email"].strip().lower()
+
         ngo_dict.pop("verified", None)
         doc_id = save_ngo(ngo_dict)
         return {"message": "NGO registered successfully", "id": doc_id}
+    except HTTPException:
+        raise
     except Exception as e:
         print("❌ NGO Registration Error:", e, flush=True)
         # Returning 200 even on error prevents Google Forms from indefinitely retrying the webhook
