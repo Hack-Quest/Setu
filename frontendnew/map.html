@@ -309,6 +309,19 @@
             }
         }
 
+        // Only NGO admins (or the system token, which never reaches the browser)
+        // can trigger the matching engine — reflect that in the UI instead of
+        // letting a logged-in volunteer click it and just get a 403.
+        function applyRoleRestrictions() {
+            const role = localStorage.getItem('role');
+            const runBtn = document.getElementById('runMatchBtn');
+            if (runBtn && role !== 'ngo') {
+                runBtn.disabled = true;
+                runBtn.title = 'Only NGO administrators can run the matching engine.';
+                runBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
         async function runMatching() {
             const btn = document.getElementById('runMatchBtn');
             if (btn) { btn.disabled = true; btn.textContent = 'Matching...'; }
@@ -326,7 +339,14 @@
             }
         }
 
-        window.onload = initMap;
+        window.onload = () => {
+            // /dashboard/reports and /match both require an authenticated
+            // session — send anonymous visitors to login instead of showing
+            // a permanently empty/erroring map.
+            if (!requireAuth('login.html')) return;
+            initMap();
+            applyRoleRestrictions();
+        };
     </script>
 </body>
 

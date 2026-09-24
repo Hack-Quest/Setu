@@ -16,6 +16,10 @@ let wsConnection     = null;
 
 // ── Init ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    // /dashboard and /dashboard/reports require an authenticated session —
+    // send anonymous visitors to login instead of letting the API calls fail.
+    if (!requireAuth('login.html')) return;
+
     loadLiveFeed();
     loadStats();
     setupFilterButtons();
@@ -80,7 +84,7 @@ async function loadLiveFeed() {
         if (feed) feed.innerHTML = `
             <div class="p-6 text-center text-text-muted">
                 <span class="material-symbols-outlined text-3xl mb-2 block">wifi_off</span>
-                Could not load live feed.
+                Unable to load live incidents. Please try again.
             </div>`;
     }
 }
@@ -97,7 +101,8 @@ function renderFeed(reports) {
     if (!feed) return;
 
     if (!reports.length) {
-        feed.innerHTML = `<div class="p-6 text-center text-text-muted font-label-md">No reports match this filter.</div>`;
+        const msg = currentFilter === 'all' ? 'No active incidents.' : 'No reports match this filter.';
+        feed.innerHTML = `<div class="p-6 text-center text-text-muted font-label-md">${msg}</div>`;
         return;
     }
 
@@ -147,12 +152,17 @@ function renderFeed(reports) {
 
 // ── Load Stats ────────────────────────────────────────────
 async function loadStats() {
+    const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? '—'; };
+
     try {
         const response = await ApiService.getDashboard();
-        if (!response.ok) return;
+        if (!response.ok) {
+            ['stat-active-emergencies', 'stat-available-volunteers', 'stat-avg-trust', 'stat-resolved-reports']
+                .forEach(id => setEl(id, '—'));
+            return;
+        }
 
         const d = response.data;
-        const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? '—'; };
 
         setEl('stat-active-emergencies', d.total_needs      ?? d.critical_cases ?? '—');
         setEl('stat-available-volunteers', d.total_volunteers ?? '—');
@@ -168,6 +178,8 @@ async function loadStats() {
 
     } catch (err) {
         console.error('loadStats error:', err);
+        ['stat-active-emergencies', 'stat-available-volunteers', 'stat-avg-trust', 'stat-resolved-reports']
+            .forEach(id => setEl(id, '—'));
     }
 }
 

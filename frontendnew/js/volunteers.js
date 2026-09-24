@@ -183,4 +183,8 @@ function escHtml(str) {
 window.filterVolunteers = filterVolunteers;
 window.applyMainFilter = applyMainFilter;
 
-document.addEventListener("DOMContentLoaded", loadVolunteers);
+// GET /volunteers requires an authenticated session — send anonymous
+// visitors to login instead of letting the 401 render as "no volunteers".
+if (requireAuth('login.html')) {
+    document.addEventListener("DOMContentLoaded", loadVolunteers);
+}

@@ -21,6 +21,7 @@ if (!token || !volunteerId || volunteerId === 'null' || volunteerId === 'undefin
     function initDashboard() {
         loadProfile();
         loadAssignments();
+        loadDutyStatus();
         setupEventListeners();
     }
 
@@ -39,16 +40,66 @@ function loadProfile() {
     if (nameEl)  nameEl.textContent  = name;
 }
 
+// ── On-Duty / Off-Duty Status ─────────────────────────────
+// There's no dedicated "get my profile" endpoint, so we reuse the existing
+// /volunteers list (already auth-gated) and pick out this volunteer's own
+// record to read the real `available` value on load / refresh.
+function setDutyUI(isAvailable) {
+    const toggle = document.getElementById('dutyToggle');
+    const label = document.getElementById('dutyLabel');
+    if (toggle) toggle.checked = isAvailable;
+    if (label) label.textContent = isAvailable ? 'You are On-Duty' : 'You are Off-Duty';
+}
+
+async function loadDutyStatus() {
+    const toggle = document.getElementById('dutyToggle');
+    if (!toggle) return;
+
+    try {
+        const response = await ApiService.getVolunteers();
+        if (!response.ok) throw new Error(response.error);
+
+        const list = Array.isArray(response.data) ? response.data : [];
+        const me = list.find(v => v.id === volunteerId);
+        setDutyUI(me ? !!me.available : true);
+    } catch (err) {
+        console.error('loadDutyStatus error:', err);
+        // Leave the toggle at its default (On-Duty) markup state rather than
+        // guessing — the rest of the dashboard still loads independently.
+    }
+}
+
+async function handleDutyToggle() {
+    const toggle = document.getElementById('dutyToggle');
+    if (!toggle) return;
+
+    const desiredAvailable = toggle.checked;
+    toggle.disabled = true;
+
+    try {
+        const response = await ApiService.updateVolunteerStatus(desiredAvailable);
+        if (!response.ok) throw new Error(response.error || 'Failed to update duty status');
+
+        // Only reflect the change once the backend has confirmed it.
+        setDutyUI(desiredAvailable);
+        showToast(desiredAvailable ? 'You are now On-Duty.' : 'You are now Off-Duty.', 'success');
+    } catch (err) {
+        console.error('handleDutyToggle error:', err);
+        // Revert the UI to the last known-good state — never pretend the change happened.
+        setDutyUI(!desiredAvailable);
+        showToast(err.message || 'Could not update your duty status. Please try again.', 'error');
+    } finally {
+        toggle.disabled = false;
+    }
+}
+
 function setupEventListeners() {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.addEventListener('click', () => logout('landing.html'));
 
     const dutyToggle = document.getElementById('dutyToggle');
     if (dutyToggle) {
-        dutyToggle.addEventListener('change', () => {
-            const label = document.getElementById('dutyLabel');
-            if (label) label.textContent = dutyToggle.checked ? 'You are On-Duty' : 'You are Off-Duty';
-        });
+        dutyToggle.addEventListener('change', handleDutyToggle);
     }
 
     const missionSection = document.getElementById('active-mission-section');

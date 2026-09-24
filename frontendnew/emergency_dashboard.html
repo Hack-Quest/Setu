@@ -259,31 +259,6 @@
                         <img class="w-full h-full object-cover"
                             data-alt="A sophisticated satellite-style digital map interface displaying an urban coastal region with glowing, semi-transparent heat map overlays and sharp geometric markers. The aesthetic is clean and professional, using a light mode palette with soft grays and bright whites. High-contrast severity markers in pulsing red, vibrant orange, and trust blue are scattered across the terrain, indicating active emergency response zones with absolute precision and clarity."
                             src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcZht_8Lp_TsssBi6KABXpFHbUSBU4xk9nvWcQe3E241LzQ1r2jjn-VO3FwlfmKaZgYmv03Y-fHXGDRTqFxKvE_CwIGTipwxXYlaphZTf5FO9kI0bE064G7tpIzYb3rNAZq6mMyW_zALctVkY4p6Dl6tkTc0SXswOpQdydCuSr5zUPIxebSwLuJxFl74SwcE3MSwiwfN5Vu5LVO-9ADU72CHUicH79EtzJRyyKwfA1b71yPDlFQxuQBvepm80YMAl4xkpkL8KYAVo" />
-                        <!-- Map Marker Overlays -->
-                        <div class="absolute top-[30%] left-[45%] group cursor-pointer">
-                            <div
-                                class="w-12 h-12 bg-critical-red/20 rounded-full flex items-center justify-center animate-pulse">
-                                <div class="w-4 h-4 bg-critical-red rounded-full border-2 border-white shadow-lg"></div>
-                            </div>
-                            <div
-                                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-white p-3 rounded-xl shadow-xl border border-border-gray opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                <span class="block text-label-sm font-label-sm text-critical-red mb-1">CRITICAL: Flood
-                                    Surge</span>
-                                <p class="text-[11px] text-text-muted mb-2">Sector 7A, Marina District. Urgent
-                                    evacuation required.</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-[10px] font-bold text-safety-green">98% TRUST</span>
-                                    <span class="text-[10px] text-text-muted">2m ago</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="absolute top-[60%] left-[20%] group cursor-pointer">
-                            <div
-                                class="w-10 h-10 bg-primary-container/20 rounded-full flex items-center justify-center animate-pulse-subtle">
-                                <div class="w-4 h-4 bg-primary-container rounded-full border-2 border-white shadow-lg">
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
                 <!-- Live Feed Section (Col 9-12) -->
@@ -296,78 +271,9 @@
                                 class="px-2 py-0.5 rounded-full bg-safety-green/10 text-safety-green text-[10px] font-bold border border-safety-green/20">LIVE</span>
                         </div>
                         <div id="live-feed-container" class="flex-1 overflow-y-auto p-4 space-y-4 report-feed-container">
-                            <!-- Report Item 1 (Critical) -->
-                            <div
-                                class="bg-surface-bright border border-border-gray p-gutter rounded-xl hover:border-primary-container transition-all group">
-                                <div class="flex justify-between items-start mb-stack-sm">
-                                    <span
-                                        class="px-2 py-0.5 rounded bg-critical-red text-on-primary text-[10px] font-bold">CRITICAL</span>
-                                    <span class="text-[11px] text-text-muted">Just Now</span>
-                                </div>
-                                <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Building Collapse
-                                    Risk</h4>
-                                <p class="text-body-md text-on-surface-variant text-[13px] mb-4">Multiple residents
-                                    trapped in West Side complex after structural failure. Rescue teams dispatched.</p>
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2">
-                                        <div
-                                            class="w-8 h-8 rounded-full border-2 border-safety-green p-0.5 flex items-center justify-center">
-                                            <span class="text-[10px] font-bold text-safety-green">94</span>
-                                        </div>
-                                        <span class="text-label-sm font-label-sm text-text-muted">Trust Score</span>
-                                    </div>
-                                    <button class="text-primary font-bold text-label-sm hover:underline">View
-                                        Intel</button>
-                                </div>
-                            </div>
-                            <!-- Report Item 2 (High) -->
-                            <div
-                                class="bg-surface-bright border border-border-gray p-gutter rounded-xl hover:border-primary-container transition-all">
-                                <div class="flex justify-between items-start mb-stack-sm">
-                                    <span
-                                        class="px-2 py-0.5 rounded bg-tertiary text-on-primary text-[10px] font-bold">HIGH
-                                        SEVERITY</span>
-                                    <span class="text-[11px] text-text-muted">12m ago</span>
-                                </div>
-                                <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Medical Supplies
-                                    Needed</h4>
-                                <p class="text-body-md text-on-surface-variant text-[13px] mb-4">Urgent request for
-                                    insulin and bandages at Central Field Hospital. Supply line blocked by rubble.</p>
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2">
-                                        <div
-                                            class="w-8 h-8 rounded-full border-2 border-safety-green p-0.5 flex items-center justify-center">
-                                            <span class="text-[10px] font-bold text-safety-green">82</span>
-                                        </div>
-                                        <span class="text-label-sm font-label-sm text-text-muted">Trust Score</span>
-                                    </div>
-                                    <button class="text-primary font-bold text-label-sm hover:underline">Assign
-                                        Team</button>
-                                </div>
-                            </div>
-                            <!-- Report Item 3 (Medium) -->
-                            <div
-                                class="bg-surface-bright border border-border-gray p-gutter rounded-xl hover:border-primary-container transition-all opacity-80">
-                                <div class="flex justify-between items-start mb-stack-sm">
-                                    <span
-                                        class="px-2 py-0.5 rounded bg-primary-container text-on-primary text-[10px] font-bold">LOGISTICS</span>
-                                    <span class="text-[11px] text-text-muted">45m ago</span>
-                                </div>
-                                <h4 class="font-label-md text-label-md font-bold text-on-surface mb-2">Power Grid
-                                    Interruption</h4>
-                                <p class="text-body-md text-on-surface-variant text-[13px] mb-4">Substation 4
-                                    flickering. May affect communication relays in District B.</p>
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2">
-                                        <div
-                                            class="w-8 h-8 rounded-full border-2 border-primary-fixed-dim p-0.5 flex items-center justify-center">
-                                            <span class="text-[10px] font-bold text-primary">61</span>
-                                        </div>
-                                        <span class="text-label-sm font-label-sm text-text-muted">Trust Score</span>
-                                    </div>
-                                    <button
-                                        class="text-primary font-bold text-label-sm hover:underline">Monitor</button>
-                                </div>
+                            <div class="flex items-center justify-center py-12 text-text-muted gap-3">
+                                <div class="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                Loading live incidents…
                             </div>
                         </div>
                     </div>
@@ -381,7 +287,7 @@
                             <span class="text-safety-green font-bold text-label-sm">+12% vs last hr</span>
                         </div>
                         <h5 class="text-text-muted font-label-md text-label-md mb-1">Active Emergencies</h5>
-                        <p id="stat-active-emergencies" class="font-display-lg text-[32px] font-bold text-on-surface">142</p>
+                        <p id="stat-active-emergencies" class="font-display-lg text-[32px] font-bold text-on-surface">—</p>
                     </div>
                     <div class="bg-surface-container-lowest border border-border-gray p-6 rounded-2xl">
                         <div class="flex justify-between mb-4">
@@ -390,7 +296,7 @@
                             <span class="text-text-muted font-bold text-label-sm">Steady</span>
                         </div>
                         <h5 class="text-text-muted font-label-md text-label-md mb-1">Available Volunteers</h5>
-                        <p id="stat-available-volunteers" class="font-display-lg text-[32px] font-bold text-on-surface">854</p>
+                        <p id="stat-available-volunteers" class="font-display-lg text-[32px] font-bold text-on-surface">—</p>
                     </div>
                     <div class="bg-surface-container-lowest border border-border-gray p-6 rounded-2xl">
                         <div class="flex justify-between mb-4">
@@ -408,7 +314,7 @@
                             <span class="text-safety-green font-bold text-label-sm">+214 today</span>
                         </div>
                         <h5 class="text-text-muted font-label-md text-label-md mb-1">Resolved Reports</h5>
-                        <p id="stat-resolved-reports" class="font-display-lg text-[32px] font-bold text-on-surface">1.2k</p>
+                        <p id="stat-resolved-reports" class="font-display-lg text-[32px] font-bold text-on-surface">—</p>
                     </div>
                 </div>
             </div>
@@ -422,14 +328,6 @@
             <div class="flex flex-col items-center md:items-start">
                 <span class="font-headline-md text-headline-md text-primary font-bold">SETU</span>
                 <p class="text-text-muted font-label-sm text-label-sm mt-1">© 2024 SETU Emergency Systems</p>
-            </div>
-            <div class="flex gap-gutter">
-                <a class="text-text-muted hover:text-primary transition-colors font-label-sm text-label-sm"
-                    href="#">Contact</a>
-                <a class="text-text-muted hover:text-primary transition-colors font-label-sm text-label-sm"
-                    href="#">Privacy</a>
-                <a class="text-text-muted hover:text-primary transition-colors font-label-sm text-label-sm"
-                    href="#">Documentation</a>
             </div>
         </div>
     </footer>

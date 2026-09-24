@@ -255,8 +255,11 @@ async function loginWithPassword() {
 
         showToast('Login successful! Redirecting…', 'success');
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectUrl = urlParams.get('redirect');
+
         setTimeout(() => {
-            window.location.href = 'volunteer.html';
+            window.location.href = redirectUrl || 'volunteer.html';
         }, 800);
 
     } catch (err) {

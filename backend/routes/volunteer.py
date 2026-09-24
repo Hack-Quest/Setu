@@ -1,9 +1,12 @@
 import traceback
 from fastapi import APIRouter, Depends, HTTPException
 from backend.auth import verify_token                    # ✅ Centralised auth
-from database.volunteers_db import save_volunteer, get_available_volunteers, get_all_volunteers, hash_password
+from database.volunteers_db import (
+    save_volunteer, get_available_volunteers, get_all_volunteers, hash_password,
+    update_volunteer_status,
+)
 from database.ngos_db import get_ngo
-from backend.models import VolunteerInput
+from backend.models import VolunteerInput, VolunteerStatusInput
 from database.geocoding import get_coordinates
 
 router = APIRouter()
@@ -66,6 +69,27 @@ def create_volunteer(data: VolunteerInput, token: dict = Depends(verify_token)):
         traceback.print_exc()
         print(f"❌ Route Error: {e}")
         return {"error": str(e)}
+
+
+@router.patch("/volunteer/status")
+def update_own_status(data: VolunteerStatusInput, token: dict = Depends(verify_token)):
+    """
+    Lets an authenticated volunteer set their own on-duty/off-duty availability.
+    Identity is derived solely from the token (uid) — a volunteer can never
+    pass another volunteer's id, so this can't be used to change someone else's status.
+    """
+    if not isinstance(token, dict) or token.get("role") != "volunteer":
+        raise HTTPException(
+            status_code=403,
+            detail="Only an authenticated volunteer can update their own duty status",
+        )
+
+    volunteer_id = token.get("uid")
+    if not volunteer_id:
+        raise HTTPException(status_code=401, detail="Invalid session")
+
+    update_volunteer_status(volunteer_id, data.available)
+    return {"id": volunteer_id, "available": data.available}
 
 
 @router.get("/volunteers")

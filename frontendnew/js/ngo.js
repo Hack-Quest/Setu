@@ -84,8 +84,34 @@ async function loadNGODashboard() {
     } catch (err) {
         console.error('loadNGODashboard error:', err);
         showToast('Failed to load dashboard. Retrying in 10s…', 'error');
+        renderDashboardError();
         setTimeout(loadNGODashboard, 10000);
     }
+}
+
+// ── Error State ────────────────────────────────────────────
+// Never leave the hardcoded placeholder markup on screen looking like live
+// data if the initial API call fails — replace it with an explicit error.
+function renderDashboardError() {
+    const assignments = document.getElementById('assignments-list');
+    if (assignments) {
+        assignments.innerHTML = `
+            <div class="flex items-center justify-center py-12 text-critical-red text-center px-6">
+                <div>
+                    <span class="material-symbols-outlined block mb-2">wifi_off</span>
+                    Unable to load active assignments. Please try again.
+                </div>
+            </div>`;
+    }
+
+    const team = document.getElementById('team-list');
+    if (team) {
+        team.innerHTML = `<p class="text-center text-critical-red py-6">Unable to load team status. Please try again.</p>`;
+    }
+
+    const set = (id) => { const el = document.getElementById(id); if (el) el.textContent = '—'; };
+    ['stat-verified-volunteers', 'stat-active-missions', 'stat-verified-professionals', 'stat-open-reports']
+        .forEach(set);
 }
 
 // ── Update Stat Cards ─────────────────────────────────────

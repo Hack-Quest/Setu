@@ -582,6 +582,36 @@ class TestVolunteerRoute:
         finally:
             app.dependency_overrides.clear()
 
+    def test_update_own_status_requires_auth(self, client):
+        resp = client.patch("/volunteer/status", json={"available": False})
+        assert resp.status_code == 401
+
+    def test_update_own_status_rejects_non_volunteer_role(self, client):
+        """NGO/system tokens must not be able to flip a volunteer's availability."""
+        from backend.main import app
+        from backend.auth import verify_token
+        app.dependency_overrides[verify_token] = lambda: {"uid": "ngo-1", "role": "ngo"}
+        try:
+            resp = client.patch("/volunteer/status", json={"available": False}, headers=AUTH_HEADERS)
+        finally:
+            app.dependency_overrides.clear()
+        assert resp.status_code == 403
+
+    def test_update_own_status_success_uses_token_identity(self, client):
+        """A volunteer can only ever update their own id — derived from the token, not the body."""
+        from backend.main import app
+        from backend.auth import verify_token
+        app.dependency_overrides[verify_token] = lambda: {"uid": "vol-self", "role": "volunteer"}
+        try:
+            with patch("backend.routes.volunteer.update_volunteer_status") as mock_update:
+                resp = client.patch("/volunteer/status", json={"available": False}, headers=AUTH_HEADERS)
+        finally:
+            app.dependency_overrides.clear()
+
+        assert resp.status_code == 200
+        assert resp.json() == {"id": "vol-self", "available": False}
+        mock_update.assert_called_once_with("vol-self", False)
+
     def test_list_volunteers_requires_auth(self, client):
         resp = client.get("/volunteers")
         assert resp.status_code == 401

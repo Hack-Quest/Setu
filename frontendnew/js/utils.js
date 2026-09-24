@@ -46,9 +46,14 @@ function showToast(message, type = 'info', duration = 4000) {
 }
 
 // ── Auth Guards ────────────────────────────────────────────
+// Redirects to `redirectTo` (login.html by default) if no session token is
+// present, preserving the current page as a `redirect` param so login.html
+// can send the user back where they came from after signing in.
 function requireAuth(redirectTo = 'login.html') {
     if (!localStorage.getItem('token') && !localStorage.getItem('auth_token')) {
-        window.location.href = redirectTo;
+        const currentPage = window.location.pathname.split('/').pop() || 'landing.html';
+        const separator = redirectTo.includes('?') ? '&' : '?';
+        window.location.href = `${redirectTo}${separator}redirect=${encodeURIComponent(currentPage)}`;
         return false;
     }
     return true;

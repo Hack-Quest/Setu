@@ -59,6 +59,10 @@ class NGOInput(BaseModel):
     phone: Optional[str] = Field(default=None, validation_alias=AliasChoices("phone", "contact_phone", "mobile"))
 
 
+class VolunteerStatusInput(BaseModel):
+    available: bool
+
+
 class SendOTPInput(BaseModel):
     email: str
 

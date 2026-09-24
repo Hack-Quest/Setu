@@ -77,6 +77,9 @@ class ApiService {
     static getVolunteers()          { return this.request('/volunteers'); }
     static postVolunteer(data)      { return this.request('/volunteer',  { method: 'POST', body: JSON.stringify(data) }); }
     static getVolunteerAssignments(id) { return this.request(`/assignment/volunteer/${id}`); }
+    static updateVolunteerStatus(available) {
+        return this.request('/volunteer/status', { method: 'PATCH', body: JSON.stringify({ available }) });
+    }
 
     // ── Assignments ───────────────────────────────────────────
     static acceptNeed(needId)        { return this.request(`/assignment/volunteer/${needId}`, { method: 'POST' }); }
