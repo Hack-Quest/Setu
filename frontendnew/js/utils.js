@@ -47,7 +47,7 @@ function showToast(message, type = 'info', duration = 4000) {
 
 // ── Auth Guards ────────────────────────────────────────────
 function requireAuth(redirectTo = 'login.html') {
-    if (!localStorage.getItem('auth_token')) {
+    if (!localStorage.getItem('token') && !localStorage.getItem('auth_token')) {
         window.location.href = redirectTo;
         return false;
     }
@@ -59,17 +59,10 @@ function logout(redirectTo = 'landing.html') {
     window.location.href = redirectTo;
 }
 
-<<<<<<< Updated upstream
 // ── Forms Navigation ───────────────────────────────────────
 function openNeedForm()      { window.location.href = 'emergency_report.html'; }
-function openNGOForm()       { window.open(window.SETU_NGO_FORM_URL,       '_blank'); }
-function openVolunteerForm() { window.location.href = 'volunteer-register.html'; }
-=======
-// ── Google Forms ───────────────────────────────────────────
-function openNeedForm()      { window.open(window.SETU_NEED_FORM_URL,      '_blank'); }
 function openNGOForm()       { window.location.href = 'ngo_register.html'; }
-function openVolunteerForm() { window.open(window.SETU_VOLUNTEER_FORM_URL, '_blank'); }
->>>>>>> Stashed changes
+function openVolunteerForm() { window.location.href = 'volunteer-register.html'; }
 
 // ── Severity Helpers ───────────────────────────────────────
 const SEVERITY_COLORS = {

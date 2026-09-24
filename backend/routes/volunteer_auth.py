@@ -58,6 +58,8 @@ def login_volunteer_endpoint(data: VolunteerLoginInput):
         return {
             "message": "Login successful",
             "volunteer_id": result["volunteer_id"],
+            "id": result["volunteer_id"],
+            "role": "volunteer",
             "name": result["name"],
             "email": result["email"],
             "token": jwt_token

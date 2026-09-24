@@ -10,18 +10,25 @@
 
 requireAuth('login.html');
 
+const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
 const volunteerId = localStorage.getItem('volunteer_id');
 
-// Safety check: invalid volunteer ID
-if (!volunteerId || volunteerId === 'null' || volunteerId === 'undefined') {
+// Safety check: invalid volunteer ID or missing token
+if (!token || !volunteerId || volunteerId === 'null' || volunteerId === 'undefined') {
     window.location.href = 'login.html';
 } else {
     // ── Init ──────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', () => {
+    function initDashboard() {
         loadProfile();
         loadAssignments();
         setupEventListeners();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    } else {
+        initDashboard();
+    }
 }
 
 function loadProfile() {

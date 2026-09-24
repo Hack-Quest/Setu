@@ -48,13 +48,35 @@ def get_pool():
                 if parsed.hostname and not parsed.hostname.startswith(("localhost", "127.0.0.1")):
                     conn_params["sslmode"] = "require"
 
-            # Threaded pool is safe for multi-threaded FastAPI servers
-            _pool = psycopg2.pool.ThreadedConnectionPool(
-                minconn=2,
-                maxconn=20,
-                **conn_params
-            )
-            print("[OK] PostgreSQL Connection Pool initialized successfully.", flush=True)
+            try:
+                # Threaded pool is safe for multi-threaded FastAPI servers
+                _pool = psycopg2.pool.ThreadedConnectionPool(
+                    minconn=2,
+                    maxconn=20,
+                    **conn_params
+                )
+                print("[OK] PostgreSQL Connection Pool initialized successfully.", flush=True)
+            except Exception as pool_err:
+                # If pooler connection fails (e.g. IPv6/NAT64 SSL EOF on Windows), try direct host fallback
+                if "pooler.supabase.com" in (conn_params.get("host") or ""):
+                    user_val = conn_params.get("user", "")
+                    proj_ref = user_val.split(".", 1)[1] if "." in user_val else None
+                    if proj_ref:
+                        print("[INFO] Pooler connection failed. Falling back to direct Supabase host...", flush=True)
+                        fallback_params = dict(conn_params)
+                        fallback_params["host"] = f"db.{proj_ref}.supabase.co"
+                        fallback_params["port"] = 5432
+                        fallback_params["user"] = "postgres"
+                        _pool = psycopg2.pool.ThreadedConnectionPool(
+                            minconn=2,
+                            maxconn=20,
+                            **fallback_params
+                        )
+                        print("[OK] PostgreSQL Connection Pool initialized via direct host fallback.", flush=True)
+                    else:
+                        raise pool_err
+                else:
+                    raise pool_err
         except Exception as e:
             print(f"[ERROR] Failed to initialize connection pool: {e}", flush=True)
             raise e

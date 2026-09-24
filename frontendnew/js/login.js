@@ -10,18 +10,56 @@
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Tab switcher elements
+    const tabOtp      = document.getElementById('tabOtp');
+    const tabPassword = document.getElementById('tabPassword');
+    const otpFlow     = document.getElementById('otp-flow');
+    const passFlow    = document.getElementById('password-flow');
+
     // OTP flow elements
     const sendBtn    = document.getElementById('sendBtn');
     const verifyBtn  = document.getElementById('verifyBtn');
     const emailInput = document.getElementById('email');
     const otpInput   = document.getElementById('otp');
+    const roleSelect = document.getElementById('role');
 
-    // Support URL prefill (e.g. from NGO registration: login.html?role=ngo&email=...)
+    // Password flow elements
+    const loginPassBtn  = document.getElementById('loginPassBtn');
+    const passEmail     = document.getElementById('passEmail');
+    const passPassword  = document.getElementById('passPassword');
+
+    // Support URL prefill (e.g. from NGO/volunteer registration: login.html?role=volunteer&email=... or ?tab=password)
     const urlParams = new URLSearchParams(window.location.search);
     const roleParam = urlParams.get('role');
     const emailParam = urlParams.get('email');
+    const tabParam = urlParams.get('tab');
+
     if (roleSelect && roleParam) roleSelect.value = roleParam;
     if (emailInput && emailParam) emailInput.value = emailParam;
+    if (passEmail && emailParam) passEmail.value = emailParam;
+
+    function activateTab(tab) {
+        if (tab === 'password' && tabPassword && tabOtp && passFlow && otpFlow) {
+            tabPassword.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-primary text-primary transition-all';
+            tabOtp.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-transparent text-text-muted hover:text-text-main transition-all';
+            passFlow.style.display = 'flex';
+            otpFlow.style.display = 'none';
+        } else if (tab === 'otp' && tabPassword && tabOtp && passFlow && otpFlow) {
+            tabOtp.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-primary text-primary transition-all';
+            tabPassword.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-transparent text-text-muted hover:text-text-main transition-all';
+            otpFlow.style.display = 'flex';
+            passFlow.style.display = 'none';
+        }
+    }
+
+    if (tabParam === 'password' || roleParam === 'volunteer') {
+        activateTab('password');
+    }
+
+    if (tabOtp && tabPassword) {
+        tabOtp.addEventListener('click', () => activateTab('otp'));
+        tabPassword.addEventListener('click', () => activateTab('password'));
+    }
 
     if (sendBtn)   sendBtn.addEventListener('click',   sendOTP);
     if (verifyBtn) verifyBtn.addEventListener('click', verifyOTP);
@@ -37,11 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Password flow elements
-    const loginPassBtn  = document.getElementById('loginPassBtn');
-    const passEmail     = document.getElementById('passEmail');
-    const passPassword  = document.getElementById('passPassword');
-
     if (loginPassBtn) loginPassBtn.addEventListener('click', loginWithPassword);
 
     if (passPassword) {
@@ -52,28 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (passEmail) {
         passEmail.addEventListener('keydown', e => {
             if (e.key === 'Enter') loginWithPassword();
-        });
-    }
-
-    // Tab switcher
-    const tabOtp      = document.getElementById('tabOtp');
-    const tabPassword = document.getElementById('tabPassword');
-    const otpFlow     = document.getElementById('otp-flow');
-    const passFlow    = document.getElementById('password-flow');
-
-    if (tabOtp && tabPassword && otpFlow && passFlow) {
-        tabOtp.addEventListener('click', () => {
-            tabOtp.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-primary text-primary transition-all';
-            tabPassword.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-transparent text-text-muted hover:text-text-main transition-all';
-            otpFlow.style.display = 'flex';
-            passFlow.style.display = 'none';
-        });
-
-        tabPassword.addEventListener('click', () => {
-            tabPassword.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-primary text-primary transition-all';
-            tabOtp.className = 'flex-1 pb-2.5 text-label-sm font-bold border-b-2 border-transparent text-text-muted hover:text-text-main transition-all';
-            passFlow.style.display = 'flex';
-            otpFlow.style.display = 'none';
         });
     }
 });
@@ -151,7 +162,10 @@ async function verifyOTP() {
         }
 
         // Store auth info
-        if (data.token) localStorage.setItem('auth_token', data.token);
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('auth_token', data.token);
+        }
         const resolvedRole = data.role || role;
         localStorage.setItem('role', resolvedRole);
 
@@ -224,7 +238,10 @@ async function loginWithPassword() {
         }
 
         const data = response.data;
-        if (data.token) localStorage.setItem('auth_token', data.token);
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('auth_token', data.token);
+        }
         localStorage.setItem('role', 'volunteer');
         localStorage.removeItem('ngo_id');
 

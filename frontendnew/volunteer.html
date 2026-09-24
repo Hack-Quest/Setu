@@ -206,7 +206,7 @@
         <section
             class="mb-stack-lg flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-surface-container-lowest border border-border-gray rounded-xl">
             <div>
-                <h2 id="volunteer-greeting" class="font-headline-md text-headline-md text-on-surface">Good Morning, Alex</h2>
+                <h2 id="volunteer-greeting" class="font-headline-md text-headline-md text-on-surface">Welcome, Volunteer</h2>
                 <p class="text-on-surface-variant font-body-md text-body-md">Ready to support your community today?</p>
             </div>
             <div class="flex items-center gap-4 bg-surface-container-low p-3 rounded-lg border border-border-gray">
@@ -228,6 +228,10 @@
             <div class="lg:col-span-8 flex flex-col gap-gutter">
                 <section id="active-mission-section"
                     class="bg-surface-container-lowest border border-border-gray rounded-xl overflow-hidden shadow-sm">
+                    <div id="assignments-loading" class="p-8 flex items-center justify-center gap-3 text-text-muted" style="display: none;">
+                        <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <p class="font-label-md">Loading assignments…</p>
+                    </div>
                     <div class="p-6 border-b border-border-gray flex justify-between items-center">
                         <div class="flex items-center gap-3">
                             <span class="p-2 bg-error-container text-error rounded-lg">

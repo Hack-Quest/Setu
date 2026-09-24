@@ -14,7 +14,7 @@ class ApiService {
      */
     static async request(endpoint, options = {}) {
         const url = `${_getBase()}${endpoint}`;
-        const token = localStorage.getItem('auth_token');
+        const token = localStorage.getItem('token') || localStorage.getItem('auth_token');
 
         const headers = {
             'Content-Type': 'application/json',
